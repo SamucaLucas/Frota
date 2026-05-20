@@ -8,6 +8,7 @@ import (
 
 	// "Frota/config"
 	"Frota/db"
+	"Frota/routers"
 
 	"github.com/joho/godotenv"
 	// "Frota/routers"
@@ -25,6 +26,7 @@ func main() {
 	db.ConectarBanco()
 
 	// 3. Aqui carregaremos as rotas (pasta routers)
+	r := routers.ConfigurarRotas()
 
 	// Subindo o servidor
 	port := os.Getenv("PORT")
@@ -33,7 +35,7 @@ func main() {
 	}
 
 	fmt.Println("🚀 Servidor Frota rodando: http://localhost:" + port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatal("❌ Erro fatal ao iniciar o servidor: ", err)
 	}
 }

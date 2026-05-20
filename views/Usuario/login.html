@@ -1,0 +1,29 @@
+{{define "Login"}}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Frota</title>
+</head>
+<body>
+    <h2>Acessar o Sistema</h2>
+    
+    {{if .Erro}}
+        <div style="color: red; margin-bottom: 15px;">{{.Erro}}</div>
+    {{end}}
+
+    <form action="/login" method="POST">
+        <label>E-mail:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <label>Senha:</label><br>
+        <input type="password" name="senha" required><br><br>
+
+        <button type="submit">Entrar</button>
+    </form>
+    
+    <p>Não tem uma conta? <a href="/cadastrar">Cadastre-se aqui</a></p>
+</body>
+</html>
+{{end}}

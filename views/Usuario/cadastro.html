@@ -1,0 +1,40 @@
+{{define "Cadastro"}}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Sistema de Frota</title>
+</head>
+
+<body>
+    <h2>Criar Conta de Passageiro</h2>
+
+    {{if .Erro}}
+    <div style="color: red; margin-bottom: 15px;">{{.Erro}}</div>
+    {{end}}
+
+    {{if .Sucesso}}
+    <div style="color: green; margin-bottom: 15px;">{{.Sucesso}}</div>
+    {{end}}
+
+    <form action="/cadastrar" method="POST">
+        <label>Nome Completo:</label><br>
+        <input type="text" name="nome" required><br><br>
+
+        <label>E-mail:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <label>Senha:</label><br>
+        <input type="password" name="senha" required><br><br>
+
+        <label>WhatsApp:</label><br>
+        <input type="text" name="whatsapp" required placeholder="(XX) 9XXXX-XXXX"><br><br>
+
+        <button type="submit">Cadastrar</button>
+    </form>
+</body>
+
+</html>
+{{end}}
