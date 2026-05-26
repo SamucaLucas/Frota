@@ -81,20 +81,34 @@ body::before {
 
 /* ── Container Responsivo (Substitui o "phone" do protótipo) ── */
 .app-container {
-    width: 100%; max-width: 380px; height: 100vh;
-    background: var(--bg); display: flex; flex-direction: column;
-    position: relative; overflow-y: scroll; -webkit-overflow-scrolling: touch;
-    z-index: 1; transition: background .3s;
+    width: 100%;
+    max-width: 100%; /* No celular, forçamos a ocupar toda a largura da tela */
+    height: 100vh;
+    height: 100dvh; /* A mágica para o Safari: dvh calcula a altura real ignorando a barra de endereço */
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    z-index: 1;
+    transition: background .3s;
 }
 
-@media (min-width: 480px) {
-    body { justify-content: center; }
+/* O "celular virtual" agora só aparece em Tablets e Computadores (Telas maiores que 768px) */
+@media (min-width: 768px) {
+    body { 
+        justify-content: center; 
+    }
     .app-container {
-        height: 90vh; max-height: 90vh; border-radius: 40px;
-        box-shadow: 0 24px 80px rgba(0, 0, 0, .7); border: 10px solid #222230;
+        max-width: 420px; /* Limita a largura para criar o visual de App no PC */
+        height: 90vh; 
+        max-height: 90vh; 
+        border-radius: 40px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, .7); 
+        border: 10px solid #222230;
     }
 }
-
 
 /* --- HERO & BACKGROUND (Atualizado com Posicionamento e Temas) --- */
 /* --- HERO & BACKGROUND --- */
@@ -212,4 +226,53 @@ body::before {
 }
 .light-mode .logo-white {
     display: block;
+}
+
+/* --- SMART BANNER PWA --- */
+.pwa-banner {
+    position: fixed;
+    bottom: -150px; /* Escondido por padrão */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+    z-index: 1000;
+    transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pwa-banner.show {
+    bottom: 20px;
+}
+
+.pwa-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pwa-close {
+    background: none;
+    border: none;
+    color: var(--t4);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.ios-instructions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--t2);
+    background: var(--bg3);
+    padding: 10px;
+    border-radius: 10px;
 }
