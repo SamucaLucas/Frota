@@ -14,6 +14,14 @@ import (
 // O padrão "views/*/*.html" diz ao Go para ler todos os arquivos HTML dentro de qualquer subpasta de views
 var temp = template.Must(template.ParseGlob("views/*/*.html"))
 
+// EmDesenvolvimento renderiza a tela de aviso de funcionalidades futuras
+func EmDesenvolvimento(w http.ResponseWriter, r *http.Request) {
+	err := temp.ExecuteTemplate(w, "Construcao", nil)
+	if err != nil {
+		log.Println("Erro ao renderizar tela de construção:", err)
+	}
+}
+
 // CadastrarUsuario gerencia a página de criar conta
 func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 
@@ -34,6 +42,7 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		senha := r.FormValue("senha")
 		whatsapp := r.FormValue("whatsapp")
+		aceitou := r.FormValue("aceitou") == "true"
 
 		// 2. Validação simples
 		if nome == "" || email == "" || senha == "" || whatsapp == "" {
@@ -57,19 +66,20 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 			Senha:    senhaHash,
 			Whatsapp: whatsapp,
 			Papel:    "passageiro", // Papel padrão
+			AceitouTermos: aceitou,   // Converte "on" para true
 		}
 
 		// 5. O Controller delega a gravação para o Model
 		err = models.CriarUsuario(&usuario)
 		if err != nil {
 			dados := struct{ Erro string }{Erro: "Este e-mail já está cadastrado em nosso sistema."}
-			temp.ExecuteTemplate(w, "Cadastro", dados)
+			temp.ExecuteTemplate(w, "Construcao", dados)
 			return
 		}
 
 		// 6. Retorno de Sucesso para a View
 		dados := struct{ Sucesso string }{Sucesso: "Conta criada com sucesso! Você já pode fazer login."}
-		temp.ExecuteTemplate(w, "Cadastro", dados)
+		temp.ExecuteTemplate(w, "Construcao", dados)
 		return
 	}
 }
@@ -78,6 +88,7 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 
 	// --- CENÁRIO 1: Aceder à Página (GET) ---
 	if r.Method == "GET" {
+		// Garanta que este nome "Login" bate com o {{define "Login"}} do HTML
 		err := temp.ExecuteTemplate(w, "Login", nil)
 		if err != nil {
 			log.Println("Erro ao renderizar ecrã de login:", err)
@@ -132,8 +143,19 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 		})
 
 		// 6. Retorno de Sucesso (Futuramente, faremos um http.Redirect para o painel de agendamento)
-		dados := struct{ Sucesso string }{Sucesso: "Login efetuado com sucesso! Bem-vindo(a), " + usuario.Nome}
-		temp.ExecuteTemplate(w, "Login", dados)
+		//dados := struct{ Sucesso string }{Sucesso: "Login efetuado com sucesso! Bem-vindo(a), " + usuario.Nome}
+		http.Redirect(w, r, "/construcao", http.StatusSeeOther)
+		return
+	}
+}
+
+// TermosUsuario renderiza a tela de políticas de uso do sistema
+func TermosUsuario(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		err := temp.ExecuteTemplate(w, "Termos", nil)
+		if err != nil {
+			log.Println("Erro ao renderizar tela de termos:", err)
+		}
 		return
 	}
 }

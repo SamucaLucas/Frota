@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+*::-webkit-scrollbar { display: none !important; }
+* { scrollbar-width: none !important; }
+
+/* ═══ THEME TOKENS ORIGINAIS ═══ */
+:root {
+    --acc: #DF0611;
+    --acc2: #FF3333;
+    --acc-bg: rgba(223, 6, 17, .12);
+    --acc-border: rgba(223, 6, 17, .28);
+    --bg: #0A0A0C;
+    --bg2: #111116;
+    --bg3: #18181F;
+    --card: #16161D;
+    --card2: #1C1C25;
+    --border: rgba(255, 255, 255, .08);
+    --border2: rgba(255, 255, 255, .13);
+    --t1: #F5F5F7;
+    --t2: #B0B3BE;
+    --t3: #75788A;
+    --t4: #50535F;
+    --status-bar-color: #fff;
+    --logo-name-color: #DF0611;
+    --logo-sub-color: rgba(255, 255, 255, .45);
+    --bnav-bg: #111116;
+    --bnav-border: rgba(255, 255, 255, .07);
+    --inp-bg: #1C1C25;
+    --inp-border: rgba(255, 255, 255, .1);
+    --hero-gradient: linear-gradient(160deg, #0A0A0C 0%, #1A0608 60%, #2D0505 100%);
+    --hero-line: rgba(223, 6, 17, .6);
+    --scan-line: rgba(223, 6, 17, .04);
+}
+
+.light-mode {
+    --acc: #1D2443;
+    --acc2: #2A3560;
+    --acc-bg: rgba(29, 36, 67, .1);
+    --acc-border: rgba(29, 36, 67, .25);
+    --bg: #F0F2F8;
+    --bg2: #E6E9F2;
+    --bg3: #DDE1ED;
+    --card: #FFFFFF;
+    --card2: #F7F8FC;
+    --border: rgba(29, 36, 67, .1);
+    --border2: rgba(29, 36, 67, .18);
+    --t1: #0E1020;
+    --t2: #3A3F5C;
+    --t3: #6B7190;
+    --t4: #9499B5;
+    --status-bar-color: #1D2443;
+    --logo-name-color: #1D2443;
+    --logo-sub-color: rgba(255, 255, 255, .6);
+    --bnav-bg: #FFFFFF;
+    --bnav-border: rgba(29, 36, 67, .1);
+    --inp-bg: #F5F6FA;
+    --inp-border: rgba(29, 36, 67, .15);
+    --hero-gradient: linear-gradient(160deg, #1D2443 0%, #2A3560 60%, #1A2040 100%);
+    --hero-line: rgba(255, 255, 255, .3);
+    --scan-line: rgba(255, 255, 255, .03);
+}
+
+body {
+    font-family: 'Sora', sans-serif;
+    background: #1A1A2E; /* Fundo do PC que você definiu no protótipo */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 20% 10%, rgba(29, 36, 67, .5) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(100, 10, 20, .3) 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
+}
+
+/* ── Container Responsivo (Substitui o "phone" do protótipo) ── */
+.app-container {
+    width: 100%; max-width: 380px; height: 100vh;
+    background: var(--bg); display: flex; flex-direction: column;
+    position: relative; overflow-y: scroll; -webkit-overflow-scrolling: touch;
+    z-index: 1; transition: background .3s;
+}
+
+@media (min-width: 480px) {
+    body { justify-content: center; }
+    .app-container {
+        height: 90vh; max-height: 90vh; border-radius: 40px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, .7); border: 10px solid #222230;
+    }
+}
+
+
+/* --- HERO & BACKGROUND (Atualizado com Posicionamento e Temas) --- */
+/* --- HERO & BACKGROUND --- */
+.hero {
+    background-image: linear-gradient(to bottom, rgba(10, 10, 12, 0.4) 0%, var(--bg) 100%), 
+                      url('/static/img/bg_dark.png');
+    background-size: 120%; 
+    background-position: center 30%; 
+    background-repeat: no-repeat; 
+    padding: 50px 22px 24px;
+    position: relative;
+    transition: background 0.3s;
+}
+
+/* Títulos no Modo Escuro (Padrão) */
+.hero-subtitle { 
+    font-size: 11px; 
+    color: rgba(255, 255, 255, .5); /* Cinza claro no escuro */
+    font-weight: 600; 
+    letter-spacing: .8px; 
+    text-transform: uppercase; 
+    margin-bottom: 6px; 
+}
+.hero-title { 
+    font-size: 26px; 
+    font-weight: 900; 
+    color: #fff; /* Branco no escuro */
+    letter-spacing: -.5px; 
+    line-height: 1.1; 
+}
+.hero-decorative-line { width: 32px; height: 2px; background: var(--acc); border-radius: 2px; margin-bottom: 16px; }
+
+/* ═══ AJUSTE DO MODO CLARO (SOUSA) ═══ */
+.light-mode .hero {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 0%, var(--bg) 100%), 
+                      url('/static/img/bg_light.png');
+    background-size: 120%;
+    background-position: center 30%;
+    background-repeat: no-repeat;
+}
+
+/* Força os textos a assumirem o Azul do sistema (--acc que vira #1D2443 no claro) */
+.light-mode .hero-subtitle {
+    color: var(--acc);
+    opacity: 0.7; /* Um leve toque de transparência para o subtítulo ficar elegante */
+}
+
+.light-mode .hero-title {
+    color: var(--acc); /* Fica no Azul Noturno do protótipo */
+}
+.hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, var(--scan-line) 0px, transparent 2px, transparent 4px);
+    pointer-events: none;
+}
+.hero-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--hero-line), transparent); }
+
+/* ── Elementos originais do HTML ── */
+.inp-wrap { display: flex; align-items: center; gap: 12px; background: var(--inp-bg); border: 1px solid var(--inp-border); border-radius: 13px; padding: 12px 14px; transition: border-color .2s, background .3s; margin-bottom: 10px; }
+.inp-wrap:focus-within { border-color: var(--acc) }
+.inp-icon { font-size: 16px; flex-shrink: 0; opacity: .6; display: flex; align-items: center; justify-content: center; width: 24px; color: var(--t1); }
+.inp { width: 100%; background: transparent; border: none; color: var(--t1); font-size: 13px; outline: none; font-family: 'Sora', sans-serif; }
+.inp::placeholder { color: var(--t3) }
+.inp-lbl {
+    font-size: 9px;
+    color: var(--t1); /* 👈 Mudando para var(--t1), ela vai ficar Branca no Escuro e Azul/Preta no Claro automaticamente! */
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.btn { width: 100%; padding: 14px; background: var(--acc); color: #fff; border: none; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Sora', sans-serif; transition: opacity .15s, transform .1s; letter-spacing: .2px; margin-bottom: 16px; }
+.btn:active { opacity: .88; transform: scale(.98) }
+.btn-ghost { padding: 10px 16px; background: rgba(255, 255, 255, .07); color: var(--t2); border: 1px solid var(--border); border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'Sora', sans-serif; flex: 1; }
+
+.card { background: var(--card); border-radius: 16px; padding: 16px; border: 1px solid var(--border); margin: 10px 0 0; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background .3s, border-color .3s; }
+.row { display: flex; align-items: center; justify-content: space-between }
+
+.theme-btn { position: absolute; top: 20px; right: 20px; z-index: 100; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; font-family: 'Sora', sans-serif;}
+
+/* Alertas Golang */
+.toast-msg { margin-bottom: 15px; border-radius: 12px; padding: 14px; font-size: 12px; font-weight: 600; text-align: center; font-family: 'Sora', sans-serif; }
+.toast-error { background: rgba(239, 68, 68, .15); color: #EF4444; border: 1px solid rgba(239, 68, 68, .3); }
+.toast-success { background: rgba(34, 197, 94, .15); color: #22C55E; border: 1px solid rgba(34, 197, 94, .3); }
+
+.brand-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: start;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.sousa-logo {
+    /* Define um teto perfeito para telas de celular sem estourar as bordas */
+    max-width: 240px; 
+    width: 100%;
+    height: auto;
+    object-fit: contain; /* Garante que a imagem mude de tamanho sem distorcer ou esticar */
+    image-rendering: -webkit-optimize-contrast; /* Melhora a nitidez em imagens com transparência */
+    background-color: transparent !important;
+}
+
+.logo-dark {
+    display: block;
+}
+.logo-white {
+    display: none;
+}
+
+/* Quando o Modo Claro (.light-mode) estiver ativo, invertemos a exibição */
+.light-mode .logo-dark {
+    display: none;
+}
+.light-mode .logo-white {
+    display: block;
+}

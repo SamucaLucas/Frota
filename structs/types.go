@@ -8,16 +8,17 @@ import (
 
 // 1. Usuários (Passageiros, Motoristas e Admin)
 type Usuario struct {
-	ID        uint   `gorm:"primaryKey"`
-	Nome      string `gorm:"size:255;not null"`
-	Email     string `gorm:"size:255;unique;not null"`
-	Senha     string `gorm:"size:255;not null"`
-	Whatsapp  string `gorm:"size:20;not null"`
-	Papel     string `gorm:"size:20;not null"` // passageiro, motorista, admin
-	Tokens    int    `gorm:"default:0"`        // Saldo atual para facilitar a visualização
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"` // Para conformidade com LGPD (Soft Delete)
+	ID            uint   `gorm:"primaryKey"`
+	Nome          string `gorm:"size:255;not null"`
+	Email         string `gorm:"size:255;unique;not null"`
+	Senha         string `gorm:"size:255;not null"`
+	Whatsapp      string `gorm:"size:20;not null"`
+	Papel         string `gorm:"size:20;not null"` // passageiro, motorista, admin
+	Tokens        int    `gorm:"default:0"`        // Saldo atual para facilitar a visualização
+	AceitouTermos bool   `gorm:"default:false"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt `gorm:"index"` // Para conformidade com LGPD (Soft Delete)
 }
 
 func (Usuario) TableName() string {

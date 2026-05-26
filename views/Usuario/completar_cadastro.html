@@ -1,0 +1,44 @@
+{{define "CompletarCadastro"}}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Cadastro - Sousa</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div class="hero">
+            <div class="hero-accent"></div>
+            <div class="hero-title" style="margin-top:20px">Quase lá!</div>
+            <div class="hero-subtitle" style="text-align:center">Precisamos do seu WhatsApp para confirmar o
+                agendamento.</div>
+        </div>
+
+        <form action="/auth/google/completar" method="POST" style="padding: 24px;">
+            <div class="inp-group">
+                <label class="inp-lbl">WhatsApp (DDD + Número)</label>
+                <div class="inp-wrap">
+                    <span class="inp-icon">📱</span>
+                    <input class="inp" type="tel" name="whatsapp" required placeholder="(94) 99999-9999">
+                </div>
+            </div>
+
+            <div
+                style="display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; background:var(--bg3); border-radius:12px; padding:12px; border:1px solid var(--border)">
+                <input type="checkbox" name="aceitou" value="true" required
+                    style="margin-top:2px; width:15px; height:15px; accent-color:var(--acc); flex-shrink:0">
+                <span style="font-size:11px; color:var(--t3); line-height:1.5">Li e aceito os <a href="/termos"
+                        style="color:var(--acc); text-decoration: none; font-weight: 700;">Termos de Uso e a Política
+                        de Privacidade</a></span>
+            </div>
+            <button type="submit" class="btn">Finalizar Cadastro →</button>
+        </form>
+    </div>
+</body>
+
+</html>
+{{end}}

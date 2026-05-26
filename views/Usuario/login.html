@@ -1,29 +1,110 @@
 {{define "Login"}}
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistema de Frota</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login - Sousa Locações e Transportes</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
-    <h2>Acessar o Sistema</h2>
-    
-    {{if .Erro}}
-        <div style="color: red; margin-bottom: 15px;">{{.Erro}}</div>
-    {{end}}
 
-    <form action="/login" method="POST">
-        <label>E-mail:</label><br>
-        <input type="email" name="email" required><br><br>
+    <div class="app-container">
 
-        <label>Senha:</label><br>
-        <input type="password" name="senha" required><br><br>
+        <button id="theme-toggle" class="theme-btn">☀️ Claro</button>
 
-        <button type="submit">Entrar</button>
-    </form>
-    
-    <p>Não tem uma conta? <a href="/cadastrar">Cadastre-se aqui</a></p>
+        <div style="display:flex; flex-direction:column; flex:1">
+
+            <div class="hero" style="padding-bottom:20px">
+                <div class="hero-accent"></div>
+                <div style="margin-top:4px">
+                    <div class="brand-container">
+                        <img src="/static/img/Logo-branco.png" alt="Sousa Transportes" class="sousa-logo logo-dark">
+
+                        <img src="/static/img/logo.png" alt="Sousa Transportes" class="sousa-logo logo-white">
+                    </div>
+                    <div class="hero-decorative-line"></div>
+                    <div class="hero-subtitle">Bem-vindo de volta</div>
+                    <div class="hero-title">Faça login para<br>continuar</div>
+                </div>
+            </div>
+
+            <form action="/login" method="POST" style="flex:1; padding:22px 18px; background: var(--bg2);">
+
+                {{if .Erro}} <div class="toast-msg toast-error">{{.Erro}}</div> {{end}}
+                {{if .Sucesso}} <div class="toast-msg toast-success">{{.Sucesso}}</div> {{end}}
+
+                <div class="inp-wrap">
+                    <span class="inp-icon">✉️</span>
+                    <div style="flex:1">
+                        <div class="inp-lbl">E-mail</div>
+                        <input class="inp" type="email" name="email" required placeholder="joao@email.com">
+                    </div>
+                </div>
+
+                <div class="inp-wrap">
+                    <span class="inp-icon">🔒</span>
+                    <div style="flex:1">
+                        <div class="inp-lbl">Senha</div>
+                        <input class="inp" type="password" name="senha" required placeholder="••••••••">
+                    </div>
+                    <span style="font-size:16px; opacity:.5; cursor:pointer">👁</span>
+                </div>
+
+                <div class="row" style="margin-bottom:20px; margin-top:10px;">
+                    <label
+                        style="display:flex; align-items:center; gap:7px; font-size:12px; color:var(--t2); cursor:pointer">
+
+                        <input type="checkbox" name="lembrar" style="display:none;">
+
+                        <div
+                            style="width:16px; height:16px; border-radius:4px; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center;">
+                            <span style="color:var(--acc); font-size:10px; font-weight:900; display:none;">✓</span>
+                        </div>
+
+                        Lembrar meus dados
+                    </label>
+
+                    <span style="font-size:12px; color:var(--t3); cursor:pointer"
+                        onclick="window.location.href='/construcao'">Esqueci minha senha</span>
+                </div>
+
+                <button type="submit" class="btn">Entrar no Sistema →</button>
+
+                <div style="text-align:center; margin-bottom:14px">
+                    <span style="font-size:11px; color:var(--t4); letter-spacing:.3px">OU</span>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-bottom:10px">
+                    <button type="button" class="btn-ghost" onclick="window.location.href='/auth/google/login'">
+                        <span style="font-size:14px; font-weight:800; color:var(--t1)">G</span> Google
+                    </button>
+                </div>
+
+
+
+                <div style="text-align:center; margin-top:16px; font-size:12px; color:var(--t3)">Novo por aqui?
+                    <a href="/cadastrar" style="color:var(--acc); font-weight:700; text-decoration:none;">Criar
+                        conta</a>
+                </div>
+
+                <div
+                    style="text-align:center; margin-top:12px; display:flex; align-items:center; justify-content:center; gap:6px">
+                    <span style="font-size:14px">🔐</span>
+                    <div>
+                        <div style="font-size:10px; font-weight:700; color:var(--t2)">Seus dados estão protegidos</div>
+                        <div style="font-size:9px; color:var(--t4)">Criptografia de ponta a ponta</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
 </body>
+
 </html>
 {{end}}

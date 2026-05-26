@@ -7,6 +7,7 @@ import (
 	"os"
 
 	// "Frota/config"
+	"Frota/controller"
 	"Frota/db"
 	"Frota/routers"
 
@@ -20,6 +21,8 @@ func main() {
 	if err != nil {
 		log.Println("⚠️ Aviso: Arquivo .env não encontrado. O sistema tentará usar as variáveis nativas do SO.")
 	}
+
+	controller.ConfigurarGoogleOAuth()
 
 	// 2. Inicializar a conexão com o PostgreSQL e rodar o AutoMigrate
 	fmt.Println("⏳ Iniciando o Sistema de Frota - Dudu...")

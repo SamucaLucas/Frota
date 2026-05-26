@@ -4,36 +4,82 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Sistema de Frota</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cadastro - Sousa Locações e Transportes</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
-    <h2>Criar Conta de Passageiro</h2>
 
-    {{if .Erro}}
-    <div style="color: red; margin-bottom: 15px;">{{.Erro}}</div>
-    {{end}}
+    <div class="app-container">
 
-    {{if .Sucesso}}
-    <div style="color: green; margin-bottom: 15px;">{{.Sucesso}}</div>
-    {{end}}
+        <button id="theme-toggle" class="theme-btn">☀️ Claro</button>
 
-    <form action="/cadastrar" method="POST">
-        <label>Nome Completo:</label><br>
-        <input type="text" name="nome" required><br><br>
+        <div style="display:flex; flex-direction:column; flex:1">
 
-        <label>E-mail:</label><br>
-        <input type="email" name="email" required><br><br>
+            <div class="hero">
+                <div class="hero-accent"></div>
+                <div style="display:flex; align-items:center; gap:12px; margin-top:6px">
+                    <a href="/login"
+                        style="width:34px; height:34px; border:none; background:rgba(255,255,255,.12); border-radius:10px; color:#fff; cursor:pointer; font-size:17px; display:flex; align-items:center; justify-content:center; font-family:inherit; text-decoration:none;">←</a>
+                    <span class="hero-title" style="font-size:18px;">Criar Conta</span>
+                </div>
+            </div>
 
-        <label>Senha:</label><br>
-        <input type="password" name="senha" required><br><br>
+            <form action="/cadastrar" method="POST" style="flex:1; padding:18px 18px 0; background:var(--bg2)">
 
-        <label>WhatsApp:</label><br>
-        <input type="text" name="whatsapp" required placeholder="(XX) 9XXXX-XXXX"><br><br>
+                {{if .Erro}} <div class="toast-msg toast-error">{{.Erro}}</div> {{end}}
+                {{if .Sucesso}} <div class="toast-msg toast-success">{{.Sucesso}}</div> {{end}}
 
-        <button type="submit">Cadastrar</button>
-    </form>
+                <div class="inp-wrap">
+                    <span class="inp-icon">👤</span>
+                    <div style="flex:1">
+                        <div class="inp">Nome Completo</div>
+                        <input class="inp" type="text" name="nome" required placeholder="Nome completo">
+                    </div>
+                </div>
+
+                <div class="inp-wrap">
+                    <span class="inp-icon">✉️</span>
+                    <div style="flex:1">
+                        <div class="inp">E-mail</div>
+                        <input class="inp" type="email" name="email" required placeholder="seu@email.com">
+                    </div>
+                </div>
+
+                <div class="inp-wrap">
+                    <span class="inp-icon">📱</span>
+                    <div style="flex:1">
+                        <div class="inp">WhatsApp</div>
+                        <input class="inp" type="tel" name="whatsapp" required placeholder="(94) 99999-9999">
+                    </div>
+                </div>
+
+                <div class="inp-wrap" style="margin-bottom:16px">
+                    <span class="inp-icon">🔒</span>
+                    <div style="flex:1">
+                        <div class="inp">Senha</div>
+                        <input class="inp" type="password" name="senha" required placeholder="Mínimo 8 caracteres">
+                    </div>
+                </div>
+
+                <div
+                    style="display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; background:var(--bg3); border-radius:12px; padding:12px; border:1px solid var(--border)">
+                    <input type="checkbox" name="aceitou" value="true" required
+                        style="margin-top:2px; width:15px; height:15px; accent-color:var(--acc); flex-shrink:0">
+                    <span style="font-size:11px; color:var(--t3); line-height:1.5">Li e aceito os <a href="/termos"
+                            style="color:var(--acc); text-decoration: none; font-weight: 700;">Termos de Uso e a
+                            Política
+                            de Privacidade</a></span>
+                </div>
+
+                <button type="submit" class="btn">Criar Minha Conta</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
 </body>
 
 </html>
