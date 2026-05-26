@@ -50,16 +50,25 @@ if (cadastroForm) {
     });
 }
 
-// Adicione isso ao seu static/app.js
-document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-    checkbox.parentElement.addEventListener('click', function(e) {
-        // Se for o label de "Lembrar meus dados"
-        if (this.querySelector('input[type="checkbox"]')) {
-            const span = this.querySelector('span'); // O elemento do ícone ✓
-            const input = this.querySelector('input');
-            
+// --- LÓGICA DO CHECKBOX CUSTOMIZADO (Exclusivo para o Login) ---
+const labelLembrar = document.querySelector('input[name="lembrar"]');
+
+if (labelLembrar && labelLembrar.parentElement) {
+    labelLembrar.parentElement.addEventListener('click', function(e) {
+        // Ignora o clique se o usuário estiver clicando no link "Esqueci minha senha"
+        if(e.target.tagName.toLowerCase() === 'span' && e.target.getAttribute('onclick')) {
+            return;
+        }
+        
+        e.preventDefault(); // Evita duplo clique no input invisível
+        
+        const input = this.querySelector('input[name="lembrar"]');
+        // Pega especificamente o span que está dentro da div (o nosso "✓")
+        const checkIcon = this.querySelector('div span'); 
+        
+        if (input && checkIcon) {
             input.checked = !input.checked;
-            span.style.display = input.checked ? 'block' : 'none';
+            checkIcon.style.display = input.checked ? 'block' : 'none';
         }
     });
-});
+}
