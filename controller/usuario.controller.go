@@ -61,12 +61,12 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 
 		// 4. Montar a Struct
 		usuario := structs.Usuario{
-			Nome:     nome,
-			Email:    email,
-			Senha:    senhaHash,
-			Whatsapp: whatsapp,
-			Papel:    "passageiro", // Papel padrão
-			AceitouTermos: aceitou,   // Converte "on" para true
+			Nome:          nome,
+			Email:         email,
+			Senha:         senhaHash,
+			Whatsapp:      whatsapp,
+			Papel:         "passageiro", // Papel padrão
+			AceitouTermos: aceitou,      // Converte "on" para true
 		}
 
 		// 5. O Controller delega a gravação para o Model
@@ -79,7 +79,7 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 
 		// 6. Retorno de Sucesso para a View
 		dados := struct{ Sucesso string }{Sucesso: "Conta criada com sucesso! Você já pode fazer login."}
-		temp.ExecuteTemplate(w, "Construcao", dados)
+		temp.ExecuteTemplate(w, "PassageiroHome", dados)
 		return
 	}
 }
@@ -144,7 +144,7 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 
 		// 6. Retorno de Sucesso (Futuramente, faremos um http.Redirect para o painel de agendamento)
 		//dados := struct{ Sucesso string }{Sucesso: "Login efetuado com sucesso! Bem-vindo(a), " + usuario.Nome}
-		http.Redirect(w, r, "/construcao", http.StatusSeeOther)
+		http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
 		return
 	}
 }

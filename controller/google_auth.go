@@ -106,7 +106,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 5. Manda para a tela de Construção!
-	http.Redirect(w, r, "/construcao", http.StatusSeeOther)
+	http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
 }
 
 // CompletarCadastroGoogle finaliza o registro após capturar o WhatsApp
@@ -150,5 +150,5 @@ func CompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 		Name: "jwt_frota", Value: tokenJWT, Expires: time.Now().Add(24 * time.Hour), HttpOnly: true, Path: "/",
 	})
 
-	http.Redirect(w, r, "/construcao", http.StatusSeeOther)
+	http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
 }

@@ -1,0 +1,340 @@
+{{define "PassageiroAgendar"}}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agendar Viagem - Sousa Transportes</title>
+    <link rel="icon" href="/static/img/Logo-icon.png" type="image/png">
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+        .agendar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .light-mode .back-btn {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 8px;
+            margin-left: 4px;
+        }
+
+        /* Container Flexível para Input + Botão GPS */
+        .input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .form-control {
+            flex: 1;
+            background: var(--inp-bg);
+            border: 1px solid var(--inp-border);
+            color: var(--t1);
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--acc);
+        }
+
+        .form-control::placeholder {
+            color: var(--t4);
+        }
+
+        .btn-gps {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            background: var(--acc-bg);
+            border: 1px solid var(--acc-border);
+            color: var(--acc);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        .light-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: none;
+        }
+
+        /* Estilo da Caixa de Sugestões de Endereço */
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 14px 16px;
+            font-size: 12px;
+            color: var(--t2);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:active {
+            background: var(--bg3);
+        }
+
+        .loading-spinner {
+            font-size: 11px;
+            color: var(--t3);
+            padding: 14px 16px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+
+        <div class="header-top">
+            <button class="back-btn" onclick="window.history.back()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--t1);">Nova Viagem</div>
+                <div style="font-size: 11px; color: var(--t3);">Preencha os detalhes da rota</div>
+            </div>
+        </div>
+
+        <div class="agendar-content">
+            <form method="POST" action="/passageiro/agendar" id="form-agendar">
+
+                <div class="form-group">
+                    <label class="form-label">📍 Origem</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="origem_texto" name="origem" class="form-control"
+                            placeholder="Digite o endereço de partida..." autocomplete="off" required>
+                        <button type="button" class="btn-gps" onclick="pegarLocalizacao()"
+                            title="Usar minha localização atual">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="lista-origem" class="autocomplete-list"></div>
+                    <input type="hidden" id="origem_lat" name="origem_lat">
+                    <input type="hidden" id="origem_lng" name="origem_lng">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🏁 Destino</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="destino_texto" name="destino" class="form-control"
+                            placeholder="Digite o endereço de destino..." autocomplete="off" required>
+                    </div>
+                    <div id="lista-destino" class="autocomplete-list"></div>
+                    <input type="hidden" id="destino_lat" name="destino_lat">
+                    <input type="hidden" id="destino_lng" name="destino_lng">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📅 Data e Horário</label>
+                    <input type="datetime-local" name="data_hora" class="form-control" required>
+                </div>
+
+                <div
+                    style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 24px;">
+                    <div style="font-size: 11px; color: var(--t2); line-height: 1.5;">
+                        <span style="color: var(--acc); font-weight: bold;">Aviso:</span> O agendamento será enviado
+                        para aprovação do motorista.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" style="padding: 16px; font-size: 15px;">Solicitar Agendamento</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        let timeoutBusca;
+
+        // Função Genérica para Buscar Endereços (Nominatim)
+        function configurarBuscaEnderecos(inputId, listId, latId, lngId) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(listId);
+            const latHidden = document.getElementById(latId);
+            const lngHidden = document.getElementById(lngId);
+
+            input.addEventListener('input', function () {
+                clearTimeout(timeoutBusca);
+                const query = this.value;
+
+                if (query.length < 4) {
+                    list.style.display = 'none';
+                    return;
+                }
+
+                list.innerHTML = '<div class="loading-spinner">Buscando endereço...</div>';
+                list.style.display = 'block';
+
+                // Delay de 800ms para não bloquear a API por excesso de requisições
+                timeoutBusca = setTimeout(() => {
+                    // Limita a busca ao Brasil para ser mais assertivo
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=5`)
+                        .then(response => response.json())
+                        .then(data => {
+                            list.innerHTML = '';
+                            if (data.length === 0) {
+                                list.innerHTML = '<div class="loading-spinner">Nenhum endereço encontrado.</div>';
+                                return;
+                            }
+
+                            data.forEach(local => {
+                                const div = document.createElement('div');
+                                div.className = 'autocomplete-item';
+                                div.innerHTML = `<span>📍</span> ${local.display_name.split(',').slice(0, 3).join(', ')}`; // Mostra só rua, bairro e cidade
+
+                                div.onclick = function () {
+                                    input.value = local.display_name.split(',').slice(0, 3).join(', ');
+                                    latHidden.value = local.lat;
+                                    lngHidden.value = local.lon;
+                                    list.style.display = 'none';
+                                };
+                                list.appendChild(div);
+                            });
+                        })
+                        .catch(err => {
+                            list.innerHTML = '<div class="loading-spinner">Erro ao buscar endereço.</div>';
+                        });
+                }, 800);
+            });
+
+            // Esconder lista se clicar fora
+            document.addEventListener('click', function (e) {
+                if (e.target !== input && e.target !== list) {
+                    list.style.display = 'none';
+                }
+            });
+        }
+
+        // Função para Capturar GPS do Celular
+        function pegarLocalizacao() {
+            const btnGps = document.querySelector('.btn-gps');
+            const inputOrigem = document.getElementById('origem_texto');
+            const latOrigem = document.getElementById('origem_lat');
+            const lngOrigem = document.getElementById('origem_lng');
+
+            if (!navigator.geolocation) {
+                alert("Seu navegador não suporta geolocalização.");
+                return;
+            }
+
+            inputOrigem.value = "Capturando seu GPS...";
+            btnGps.style.opacity = "0.5";
+
+            navigator.geolocation.getCurrentPosition(
+                // Sucesso
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    // Converte Coordenadas para Nome de Rua (Reverse Geocoding)
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            let endereco = data.address.road || "Endereço Atual";
+                            if (data.address.suburb) endereco += ", " + data.address.suburb;
+
+                            inputOrigem.value = endereco;
+                            latOrigem.value = lat;
+                            lngOrigem.value = lng;
+                            btnGps.style.opacity = "1";
+                        });
+                },
+                // Erro
+                (erro) => {
+                    inputOrigem.value = "";
+                    btnGps.style.opacity = "1";
+                    alert("Por favor, permita o acesso à sua localização.");
+                },
+                { enableHighAccuracy: true } // Força usar o GPS real do celular
+            );
+        }
+
+        // Ativa os listeners nas duas caixas de texto
+        configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng');
+        configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng');
+    </script>
+</body>
+
+</html>
+{{end}}

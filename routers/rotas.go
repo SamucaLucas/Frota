@@ -25,6 +25,10 @@ func ConfigurarRotas() *http.ServeMux {
 	mux.HandleFunc("/auth/google/callback", controller.GoogleCallback)
 	mux.HandleFunc("/auth/google/completar", controller.CompletarCadastroGoogle)
 
+	// Rotas do Passageiro
+	mux.HandleFunc("/passageiro/home", controller.HomePassageiro)
+	mux.HandleFunc("/passageiro/agendar", controller.AgendarViagem)
+
 
 	return mux
 }
