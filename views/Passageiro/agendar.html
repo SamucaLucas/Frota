@@ -9,6 +9,16 @@
     <link rel="icon" href="/static/img/Logo-icon.png" type="image/png">
     <link rel="stylesheet" href="/static/style.css">
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Lê o tema salvo no navegador e aplica na raiz do documento
+        if (localStorage.getItem('theme') === 'light' || localStorage.getItem('tema') === 'claro' || document.cookie.includes('light-mode')) {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
     <style>
         .agendar-content {
             flex: 1;
@@ -44,7 +54,7 @@
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             position: relative;
         }
 
@@ -59,20 +69,20 @@
             margin-left: 4px;
         }
 
-        /* Container Flexível para Input + Botão GPS */
         .input-wrapper {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
 
         .form-control {
+            width: 100%;
             flex: 1;
             background: var(--inp-bg);
             border: 1px solid var(--inp-border);
             color: var(--t1);
-            padding: 16px;
-            border-radius: 14px;
+            padding: 14px;
+            border-radius: 12px;
             font-size: 13px;
             font-family: 'Sora', sans-serif;
             outline: none;
@@ -83,35 +93,31 @@
             border-color: var(--acc);
         }
 
-        .form-control::placeholder {
-            color: var(--t4);
-        }
-
-        .btn-gps {
-            width: 48px;
-            height: 48px;
+        .btn-util {
+            width: 44px;
+            height: 44px;
             flex-shrink: 0;
-            background: var(--acc-bg);
-            border: 1px solid var(--acc-border);
-            color: var(--acc);
-            border-radius: 14px;
+            background: var(--bg3);
+            border: 1px solid var(--inp-border);
+            color: var(--t2);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            opacity: 0.6;
-            cursor: pointer;
+        .btn-util:active {
+            transform: scale(0.95);
         }
 
-        .light-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-            filter: none;
+        .btn-util.active {
+            background: var(--acc-bg);
+            border-color: var(--acc-border);
+            color: var(--acc);
         }
 
-        /* Estilo da Caixa de Sugestões de Endereço */
         .autocomplete-list {
             position: absolute;
             top: 100%;
@@ -121,15 +127,15 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             margin-top: 4px;
-            max-height: 200px;
+            max-height: 180px;
             overflow-y: auto;
-            z-index: 10;
+            z-index: 999;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             display: none;
         }
 
         .autocomplete-item {
-            padding: 14px 16px;
+            padding: 12px 16px;
             font-size: 12px;
             color: var(--t2);
             border-bottom: 1px solid var(--border);
@@ -137,10 +143,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-
-        .autocomplete-item:last-child {
-            border-bottom: none;
         }
 
         .autocomplete-item:active {
@@ -153,10 +155,72 @@
             padding: 14px 16px;
             text-align: center;
         }
+
+        .map-wrapper {
+            margin-bottom: 20px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #mapa {
+            width: 100%;
+            height: 200px;
+            z-index: 1;
+        }
+
+        .map-instruction {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 12, 0.85);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            z-index: 99;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: none;
+        }
+
+        .light-mode .map-instruction {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+
+        /* PINOS CUSTOMIZADOS NO MAPA */
+        .pin-origem-visual {
+            width: 22px;
+            height: 22px;
+            background: #2ecc71;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .pin-destino-visual {
+            width: 22px;
+            height: 22px;
+            background: #e74c3c;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        }
     </style>
 </head>
 
 <body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode');
+        }
+    </script>
+
     <div class="app-container">
 
         <div class="header-top">
@@ -168,25 +232,30 @@
             </button>
             <div>
                 <div style="font-size: 16px; font-weight: 800; color: var(--t1);">Nova Viagem</div>
-                <div style="font-size: 11px; color: var(--t3);">Preencha os detalhes da rota</div>
+                <div style="font-size: 11px; color: var(--t3);">Defina a rota digitando ou tocando no mapa</div>
             </div>
         </div>
 
         <div class="agendar-content">
-            <form method="POST" action="/passageiro/agendar" id="form-agendar">
+            <form method="POST" action="/passageiro/agendar" id="form-agendar" data-base-urbano="{{.PrecoBaseUrbano}}"
+                data-km-urbano="{{.PrecoKmUrbano}}" data-km-inter="{{.PrecoKmInter}}"
+                data-limite-urbano="{{.LimiteKmUrbano}}">
 
                 <div class="form-group">
                     <label class="form-label">📍 Origem</label>
                     <div class="input-wrapper">
                         <input type="text" id="origem_texto" name="origem" class="form-control"
-                            placeholder="Digite o endereço de partida..." autocomplete="off" required>
-                        <button type="button" class="btn-gps" onclick="pegarLocalizacao()"
-                            title="Usar minha localização atual">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            placeholder="Endereço de partida..." autocomplete="off" required>
+                        <button type="button" class="btn-util" onclick="pegarLocalizacao()" title="Usar meu GPS">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
                                 <circle cx="12" cy="12" r="10" />
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
+                        </button>
+                        <button type="button" id="pin-origem" class="btn-util" onclick="ativarInsercaoMapa('origem')"
+                            title="Marcar no mapa">
+                            <span style="color: #2ecc71;">📍</span>
                         </button>
                     </div>
                     <div id="lista-origem" class="autocomplete-list"></div>
@@ -198,11 +267,20 @@
                     <label class="form-label">🏁 Destino</label>
                     <div class="input-wrapper">
                         <input type="text" id="destino_texto" name="destino" class="form-control"
-                            placeholder="Digite o endereço de destino..." autocomplete="off" required>
+                            placeholder="Endereço de destino..." autocomplete="off" required>
+                        <button type="button" id="pin-destino" class="btn-util" onclick="ativarInsercaoMapa('destino')"
+                            title="Marcar no mapa">
+                            <span style="color: #e74c3c;">📍</span>
+                        </button>
                     </div>
                     <div id="lista-destino" class="autocomplete-list"></div>
                     <input type="hidden" id="destino_lat" name="destino_lat">
                     <input type="hidden" id="destino_lng" name="destino_lng">
+                </div>
+
+                <div class="map-wrapper">
+                    <div id="mapa"></div>
+                    <div id="instrucao-mapa" class="map-instruction">Toque no mapa para fixar a Origem</div>
                 </div>
 
                 <div class="form-group">
@@ -210,25 +288,148 @@
                     <input type="datetime-local" name="data_hora" class="form-control" required>
                 </div>
 
-                <div
-                    style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 24px;">
-                    <div style="font-size: 11px; color: var(--t2); line-height: 1.5;">
-                        <span style="color: var(--acc); font-weight: bold;">Aviso:</span> O agendamento será enviado
-                        para aprovação do motorista.
-                    </div>
+                <div id="estimativa-card"
+                    style="display: none; background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 14px; padding: 18px; margin-bottom: 24px; text-align: center;">
+                    <div
+                        style="font-size: 11px; color: var(--t2); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.5px;">
+                        Valor Estimado</div>
+                    <div style="font-size: 28px; font-weight: 900; color: var(--acc); margin-bottom: 4px;"
+                        id="estimativa-valor">R$ 0,00</div>
+                    <div style="font-size: 12px; color: var(--t1); font-weight: 600;" id="estimativa-distancia">
+                        Distância: 0 km</div>
                 </div>
+
+                <input type="hidden" id="km_rodado" name="km_rodado">
+                <input type="hidden" id="valor_estimado" name="valor_estimado">
 
                 <button type="submit" class="btn" style="padding: 16px; font-size: 15px;">Solicitar Agendamento</button>
             </form>
         </div>
-
     </div>
 
+    <script src="/static/app.js"></script>
     <script>
         let timeoutBusca;
+        let mapa, origemMarker, destinoMarker;
+        let modoSelecaoMapa = null;
 
-        // Função Genérica para Buscar Endereços (Nominatim)
-        function configurarBuscaEnderecos(inputId, listId, latId, lngId) {
+        const latPadrao = -6.4975;
+        const lngPadrao = -49.8794;
+
+        // CRIAÇÃO DOS ÍCONES VERDE E VERMELHO
+        const iconeOrigem = L.divIcon({
+            className: 'custom-icon',
+            html: '<div class="pin-origem-visual"></div>',
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+        });
+
+        const iconeDestino = L.divIcon({
+            className: 'custom-icon',
+            html: '<div class="pin-destino-visual"></div>',
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            mapa = L.map('mapa', { zoomControl: false }).setView([latPadrao, lngPadrao], 13);
+            L.control.zoom({ position: 'bottomright' }).addTo(mapa);
+
+            // Verifica o tema da página que os scripts iniciais definiram
+            const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
+            const tileUrl = isLight
+                ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+            L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(mapa);
+
+            mapa.on('click', function (e) {
+                if (!modoSelecaoMapa) return;
+                atualizarPosicaoPorPino(modoSelecaoMapa, e.latlng.lat, e.latlng.lng);
+            });
+        });
+
+        // FUNÇÃO CORRIGIDA: ativarInsercaoMapa (sem o 'c')
+        function ativarInsercaoMapa(tipo) {
+            const btnOrigem = document.getElementById('pin-origem');
+            const btnDestino = document.getElementById('pin-destino');
+            const instrucao = document.getElementById('instrucao-mapa');
+
+            if (modoSelecaoMapa === tipo) {
+                modoSelecaoMapa = null;
+                btnOrigem.classList.remove('active');
+                btnDestino.classList.remove('active');
+                instrucao.style.display = 'none';
+            } else {
+                modoSelecaoMapa = tipo;
+                btnOrigem.classList.toggle('active', tipo === 'origem');
+                btnDestino.classList.toggle('active', tipo === 'destino');
+                instrucao.innerText = `Toque no mapa para fixar a ${tipo === 'origem' ? 'Origem (Verde)' : 'Destino (Vermelho)'}`;
+                instrucao.style.display = 'block';
+            }
+        }
+
+        function atualizarPosicaoPorPino(tipo, lat, lng) {
+            document.getElementById(`${tipo}_lat`).value = lat;
+            document.getElementById(`${tipo}_lng`).value = lng;
+
+            const inputTexto = document.getElementById(`${tipo}_texto`);
+            inputTexto.value = "Buscando nome do local...";
+
+            atualizarMarcadorNoMapa(tipo, lat, lng);
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(res => res.json())
+                .then(data => {
+                    let endereco = data.address.road || data.address.suburb || "Local selecionado no mapa";
+                    if (data.address.house_number) endereco += ", " + data.address.house_number;
+                    if (data.address.suburb && data.address.road) endereco += " - " + data.address.suburb;
+
+                    inputTexto.value = endereco;
+                    ativarInsercaoMapa(tipo); // Desliga o botão
+                    calcularEstimativa();
+                })
+                .catch(() => {
+                    inputTexto.value = `Ponto no Mapa (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                    ativarInsercaoMapa(tipo);
+                    calcularEstimativa();
+                });
+        }
+
+        function atualizarMarcadorNoMapa(tipo, lat, lng) {
+            const coordenadas = [lat, lng];
+
+            if (tipo === 'origem') {
+                if (origemMarker) {
+                    origemMarker.setLatLng(coordenadas);
+                } else {
+                    origemMarker = L.marker(coordenadas, { icon: iconeOrigem, draggable: true }).addTo(mapa);
+                    origemMarker.on('dragend', function (e) {
+                        const p = origemMarker.getLatLng();
+                        atualizarPosicaoPorPino('origem', p.lat, p.lng);
+                    });
+                }
+            } else {
+                if (destinoMarker) {
+                    destinoMarker.setLatLng(coordenadas);
+                } else {
+                    destinoMarker = L.marker(coordenadas, { icon: iconeDestino, draggable: true }).addTo(mapa);
+                    destinoMarker.on('dragend', function (e) {
+                        const p = destinoMarker.getLatLng();
+                        atualizarPosicaoPorPino('destino', p.lat, p.lng);
+                    });
+                }
+            }
+
+            if (origemMarker && destinoMarker) {
+                const grupo = new L.featureGroup([origemMarker, destinoMarker]);
+                mapa.fitBounds(grupo.getBounds().pad(0.3));
+            } else {
+                mapa.setView(coordenadas, 15);
+            }
+        }
+
+        function configurarBuscaEnderecos(inputId, listId, latId, lngId, tipo) {
             const input = document.getElementById(inputId);
             const list = document.getElementById(listId);
             const latHidden = document.getElementById(latId);
@@ -238,101 +439,135 @@
                 clearTimeout(timeoutBusca);
                 const query = this.value;
 
-                if (query.length < 4) {
-                    list.style.display = 'none';
-                    return;
-                }
+                if (query.length < 4) { list.style.display = 'none'; return; }
 
                 list.innerHTML = '<div class="loading-spinner">Buscando endereço...</div>';
                 list.style.display = 'block';
 
-                // Delay de 800ms para não bloquear a API por excesso de requisições
                 timeoutBusca = setTimeout(() => {
-                    // Limita a busca ao Brasil para ser mais assertivo
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=5`)
+                    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=5`;
+                    const viewboxPara = `-51.0,-4.5,-48.0,-7.5`;
+                    url += `&viewbox=${viewboxPara}`;
+
+                    fetch(url)
                         .then(response => response.json())
                         .then(data => {
                             list.innerHTML = '';
-                            if (data.length === 0) {
-                                list.innerHTML = '<div class="loading-spinner">Nenhum endereço encontrado.</div>';
-                                return;
-                            }
+                            if (data.length === 0) { list.innerHTML = '<div class="loading-spinner">Nenhum endereço encontrado.</div>'; return; }
 
                             data.forEach(local => {
                                 const div = document.createElement('div');
                                 div.className = 'autocomplete-item';
-                                div.innerHTML = `<span>📍</span> ${local.display_name.split(',').slice(0, 3).join(', ')}`; // Mostra só rua, bairro e cidade
+                                div.innerHTML = `<span>📍</span> ${local.display_name.split(',').slice(0, 3).join(', ')}`;
 
                                 div.onclick = function () {
                                     input.value = local.display_name.split(',').slice(0, 3).join(', ');
                                     latHidden.value = local.lat;
                                     lngHidden.value = local.lon;
                                     list.style.display = 'none';
+
+                                    atualizarMarcadorNoMapa(tipo, parseFloat(local.lat), parseFloat(local.lon));
+                                    calcularEstimativa();
                                 };
                                 list.appendChild(div);
                             });
                         })
-                        .catch(err => {
-                            list.innerHTML = '<div class="loading-spinner">Erro ao buscar endereço.</div>';
-                        });
+                        .catch(() => { list.innerHTML = '<div class="loading-spinner">Erro ao buscar endereço.</div>'; });
                 }, 800);
             });
 
-            // Esconder lista se clicar fora
             document.addEventListener('click', function (e) {
-                if (e.target !== input && e.target !== list) {
-                    list.style.display = 'none';
-                }
+                if (e.target !== input && e.target !== list) list.style.display = 'none';
             });
         }
 
-        // Função para Capturar GPS do Celular
         function pegarLocalizacao() {
-            const btnGps = document.querySelector('.btn-gps');
+            const btnGps = document.querySelector('.btn-util');
             const inputOrigem = document.getElementById('origem_texto');
-            const latOrigem = document.getElementById('origem_lat');
-            const lngOrigem = document.getElementById('origem_lng');
 
-            if (!navigator.geolocation) {
-                alert("Seu navegador não suporta geolocalização.");
-                return;
-            }
+            if (!navigator.geolocation) return alert("Seu dispositivo não suporta geolocalização.");
 
-            inputOrigem.value = "Capturando seu GPS...";
+            inputOrigem.value = "Buscando sinal de satélite...";
             btnGps.style.opacity = "0.5";
 
             navigator.geolocation.getCurrentPosition(
-                // Sucesso
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
 
-                    // Converte Coordenadas para Nome de Rua (Reverse Geocoding)
+                    document.getElementById('origem_lat').value = lat;
+                    document.getElementById('origem_lng').value = lng;
+
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                         .then(res => res.json())
                         .then(data => {
-                            let endereco = data.address.road || "Endereço Atual";
+                            let endereco = data.address.road || "Minha Localização";
                             if (data.address.suburb) endereco += ", " + data.address.suburb;
 
                             inputOrigem.value = endereco;
-                            latOrigem.value = lat;
-                            lngOrigem.value = lng;
                             btnGps.style.opacity = "1";
+
+                            atualizarMarcadorNoMapa('origem', lat, lng);
+                            calcularEstimativa();
                         });
                 },
-                // Erro
-                (erro) => {
+                () => {
                     inputOrigem.value = "";
                     btnGps.style.opacity = "1";
-                    alert("Por favor, permita o acesso à sua localização.");
+                    alert("Ative a localização nas configurações do seu celular.");
                 },
-                { enableHighAccuracy: true } // Força usar o GPS real do celular
+                { enableHighAccuracy: true }
             );
         }
 
-        // Ativa os listeners nas duas caixas de texto
-        configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng');
-        configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng');
+        function calcularEstimativa() {
+            const lat1 = document.getElementById('origem_lat').value;
+            const lng1 = document.getElementById('origem_lng').value;
+            const lat2 = document.getElementById('destino_lat').value;
+            const lng2 = document.getElementById('destino_lng').value;
+
+            if (lat1 && lng1 && lat2 && lng2) {
+                const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`;
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.routes && data.routes.length > 0) {
+                            const distanciaMetros = data.routes[0].distance;
+                            const distanciaKm = parseFloat((distanciaMetros / 1000).toFixed(1));
+
+                            const formElement = document.getElementById('form-agendar');
+                            const precoBaseUrbano = parseFloat(formElement.getAttribute('data-base-urbano')) || 10.00;
+                            const precoKmUrbano = parseFloat(formElement.getAttribute('data-km-urbano')) || 2.50;
+                            const precoKmInter = parseFloat(formElement.getAttribute('data-km-inter')) || 3.50;
+                            const limiteKmUrbano = parseFloat(formElement.getAttribute('data-limite-urbano')) || 20.0;
+
+                            let valorFinal = 0;
+                            let tipoViagem = "";
+
+                            if (distanciaKm <= limiteKmUrbano) {
+                                tipoViagem = "Urbana";
+                                valorFinal = precoBaseUrbano;
+                                if (distanciaKm > 1) valorFinal += (distanciaKm - 1) * precoKmUrbano;
+                            } else {
+                                tipoViagem = "Intermunicipal";
+                                valorFinal = distanciaKm * precoKmInter;
+                            }
+
+                            document.getElementById('estimativa-distancia').innerText = `Distância: ${distanciaKm.toString().replace('.', ',')} km (${tipoViagem})`;
+                            document.getElementById('estimativa-valor').innerText = `R$ ${valorFinal.toFixed(2).replace('.', ',')}`;
+                            document.getElementById('estimativa-card').style.display = 'block';
+
+                            document.getElementById('km_rodado').value = distanciaKm;
+                            document.getElementById('valor_estimado').value = valorFinal.toFixed(2);
+                        }
+                    })
+                    .catch(err => console.error("Erro no cálculo OSRM:", err));
+            }
+        }
+
+        configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng', 'origem');
+        configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng', 'destino');
     </script>
 </body>
 

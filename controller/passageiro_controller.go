@@ -51,18 +51,33 @@ func HomePassageiro(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type DadosAgendamento struct {
+	PrecoBaseUrbano float64
+	PrecoKmUrbano   float64
+	PrecoKmInter    float64
+	LimiteKmUrbano  float64
+}
+
 // AgendarViagem lida com a exibição do formulário e a gravação da nova corrida
 func AgendarViagem(w http.ResponseWriter, r *http.Request) {
-	// 1. Verifica se o usuário está logado
 	usuarioID, err := services.ExtrairUsuarioID(r)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
-	// 2. Se for método GET (Acessando a página), apenas exibe o HTML
+	// 2. Se for método GET (Acessando a página)
 	if r.Method == "GET" {
-		err := temp.ExecuteTemplate(w, "PassageiroAgendar", nil)
+		// Simulando os valores que o Dudu configurou no Painel Administrativo
+		// No futuro, faremos: db.DB.First(&config)
+		configPrecos := DadosAgendamento{
+			PrecoBaseUrbano: 10.00, // Inicia em R$ 10,00
+			PrecoKmUrbano:   2.50,  // R$ 2,50 por KM após o 1º KM
+			PrecoKmInter:    4.00,  // R$ 3,50 a 4,00 por KM em viagens longas
+			LimiteKmUrbano:  20.0,
+		}
+
+		err := temp.ExecuteTemplate(w, "PassageiroAgendar", configPrecos)
 		if err != nil {
 			log.Println("Erro ao renderizar Agendar:", err)
 		}
@@ -75,13 +90,17 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
 		destino := r.FormValue("destino")
 		dataHoraStr := r.FormValue("data_hora")
 
-		// 3.1 Captura das Coordenadas (Convertendo de string para Float64)
+		// 3.1 Captura das Coordenadas
 		origemLat, _ := strconv.ParseFloat(r.FormValue("origem_lat"), 64)
 		origemLng, _ := strconv.ParseFloat(r.FormValue("origem_lng"), 64)
 		destinoLat, _ := strconv.ParseFloat(r.FormValue("destino_lat"), 64)
 		destinoLng, _ := strconv.ParseFloat(r.FormValue("destino_lng"), 64)
 
-		// 3.2. Tratamento da Data/Hora
+		// 3.2 Captura da Distância e Valor (Novo!)
+		kmRodado, _ := strconv.ParseFloat(r.FormValue("km_rodado"), 64)
+		valorEstimado, _ := strconv.ParseFloat(r.FormValue("valor_estimado"), 64)
+
+		// 3.3 Tratamento da Data/Hora
 		dataHoraAgendada, err := time.Parse("2006-01-02T15:04", dataHoraStr)
 		if err != nil {
 			log.Println("Erro ao converter data:", err)
@@ -89,7 +108,7 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// 3.3. Cria a corrida no banco de dados com as coordenadas exatas!
+		// 3.4 Cria a corrida na base de dados com as estimativas!
 		novaCorrida := structs.Corrida{
 			UsuarioID:        usuarioID,
 			Tipo:             "padrao",
@@ -99,6 +118,8 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
 			DestinoTexto:     destino,
 			DestinoLat:       destinoLat,
 			DestinoLng:       destinoLng,
+			KMRodado:         kmRodado,      // 👈 Gravando no banco
+			ValorEstimado:    valorEstimado, // 👈 Gravando no banco
 			DataHoraAgendada: dataHoraAgendada,
 			Status:           "Aguardando Confirmacao",
 		}
