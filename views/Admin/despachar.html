@@ -1,0 +1,283 @@
+{{define "AdminDespachar"}}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Despachar Corrida - Admin</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .home-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sec-lbl {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--t1);
+            margin: 24px 0 12px;
+        }
+
+        .divl {
+            height: 1px;
+            background: var(--border);
+            margin: 12px 0;
+            width: 100%;
+        }
+
+        .meta {
+            font-size: 9px;
+            color: var(--t3);
+            font-weight: 700;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .val {
+            font-size: 13px;
+            color: var(--t1);
+            font-weight: 500;
+        }
+
+        .card-hot {
+            border-top: 2.5px solid var(--acc);
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .driver-card {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .dchk {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--border2);
+            flex-shrink: 0;
+            transition: background .2s, border-color .2s;
+        }
+
+        /* Oculta os radios originais e lida com estilos baseados em checked */
+        input[type="radio"] {
+            display: none;
+        }
+
+        input[type="radio"]:checked~.dchk {
+            background: var(--acc);
+            border-color: var(--acc);
+        }
+
+        .bnav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bnav-bg, var(--bg2));
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 8px 0 28px;
+            z-index: 50;
+            backdrop-filter: blur(20px);
+        }
+
+        .ni {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--t3);
+            font-size: 9px;
+            padding: 4px;
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            letter-spacing: .3px;
+            transition: color .2s;
+        }
+
+        .ni.on {
+            color: var(--acc);
+        }
+
+        .ni svg {
+            width: 22px;
+            height: 22px;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode');
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+    <div class="app-container">
+        <div class="home-content">
+
+            <div class="header-top">
+                <button class="back-btn" onclick="window.location.href='/admin/home'">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Despachar Corrida</div>
+            </div>
+
+            <div class="card-hot">
+                <div
+                    style="font-size:10px;color:var(--acc);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">
+                    📋 Solicitação #{{.Corrida.ID}}
+                </div>
+                <div class="divl" style="margin-top:0"></div>
+
+                <div style="margin-bottom:8px">
+                    <div class="meta">Passageiro</div>
+                    <div class="val">{{.Corrida.Usuario.Nome}} · {{.Corrida.Usuario.Whatsapp}}</div>
+                </div>
+                <div style="margin-bottom:8px">
+                    <div class="meta">Data e Hora Agendada</div>
+                    <div class="val">{{.Corrida.DataHoraAgendada.Format "02/01/2006 às 15:04"}}</div>
+                </div>
+                <div style="margin-bottom:8px">
+                    <div class="meta">📍 Origem</div>
+                    <div class="val">{{.Corrida.OrigemTexto}}</div>
+                </div>
+                <div style="margin-bottom:8px">
+                    <div class="meta">🏁 Destino</div>
+                    <div class="val">{{.Corrida.DestinoTexto}}</div>
+                </div>
+                <div class="divl"></div>
+                <div>
+                    <div class="meta">Valor Estimado</div>
+                    <div class="val" style="color:var(--acc); font-weight: 800;">R$ {{printf "%.2f"
+                        .Corrida.ValorEstimado}}</div>
+                </div>
+            </div>
+
+            <div class="sec-lbl">Atribuir corrida para:</div>
+
+            <form method="POST" action="" id="form-despacho">
+
+                {{range .Motoristas}}
+                <label class="driver-card" onclick="selDrv(this)">
+                    <input type="radio" name="motorista_id" value="{{.ID}}" required>
+                    <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                        <div
+                            style="width:40px;height:40px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+                            🚗
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:var(--t1);">{{.Nome}}</div>
+                            <div style="font-size:10px;color:#22C55E;font-weight:600">● Motorista Disponível</div>
+                        </div>
+                    </div>
+                    <div class="dchk"></div>
+                </label>
+                {{end}}
+
+                <label class="driver-card" onclick="selDrv(this)">
+                    <input type="radio" name="motorista_id" value="{{.Usuario.ID}}" required>
+                    <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                        <div
+                            style="width:40px;height:40px;background:var(--acc-bg);border-radius:12px;border:1px solid var(--acc-border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+                            👤
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:var(--t1);">Assumir eu mesmo</div>
+                            <div style="font-size:10px;color:var(--t3);">Administrador</div>
+                        </div>
+                    </div>
+                    <div class="dchk"></div>
+                </label>
+
+                <div style="margin-top: 24px;">
+                    <button type="submit" class="btn" style="width: 100%; padding: 16px; font-size: 14px;">✓ Confirmar
+                        Atribuição</button>
+                </div>
+            </form>
+
+        </div>
+
+        <div class="bnav">
+            <button class="ni on" onclick="window.location.href='/admin/home'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                </svg>
+                Despacho
+            </button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+    <script>
+        function selDrv(element) {
+            // Garante que o input radio invisível é checkado via Javascript
+            const radio = element.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+
+            // Retira a cor ativa de todos
+            document.querySelectorAll('.driver-card').forEach(card => {
+                card.style.borderColor = 'var(--border)';
+                card.style.background = 'var(--card)';
+            });
+
+            // Dá destaque ao card selecionado
+            element.style.borderColor = 'var(--acc)';
+            element.style.background = 'var(--acc-bg)';
+        }
+    </script>
+</body>
+
+</html>
+{{end}}

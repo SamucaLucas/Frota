@@ -28,23 +28,6 @@
             margin: 0 18px 12px;
         }
 
-        .divl {
-            height: 1px;
-            background: var(--border);
-            margin: 12px 0;
-            width: 100%;
-        }
-
-        .badge-warning {
-            background: rgba(243, 156, 18, 0.15);
-            color: #f39c12;
-            font-size: 10px;
-            font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-
         .badge-green {
             background: rgba(46, 204, 113, 0.15);
             color: #2ecc71;
@@ -55,11 +38,21 @@
             text-transform: uppercase;
         }
 
-        .btn-aceitar {
-            background: #2ecc71;
-            color: #fff;
-            border: none;
-            padding: 10px 16px;
+        .badge-blue {
+            background: var(--acc-bg);
+            color: var(--acc);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .btn-concluir {
+            background: transparent;
+            color: var(--acc);
+            border: 1px solid var(--acc-border);
+            padding: 10px;
             border-radius: 10px;
             font-size: 12px;
             font-weight: 700;
@@ -67,12 +60,55 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            width: 100%;
+            transition: opacity 0.2s;
+            margin-top: 12px;
         }
 
-        .btn-aceitar:active {
-            transform: scale(0.95);
-            opacity: 0.9;
+        .btn-concluir:active {
+            transform: scale(0.98);
+            background: var(--acc-bg);
+        }
+
+        .bnav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bnav-bg, var(--bg2));
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 8px 0 28px;
+            z-index: 50;
+            backdrop-filter: blur(20px);
+        }
+
+        .ni {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--t3);
+            font-size: 9px;
+            padding: 4px;
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            letter-spacing: .3px;
+            transition: color .2s;
+        }
+
+        .ni.on {
+            color: var(--acc);
+        }
+
+        .ni svg {
+            width: 22px;
+            height: 22px;
         }
     </style>
 </head>
@@ -81,79 +117,113 @@
     <script>
         if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
             document.body.classList.add('light-mode');
+            document.documentElement.classList.add('light-mode');
         }
     </script>
 
     <div class="app-container">
         <div class="home-content">
 
-            <div class="hero" style="padding-bottom: 30px;">
-                <div class="row" style="align-items: flex-end;">
+            <div class="hero">
+                <div class="hero-accent"></div>
+                <div class="row">
                     <div>
-                        <div class="hero-subtitle">Modo Motorista 🚗</div>
-                        <div class="hero-title">Fala, {{.Usuario.Nome}}!</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:.5px">
+                            Modo Motorista
+                        </div>
+                        <div style="font-size:22px;font-weight:900;color:#fff;margin-top:2px">{{.Usuario.Nome}}</div>
+                    </div>
+                    <div
+                        style="background:var(--acc);width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 14px rgba(0,0,0,.3)">
+                        🚗
                     </div>
                 </div>
             </div>
 
-            <div class="sec-lbl">Novas Solicitações 🔥</div>
-            {{if .Pendentes}}
-            {{range .Pendentes}}
-            <div class="card list-card">
+            <div class="sec-lbl">Minha Agenda 📅</div>
+
+            {{if .Atribuidas}}
+            {{range .Atribuidas}}
+            <div class="card list-card" style="border-left: 3px solid #2ecc71;">
                 <div class="row" style="margin-bottom: 8px;">
-                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">{{.Usuario.Nome}} solicitou:</div>
-                    <span class="badge-warning">Novo</span>
+                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">{{.OrigemTexto}} →
+                        {{.DestinoTexto}}</div>
+                    <span class="badge-green">Aprovada</span>
                 </div>
 
-                <div style="font-size: 12px; color: var(--t2); margin-bottom: 4px;">📍 De: {{.OrigemTexto}}</div>
-                <div style="font-size: 12px; color: var(--t2); margin-bottom: 10px;">🏁 Para: {{.DestinoTexto}}</div>
-                <div style="font-size: 12px; color: var(--acc); font-weight: 700;">📅 {{.DataHoraAgendada.Format
-                    "02/01/2006 às 15:04"}}</div>
+                <div style="font-size: 11px; color: var(--t3); margin-bottom: 6px;">
+                    📅 {{.DataHoraAgendada.Format "02/01/2006 às 15:04"}}
+                </div>
+                <div style="font-size: 11px; color: var(--t2);">
+                    👤 Passageiro: <span style="color: var(--t1); font-weight: bold;">{{.Usuario.Nome}}</span>
+                </div>
 
-                <div class="divl"></div>
-                <div class="row">
-                    <div style="font-size: 15px; color: var(--t1); font-weight: 800;">R$ {{printf "%.2f"
-                        .ValorEstimado}} <span
-                            style="font-size: 10px; font-weight: normal; color: var(--t3);">({{.KMRodado}} km)</span>
-                    </div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="btn" style="flex: 1; padding: 10px; font-size: 12px;"
+                        onclick="window.open('https://www.google.com/maps/dir/?api=1&destination={{.DestinoLat}},{{.DestinoLng}}', '_blank')">
+                        🗺️ Iniciar Rota
+                    </button>
 
-                    <form method="POST" action="/motorista/aceitar/{{.ID}}">
-                        <button type="submit" class="btn-aceitar">✓ Aceitar Corrida</button>
+                    <form method="POST" action="/motorista/concluir/{{.ID}}" style="flex: 1;">
+                        <button type="submit" class="btn-concluir">✓ Concluir</button>
                     </form>
                 </div>
             </div>
             {{end}}
             {{else}}
             <div class="card list-card" style="text-align: center; padding: 20px 10px;">
-                <div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div>
+                <div style="font-size: 12px; color: var(--t3);">Nenhuma corrida pendente na sua agenda.</div>
             </div>
             {{end}}
 
-            <div class="sec-lbl">Minha Agenda 📅</div>
-            {{if .Aprovadas}}
-            {{range .Aprovadas}}
-            <div class="card list-card">
-                <div class="row" style="margin-bottom: 8px;">
-                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">Passageiro: {{.Usuario.Nome}}
-                    </div>
-                    <span class="badge-green">Agendada</span>
+            <div class="sec-lbl">Corridas Concluídas ✅</div>
+            {{if .Concluidas}}
+            {{range .Concluidas}}
+            <div class="card list-card" style="border-left: 3px solid var(--t4);">
+                <div class="row" style="margin-bottom: 7px;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--t1);">{{.OrigemTexto}} →
+                        {{.DestinoTexto}}</div>
+                    <span class="badge-blue">Concluída</span>
                 </div>
-                <div style="font-size: 11px; color: var(--t3);">{{.OrigemTexto}} → {{.DestinoTexto}}</div>
-                <div class="row" style="margin-top: 10px;">
-                    <div style="font-size: 11px; color: var(--t2);">{{.DataHoraAgendada.Format "02/01/2006 às 15:04"}}
-                    </div>
-                    <div style="font-size: 11px; color: var(--acc); font-weight: 700;">Iniciar Rota ↗</div>
+                <div style="font-size: 11px; color: var(--t3);">
+                    {{.DataHoraAgendada.Format "02/01/2006"}} · Passageiro: {{.Usuario.Nome}}
                 </div>
             </div>
             {{end}}
             {{else}}
             <div class="card list-card" style="text-align: center; padding: 20px 10px;">
-                <div style="font-size: 12px; color: var(--t3);">Sua agenda está livre.</div>
+                <div style="font-size: 12px; color: var(--t3);">Sem histórico recente.</div>
             </div>
             {{end}}
 
         </div>
+
+        <div class="bnav">
+            <button class="ni on">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                Início
+            </button>
+            <button class="ni">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                </svg>
+                Histórico
+            </button>
+            <button class="ni">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                Perfil
+            </button>
+        </div>
+
     </div>
+
+    <script src="/static/app.js"></script>
 </body>
 
 </html>

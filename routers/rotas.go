@@ -31,9 +31,13 @@ func ConfigurarRotas() *http.ServeMux {
 
 	// Rotas do Motorista
 	r.HandleFunc("/motorista/home", controller.HomeMotorista)
+	r.HandleFunc("/motorista/concluir/", controller.ConcluirCorrida)
+	
 	// Rotas do Admin
 	r.HandleFunc("/admin/home", controller.HomeAdmin)
-	r.HandleFunc("/admin/atribuir", controller.AtribuirCorrida)
+	//r.HandleFunc("/admin/atribuir", controller.AtribuirCorrida)
+	r.HandleFunc("/admin/despachar/", controller.DespacharCorrida)
 
 	return r
 }
+	

@@ -3,6 +3,9 @@ package controller
 import (
 	"log"
 	"net/http"
+	"strings"
+
+	"github.com/gorilla/mux"
 
 	"Frota/db"
 	"Frota/services"
@@ -15,6 +18,12 @@ type DadosHomeAdmin struct {
 	Pendentes  []structs.Corrida
 	Aprovadas  []structs.Corrida
 	Motoristas []structs.Usuario // Lista de todos os motoristas para o Dudu escolher
+}
+
+type DadosDespacho struct {
+	Usuario    structs.Usuario
+	Corrida    structs.Corrida
+	Motoristas []structs.Usuario
 }
 
 func HomeAdmin(w http.ResponseWriter, r *http.Request) {
@@ -58,29 +67,115 @@ func HomeAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AtribuirCorrida recebe o POST quando o Dudu escolhe um motorista e clica em Atribuir
-func AtribuirCorrida(w http.ResponseWriter, r *http.Request) {
+func DespacharCorridaTela(w http.ResponseWriter, r *http.Request) {
+	usuarioID, err := services.ExtrairUsuarioID(r)
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
 
-	if r.Method != http.MethodPost {
-        http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
-        return
-    }
-	
-	if r.Method == "POST" {
-		corridaID := r.FormValue("corrida_id")
+	var admin structs.Usuario
+	db.DB.First(&admin, usuarioID)
+
+	if admin.Papel != "admin" {
+		http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
+		return
+	}
+
+	// 1. Pega o ID da corrida na URL
+	vars := mux.Vars(r)
+	corridaID := vars["id"]
+
+	// 2. Busca a corrida específica com os dados do passageiro
+	var corrida structs.Corrida
+	db.DB.Preload("Usuario").First(&corrida, corridaID)
+
+	// 3. Busca os motoristas
+	var motoristas []structs.Usuario
+	db.DB.Where("papel = ?", "motorista").Find(&motoristas)
+
+	dados := DadosDespacho{
+		Usuario:    admin,
+		Corrida:    corrida,
+		Motoristas: motoristas,
+	}
+
+	err = temp.ExecuteTemplate(w, "AdminDespachar", dados)
+	if err != nil {
+		log.Println("Erro na renderização da tela de Despacho:", err)
+	}
+}
+
+// DespacharCorrida centraliza a exibição (GET) e o processamento (POST)
+func DespacharCorrida(w http.ResponseWriter, r *http.Request) {
+	usuarioID, err := services.ExtrairUsuarioID(r)
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	var admin structs.Usuario
+	db.DB.First(&admin, usuarioID)
+
+	if admin.Papel != "admin" {
+		http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
+		return
+	}
+
+	// Como usamos o ServeMux nativo, extraímos o ID "cortando" a rota base
+	corridaID := strings.TrimPrefix(r.URL.Path, "/admin/despachar/")
+
+	// ═════════════════════════════════════════════════════════════
+	// CONDIÇÃO 1: MÉTODO GET (Mostrar o Ecrã de Despacho)
+	// ═════════════════════════════════════════════════════════════
+	if r.Method == http.MethodGet {
+		var corrida structs.Corrida
+		db.DB.Preload("Usuario").First(&corrida, corridaID)
+
+		var motoristas []structs.Usuario
+		db.DB.Where("papel = ?", "motorista").Find(&motoristas)
+
+		dados := struct {
+			Usuario    structs.Usuario
+			Corrida    structs.Corrida
+			Motoristas []structs.Usuario
+		}{
+			Usuario:    admin,
+			Corrida:    corrida,
+			Motoristas: motoristas,
+		}
+
+		err = temp.ExecuteTemplate(w, "AdminDespachar", dados)
+		if err != nil {
+			log.Println("Erro ao renderizar o ecrã de Despacho:", err)
+		}
+		return
+	}
+
+	// ═════════════════════════════════════════════════════════════
+	// CONDIÇÃO 2: MÉTODO POST (Salvar a atribuição no Banco)
+	// ═════════════════════════════════════════════════════════════
+	if r.Method == http.MethodPost {
 		motoristaID := r.FormValue("motorista_id")
 
-		// Atualiza a corrida no banco de dados
-		err := db.DB.Model(&structs.Corrida{}).Where("id = ?", corridaID).Updates(map[string]interface{}{
+		// TRAVA DE SEGURANÇA: Impede que guarde vazio no banco de dados
+		if motoristaID == "" {
+			log.Println("Aviso: Tentativa de despacho sem motorista selecionado.")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther) // Recarrega a página
+			return
+		}
+
+		errDb := db.DB.Model(&structs.Corrida{}).Where("id = ?", corridaID).Updates(map[string]interface{}{
 			"motorista_id": motoristaID,
 			"status":       "Aprovada",
 		}).Error
 
-		if err != nil {
-			log.Println("Erro ao atribuir corrida:", err)
+		if errDb != nil {
+			log.Println("Erro ao salvar atribuição no banco:", errDb)
 		}
 
-		// Volta para o painel do Dudu
+		// Volta para a Home do Admin
 		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+		return
 	}
 }

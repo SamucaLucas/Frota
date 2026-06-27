@@ -144,7 +144,16 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 
 		// 6. Retorno de Sucesso (Futuramente, faremos um http.Redirect para o painel de agendamento)
 		//dados := struct{ Sucesso string }{Sucesso: "Login efetuado com sucesso! Bem-vindo(a), " + usuario.Nome}
-		http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
+		// Após validar a senha e gerar o cookie de sessão com sucesso:
+		
+		// Direciona o usuário para a sua respectiva Home
+		if usuario.Papel == "admin" {
+			http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+		} else if usuario.Papel == "motorista" {
+			http.Redirect(w, r, "/motorista/home", http.StatusSeeOther)
+		} else {
+			http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
+		}
 		return
 	}
 }
