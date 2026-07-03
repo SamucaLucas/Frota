@@ -8,23 +8,36 @@ import (
 
 func ConfigurarRotas() *http.ServeMux {
 
-	mux := http.NewServeMux()
+	r := http.NewServeMux()
 
 	fs := http.FileServer(http.Dir("static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	r.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	mux.HandleFunc("/construcao", controller.EmDesenvolvimento)
+	r.HandleFunc("/construcao", controller.EmDesenvolvimento)
 	// --- Rotas de Usuário (Passageiro) ---
 
-	mux.HandleFunc("/cadastrar", controller.CadastrarUsuario)
-	mux.HandleFunc("/login", controller.LoginUsuario)
-	mux.HandleFunc("/termos", controller.TermosUsuario)
+	r.HandleFunc("/cadastrar", controller.CadastrarUsuario)
+	r.HandleFunc("/login", controller.LoginUsuario)
+	r.HandleFunc("/termos", controller.TermosUsuario)
 
 	// Rotas do Google
-	mux.HandleFunc("/auth/google/login", controller.GoogleLogin)
-	mux.HandleFunc("/auth/google/callback", controller.GoogleCallback)
-	mux.HandleFunc("/auth/google/completar", controller.CompletarCadastroGoogle)
+	r.HandleFunc("/auth/google/login", controller.GoogleLogin)
+	r.HandleFunc("/auth/google/callback", controller.GoogleCallback)
+	r.HandleFunc("/auth/google/completar", controller.CompletarCadastroGoogle)
 
+	// Rotas do Passageiro
+	r.HandleFunc("/passageiro/home", controller.HomePassageiro)
+	r.HandleFunc("/passageiro/agendar", controller.AgendarViagem)
 
-	return mux
+	// Rotas do Motorista
+	r.HandleFunc("/motorista/home", controller.HomeMotorista)
+	r.HandleFunc("/motorista/concluir/", controller.ConcluirCorrida)
+	
+	// Rotas do Admin
+	r.HandleFunc("/admin/home", controller.HomeAdmin)
+	//r.HandleFunc("/admin/atribuir", controller.AtribuirCorrida)
+	r.HandleFunc("/admin/despachar/", controller.DespacharCorrida)
+
+	return r
 }
+	
