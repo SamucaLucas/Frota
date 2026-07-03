@@ -107,44 +107,55 @@
             border-color: var(--acc);
         }
 
+        /* --- ESTILOS DA BOTTOM NAV (Padronizados) --- */
         .bnav {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
+            height: 68px;
             background: var(--bnav-bg, var(--bg2));
             border-top: 1px solid var(--border);
             display: flex;
-            padding: 8px 0 28px;
-            z-index: 50;
-            backdrop-filter: blur(20px);
+            /* Flexível para 1 ou múltiplos botões */
+            padding-bottom: env(safe-area-inset-bottom);
+            z-index: 999;
+            transition: background .3s, border-color .3s;
         }
 
         .ni {
             flex: 1;
+            /* Ocupa o espaço por igual */
+            background: none;
+            border: none;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 4px;
-            cursor: pointer;
-            border: none;
-            background: transparent;
             color: var(--t3);
-            font-size: 9px;
-            padding: 4px;
-            font-family: 'Sora', sans-serif;
+            font-size: 10px;
             font-weight: 600;
-            letter-spacing: .3px;
-            transition: color .2s;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .ni svg {
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+            transition: all 0.2s;
         }
 
         .ni.on {
             color: var(--acc);
+            font-weight: 700;
         }
 
-        .ni svg {
-            width: 22px;
-            height: 22px;
+        .ni.on svg {
+            opacity: 1;
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -247,7 +258,8 @@
 
         <div class="bnav">
             <button class="ni on" onclick="window.location.href='/admin/home'">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                     <line x1="16" y1="13" x2="8" y2="13" />
