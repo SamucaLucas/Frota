@@ -23,11 +23,11 @@ func EmDesenvolvimento(w http.ResponseWriter, r *http.Request) {
 }
 
 // CadastrarUsuario gerencia a página de criar conta
+// CadastrarUsuario gerencia a página de criar conta
 func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 
 	// --- CENÁRIO 1: Acessar a Página (GET) ---
-	if r.Method == "GET" {
-		// Agora chamamos o nome do template "Cadastro" que definimos no HTML
+	if r.Method == http.MethodGet {
 		err := temp.ExecuteTemplate(w, "Cadastro", nil)
 		if err != nil {
 			log.Println("Erro ao renderizar tela de cadastro:", err)
@@ -36,13 +36,14 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// --- CENÁRIO 2: Enviar o Formulário (POST) ---
-	if r.Method == "POST" {
+	if r.Method == http.MethodPost {
 		// 1. Coleta os dados do HTML
 		nome := r.FormValue("nome")
 		email := r.FormValue("email")
 		senha := r.FormValue("senha")
 		whatsapp := r.FormValue("whatsapp")
-		aceitou := r.FormValue("aceitou") == "true"
+		// Melhoria: Aceita tanto "true" quanto "on" do checkbox HTML
+		aceitou := r.FormValue("aceitou") == "true" || r.FormValue("aceitou") == "on"
 
 		// 2. Validação simples
 		if nome == "" || email == "" || senha == "" || whatsapp == "" {
@@ -65,21 +66,36 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 			Email:         email,
 			Senha:         senhaHash,
 			Whatsapp:      whatsapp,
-			Papel:         "passageiro", // Papel padrão
-			AceitouTermos: aceitou,      // Converte "on" para true
+			Papel:         "passageiro", // Todo cadastro novo nasce como passageiro
+			AceitouTermos: aceitou,
 		}
 
 		// 5. O Controller delega a gravação para o Model
 		err = models.CriarUsuario(&usuario)
 		if err != nil {
+			// CORREÇÃO: Em vez de ir para a tela de Construção, volta para a tela de Cadastro com o aviso!
 			dados := struct{ Erro string }{Erro: "Este e-mail já está cadastrado em nosso sistema."}
-			temp.ExecuteTemplate(w, "Construcao", dados)
+			temp.ExecuteTemplate(w, "Cadastro", dados) 
 			return
 		}
 
-		// 6. Retorno de Sucesso para a View
-		dados := struct{ Sucesso string }{Sucesso: "Conta criada com sucesso! Você já pode fazer login."}
-		temp.ExecuteTemplate(w, "PassageiroHome", dados)
+		// 6. AUTO-LOGIN: Cria o Cookie de sessão (JWT)
+		// Obs: Verifique no seu arquivo JWT.go se o nome da função é GerarToken ou GerarTokenJWT
+		tokenString, errToken := services.GerarToken(usuario.ID, usuario.Papel)
+		if errToken == nil {
+			http.SetCookie(w, &http.Cookie{
+				Name:     "token",
+				Value:    tokenString,
+				Path:     "/",
+				HttpOnly: true,
+			})
+		} else {
+			log.Println("Erro ao gerar token no auto-login:", errToken)
+		}
+
+		// 7. REDIRECIONAMENTO INTELIGENTE
+		// Em vez de forçar a renderização falha, enviamos o usuário limpo para a rota oficial da Home
+		http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
 		return
 	}
 }
