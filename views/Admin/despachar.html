@@ -12,7 +12,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            padding-bottom: 100px;
+            padding-bottom: 30px;
         }
 
         .header-top {
@@ -97,7 +97,6 @@
             transition: background .2s, border-color .2s;
         }
 
-        /* Oculta os radios originais e lida com estilos baseados em checked */
         input[type="radio"] {
             display: none;
         }
@@ -107,55 +106,109 @@
             border-color: var(--acc);
         }
 
-        /* --- ESTILOS DA BOTTOM NAV (Padronizados) --- */
-        .bnav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 68px;
-            background: var(--bnav-bg, var(--bg2));
-            border-top: 1px solid var(--border);
+        /* --- ESTILOS DO MENU LATERAL --- */
+        .menu-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
             display: flex;
-            /* Flexível para 1 ou múltiplos botões */
-            padding-bottom: env(safe-area-inset-bottom);
-            z-index: 999;
-            transition: background .3s, border-color .3s;
-        }
-
-        .ni {
-            flex: 1;
-            /* Ocupa o espaço por igual */
-            background: none;
-            border: none;
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 260px;
+            height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            transition: left 0.3s ease;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sb-header {
+            padding: 30px 20px 20px;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--t1);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sb-close {
+            background: none;
+            border: none;
             color: var(--t3);
-            font-size: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .sb-link {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--t2);
+            font-size: 14px;
             font-weight: 600;
             font-family: 'Sora', sans-serif;
+            text-decoration: none;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background: transparent;
+            border-left: 3px solid transparent;
             cursor: pointer;
-            padding: 0;
+            text-align: left;
         }
 
-        .ni svg {
-            width: 20px;
-            height: 20px;
-            opacity: 0.6;
-            transition: all 0.2s;
+        .sb-link svg {
+            width: 22px;
+            height: 22px;
+            opacity: 0.7;
         }
 
-        .ni.on {
+        .sb-link.active {
             color: var(--acc);
-            font-weight: 700;
+            border-left-color: var(--acc);
+            background: var(--acc-bg);
         }
 
-        .ni.on svg {
+        .sb-link.active svg {
             opacity: 1;
-            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -168,6 +221,7 @@
         }
     </script>
 
+
     <div class="app-container">
         <div class="home-content">
 
@@ -178,7 +232,8 @@
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Despachar Corrida</div>
+                <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Despachar</div>
+
             </div>
 
             <div class="card-hot">
@@ -215,7 +270,6 @@
             <div class="sec-lbl">Atribuir corrida para:</div>
 
             <form method="POST" action="" id="form-despacho">
-
                 {{range .Motoristas}}
                 <label class="driver-card" onclick="selDrv(this)">
                     <input type="radio" name="motorista_id" value="{{.ID}}" required>
@@ -255,36 +309,24 @@
             </form>
 
         </div>
-
-        <div class="bnav">
-            <button class="ni on" onclick="window.location.href='/admin/home'">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                </svg>
-                Despacho
-            </button>
-        </div>
     </div>
 
     <script src="/static/app.js"></script>
     <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('open');
+        }
+
         function selDrv(element) {
-            // Garante que o input radio invisível é checkado via Javascript
             const radio = element.querySelector('input[type="radio"]');
             if (radio) radio.checked = true;
 
-            // Retira a cor ativa de todos
             document.querySelectorAll('.driver-card').forEach(card => {
                 card.style.borderColor = 'var(--border)';
                 card.style.background = 'var(--card)';
             });
 
-            // Dá destaque ao card selecionado
             element.style.borderColor = 'var(--acc)';
             element.style.background = 'var(--acc-bg)';
         }
