@@ -100,13 +100,21 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
 		kmRodado, _ := strconv.ParseFloat(r.FormValue("km_rodado"), 64)
 		valorEstimado, _ := strconv.ParseFloat(r.FormValue("valor_estimado"), 64)
 
-		// 3.3 Tratamento da Data/Hora
-		dataHoraAgendada, err := time.Parse("2006-01-02T15:04", dataHoraStr)
-		if err != nil {
-			log.Println("Erro ao converter data:", err)
-			http.Redirect(w, r, "/passageiro/agendar?erro=data_invalida", http.StatusSeeOther)
-			return
-		}
+		// 1. Carrega o fuso horário oficial do Brasil
+        loc, errLoc := time.LoadLocation("America/Sao_Paulo")
+        if errLoc != nil {
+            log.Println("Erro ao carregar Timezone:", errLoc)
+            // Caso falhe por falta de pacotes no SO, usa o fuso local do sistema
+            loc = time.Local 
+        }
+
+        // 2. Substitua o time.Parse antigo por time.ParseInLocation
+        dataHora, err := time.ParseInLocation("2006-01-02T15:04", dataHoraStr, loc)
+        if err != nil {
+            log.Println("Erro ao converter data e hora:", err)
+            // trate o erro exibindo uma mensagem na tela...
+            return
+        }
 
 		// 3.4 Cria a corrida na base de dados com as estimativas!
 		novaCorrida := structs.Corrida{
@@ -120,7 +128,7 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
 			DestinoLng:       destinoLng,
 			KMRodado:         kmRodado,      // 👈 Gravando no banco
 			ValorEstimado:    valorEstimado, // 👈 Gravando no banco
-			DataHoraAgendada: dataHoraAgendada,
+			DataHoraAgendada: dataHora,
 			Status:           "Aguardando Confirmacao",
 		}
 

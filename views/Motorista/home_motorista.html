@@ -52,10 +52,10 @@
             background: transparent;
             color: var(--acc);
             border: 1px solid var(--acc-border);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 800;
             font-family: 'Sora';
             cursor: pointer;
             display: flex;
@@ -63,12 +63,49 @@
             justify-content: center;
             width: 100%;
             transition: opacity 0.2s;
-            margin-top: 12px;
+            margin-top: 10px;
         }
 
         .btn-concluir:active {
             transform: scale(0.98);
             background: var(--acc-bg);
+        }
+
+        .btn-gps-origem {
+            background: var(--bg3);
+            color: var(--t1);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Sora';
+            cursor: pointer;
+            flex: 1;
+            transition: background 0.2s;
+        }
+
+        .btn-gps-origem:active {
+            background: var(--border);
+        }
+
+        .btn-gps-destino {
+            background: var(--acc);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Sora';
+            cursor: pointer;
+            flex: 1;
+            transition: opacity 0.2s;
+        }
+
+        .btn-gps-destino:active {
+            opacity: 0.8;
+            transform: scale(0.98);
         }
 
         .bnav {
@@ -158,16 +195,21 @@
                     👤 Passageiro: <span style="color: var(--t1); font-weight: bold;">{{.Usuario.Nome}}</span>
                 </div>
 
-                <div style="display: flex; gap: 8px; margin-top: 12px;">
-                    <button class="btn" style="flex: 1; padding: 10px; font-size: 12px;"
-                        onclick="window.open('https://www.google.com/maps/dir/?api=1&destination={{.DestinoLat}},{{.DestinoLng}}', '_blank')">
-                        🗺️ Iniciar Rota
+                <div style="display: flex; gap: 8px; margin-top: 14px;">
+                    <button class="btn-gps-origem"
+                        onclick="window.open('https://www.google.com/maps/dir/?api=1&destination={{.OrigemLat}},{{.OrigemLng}}', '_blank')">
+                        📍 Buscar Cliente
                     </button>
 
-                    <form method="POST" action="/motorista/concluir/{{.ID}}" style="flex: 1;">
-                        <button type="submit" class="btn-concluir">✓ Concluir</button>
-                    </form>
+                    <button class="btn-gps-destino"
+                        onclick="window.open('https://www.google.com/maps/dir/?api=1&destination={{.DestinoLat}},{{.DestinoLng}}', '_blank')">
+                        🏁 Ir p/ Destino
+                    </button>
                 </div>
+
+                <form method="POST" action="/motorista/concluir/{{.ID}}">
+                    <button type="submit" class="btn-concluir">✓ Finalizar Corrida</button>
+                </form>
             </div>
             {{end}}
             {{else}}
