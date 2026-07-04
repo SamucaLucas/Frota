@@ -2,7 +2,7 @@
   "name": "Sistema de Frota - Dudu",
   "short_name": "FrotaApp",
   "description": "Agendamento de corridas e fidelidade",
-  "start_url": "/login",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#facc15",
