@@ -4,12 +4,15 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"Frota/models"
 	"Frota/services"
 	"Frota/structs"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // O padrão "views/*/*.html" diz ao Go para ler todos os arquivos HTML dentro de qualquer subpasta de views
@@ -21,6 +24,52 @@ func EmDesenvolvimento(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Erro ao renderizar tela de construção:", err)
 	}
+}
+
+// IndexHandler cuida da rota raiz "/" e redireciona o usuário de forma inteligente
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	// Garante que só vai tratar o "/" exato e não caminhos inexistentes
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
+	// 1. Tenta ler o cookie de sessão
+	cookie, err := r.Cookie("jwt_frota")
+	if err != nil {
+		// Se o cookie não existir, redireciona direto para o login
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// 2. Se o cookie existe, vamos validar o JWT para saber o papel (role) do usuário
+	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	// 3. Se o token for válido, extrai o papel e joga o usuário para a sua respectiva Home
+	if err == nil && token.Valid {
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			papel, okPapel := claims["papel"].(string)
+			if okPapel {
+				// Usamos strings.ToLower para ignorar maiúsculas/minúsculas vindas do banco
+				switch strings.ToLower(strings.TrimSpace(papel)) {
+				case "admin":
+					http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
+					return
+				case "motorista":
+					http.Redirect(w, r, "/motorista/home", http.StatusSeeOther)
+					return
+				default:
+					http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
+					return
+				}
+			}
+		}
+	}
+
+	// 4. Se o token estiver expirado ou corrompido, limpa e manda para o login
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 // CadastrarUsuario gerencia a página de criar conta
@@ -127,7 +176,7 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 3. Procurar o utilizador na base de dados
-		usuario, err :=  models.BuscarUsuarioPorEmail(email) // Agora vai buscar sempre minúsculo!
+		usuario, err := models.BuscarUsuarioPorEmail(email) // Agora vai buscar sempre minúsculo!
 		if err != nil {
 			dados := map[string]interface{}{"Erro": "E-mail ou palavra-passe inválidos."}
 			temp.ExecuteTemplate(w, "Login", dados)
@@ -150,22 +199,34 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 5. Configurar a expiração do Cookie com base na escolha do utilizador
-		tempoExpiracao := time.Hour * 24 // Padrão: 24 horas (se NÃO marcar a caixa)
+		var cookie *http.Cookie
 
 		if lembrar == "on" {
-			tempoExpiracao = time.Hour * 24 * 30 // 30 dias (se MARCAR a caixa)
+			// SE MARCOU: Definimos Expires para daqui a 30 dias (Cookie persistente)
+			cookie = &http.Cookie{
+				Name:     "jwt_frota",
+				Value:    token,
+				Expires:  time.Now().Add(time.Hour * 24 * 30),
+				HttpOnly: true,
+				Secure:   false, // Defina como true em produção (com HTTPS)
+				Path:     "/",
+				SameSite: http.SameSiteLaxMode,
+			}
+		} else {
+			// SE NÃO MARCOU: Omitimos o campo Expires (Cookie de Sessão)
+			// Este cookie será destruído automaticamente assim que o App/PWA for fechado
+			cookie = &http.Cookie{
+				Name:     "jwt_frota",
+				Value:    token,
+				HttpOnly: true,
+				Secure:   false, // Defina como true em produção (com HTTPS)
+				Path:     "/",
+				SameSite: http.SameSiteLaxMode,
+			}
 		}
 
-		// Gravar o Cookie no navegador do utilizador
-		http.SetCookie(w, &http.Cookie{
-			Name:     "jwt_frota", // O nome do seu cookie de autenticação
-			Value:    token,
-			Expires:  time.Now().Add(tempoExpiracao),
-			HttpOnly: true,  // Impede que scripts roubem o cookie
-			Secure:   false, // Mude para 'true' quando colocar em produção com HTTPS
-			Path:     "/",
-			SameSite: http.SameSiteLaxMode,
-		})
+		// Gravar o Cookie estruturado no navegador/PWA do utilizador
+		http.SetCookie(w, cookie)
 
 		// 6. Redirecionar para a Home correta baseada no Papel do Utilizador
 		if usuario.Papel == "admin" {

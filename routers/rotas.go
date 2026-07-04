@@ -15,7 +15,7 @@ func ConfigurarRotas() *http.ServeMux {
 
 	r.HandleFunc("/construcao", controller.EmDesenvolvimento)
 	// --- Rotas de Usuário (Passageiro) ---
-
+	r.HandleFunc("/", controller.IndexHandler)
 	r.HandleFunc("/cadastrar", controller.CadastrarUsuario)
 	r.HandleFunc("/login", controller.LoginUsuario)
 	r.HandleFunc("/logout", controller.LogoutHandler)
