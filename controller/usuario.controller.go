@@ -85,7 +85,7 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 		tokenString, errToken := services.GerarToken(usuario.ID, usuario.Papel)
 		if errToken == nil {
 			http.SetCookie(w, &http.Cookie{
-				Name:     "token",
+				Name:     "jwt_frota",
 				Value:    tokenString,
 				Path:     "/",
 				HttpOnly: true,
@@ -158,7 +158,7 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 
 		// Gravar o Cookie no navegador do utilizador
 		http.SetCookie(w, &http.Cookie{
-			Name:     "token", // O nome do seu cookie de autenticação
+			Name:     "jwt_frota", // O nome do seu cookie de autenticação
 			Value:    token,
 			Expires:  time.Now().Add(tempoExpiracao),
 			HttpOnly: true,  // Impede que scripts roubem o cookie
@@ -182,7 +182,7 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Sobrescreve o cookie JWT definindo o seu tempo de vida no passado
 	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt",
+		Name:     "jwt_frota",
 		Value:    "",
 		Expires:  time.Now().Add(-7 * 24 * time.Hour), // Define a expiração para 7 dias atrás
 		MaxAge:   -1,                                  // Força a remoção imediata no navegador
