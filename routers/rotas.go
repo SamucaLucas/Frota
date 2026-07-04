@@ -18,6 +18,7 @@ func ConfigurarRotas() *http.ServeMux {
 
 	r.HandleFunc("/cadastrar", controller.CadastrarUsuario)
 	r.HandleFunc("/login", controller.LoginUsuario)
+	r.HandleFunc("/logout", controller.LogoutHandler)
 	r.HandleFunc("/termos", controller.TermosUsuario)
 
 	// Rotas do Google

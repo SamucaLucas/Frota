@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"Frota/models"
@@ -39,7 +40,7 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		// 1. Coleta os dados do HTML
 		nome := r.FormValue("nome")
-		email := r.FormValue("email")
+		email := strings.ToLower(strings.TrimSpace(r.FormValue("email")))
 		senha := r.FormValue("senha")
 		whatsapp := r.FormValue("whatsapp")
 		// Melhoria: Aceita tanto "true" quanto "on" do checkbox HTML
@@ -75,7 +76,7 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			// CORREÇÃO: Em vez de ir para a tela de Construção, volta para a tela de Cadastro com o aviso!
 			dados := struct{ Erro string }{Erro: "Este e-mail já está cadastrado em nosso sistema."}
-			temp.ExecuteTemplate(w, "Cadastro", dados) 
+			temp.ExecuteTemplate(w, "Cadastro", dados)
 			return
 		}
 
@@ -112,57 +113,61 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// --- CENÁRIO 2: Enviar o Formulário (POST) ---
 	if r.Method == "POST" {
-		email := r.FormValue("email")
+		// 1. Pega o e-mail, remove espaços vazios (comuns no celular) e força TUDO para minúsculo
+		email := strings.ToLower(strings.TrimSpace(r.FormValue("email")))
 		senha := r.FormValue("senha")
+		lembrar := r.FormValue("lembrar")
 
-		// 1. Validação simples
+		// 2. Validação simples
 		if email == "" || senha == "" {
-			dados := struct{ Erro string }{Erro: "Por favor, preencha o e-mail e a palavra-passe."}
+			dados := map[string]interface{}{"Erro": "Por favor, preencha o e-mail e a palavra-passe."}
 			temp.ExecuteTemplate(w, "Login", dados)
 			return
 		}
 
-		// 2. Procurar o utilizador na base de dados (através do Model)
-		usuario, err := models.BuscarUsuarioPorEmail(email)
+		// 3. Procurar o utilizador na base de dados
+		usuario, err :=  models.BuscarUsuarioPorEmail(email) // Agora vai buscar sempre minúsculo!
 		if err != nil {
-			// Não dizemos se o erro foi no e-mail ou na palavra-passe por questões de segurança
-			dados := struct{ Erro string }{Erro: "E-mail ou palavra-passe inválidos."}
+			dados := map[string]interface{}{"Erro": "E-mail ou palavra-passe inválidos."}
 			temp.ExecuteTemplate(w, "Login", dados)
 			return
 		}
 
-		// 3. Comparar a palavra-passe digitada com o Hash guardado no PostgreSQL
+		// 3. Comparar a palavra-passe digitada com o Hash
 		if !services.CompararSenha(usuario.Senha, senha) {
-			dados := struct{ Erro string }{Erro: "E-mail ou palavra-passe inválidos."}
+			dados := map[string]interface{}{"Erro": "E-mail ou palavra-passe inválidos."}
 			temp.ExecuteTemplate(w, "Login", dados)
 			return
 		}
 
-		// 4. Gerar o Token JWT com o ID e o Papel do utilizador (Passageiro, Motorista ou Admin)
+		// 4. Gerar o Token JWT
 		token, err := services.GerarToken(usuario.ID, usuario.Papel)
 		if err != nil {
-			dados := struct{ Erro string }{Erro: "Erro interno ao iniciar a sessão."}
+			dados := map[string]interface{}{"Erro": "Erro interno ao iniciar a sessão."}
 			temp.ExecuteTemplate(w, "Login", dados)
 			return
 		}
 
-		// 5. Guardar o Token de forma segura nos Cookies do navegador
+		// 5. Configurar a expiração do Cookie com base na escolha do utilizador
+		tempoExpiracao := time.Hour * 24 // Padrão: 24 horas (se NÃO marcar a caixa)
+
+		if lembrar == "on" {
+			tempoExpiracao = time.Hour * 24 * 30 // 30 dias (se MARCAR a caixa)
+		}
+
+		// Gravar o Cookie no navegador do utilizador
 		http.SetCookie(w, &http.Cookie{
-			Name:     "jwt_frota",                    // Nome do cookie
-			Value:    token,                          // O nosso token gerado
-			Expires:  time.Now().Add(24 * time.Hour), // Expira em 24 horas
-			HttpOnly: true,                           // Fundamental: Impede acesso via JavaScript (Segurança extra)
-			Secure:   false,                          // Defina como 'true' quando for para produção com HTTPS
-			Path:     "/",                            // Disponível em todo o sistema
+			Name:     "token", // O nome do seu cookie de autenticação
+			Value:    token,
+			Expires:  time.Now().Add(tempoExpiracao),
+			HttpOnly: true,  // Impede que scripts roubem o cookie
+			Secure:   false, // Mude para 'true' quando colocar em produção com HTTPS
+			Path:     "/",
+			SameSite: http.SameSiteLaxMode,
 		})
 
-		// 6. Retorno de Sucesso (Futuramente, faremos um http.Redirect para o painel de agendamento)
-		//dados := struct{ Sucesso string }{Sucesso: "Login efetuado com sucesso! Bem-vindo(a), " + usuario.Nome}
-		// Após validar a senha e gerar o cookie de sessão com sucesso:
-		
-		// Direciona o usuário para a sua respectiva Home
+		// 6. Redirecionar para a Home correta baseada no Papel do Utilizador
 		if usuario.Papel == "admin" {
 			http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 		} else if usuario.Papel == "motorista" {
@@ -172,6 +177,23 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+}
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	// Sobrescreve o cookie JWT definindo o seu tempo de vida no passado
+	http.SetCookie(w, &http.Cookie{
+		Name:     "jwt",
+		Value:    "",
+		Expires:  time.Now().Add(-7 * 24 * time.Hour), // Define a expiração para 7 dias atrás
+		MaxAge:   -1,                                  // Força a remoção imediata no navegador
+		HttpOnly: true,
+		Secure:   false, // Mudar para true quando usar HTTPS em produção
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	// Redireciona o utilizador de volta para a tela de login com status 303 (See Other)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 // TermosUsuario renderiza a tela de políticas de uso do sistema

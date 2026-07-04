@@ -18,7 +18,7 @@ func GerarToken(usuarioID uint, papel string) (string, error) {
 	claims := jwt.MapClaims{
 		"id": usuarioID,
 		"papel":      papel,
-		"exp":        time.Now().Add(time.Hour * 24).Unix(), // Token expira em 24 horas
+		"exp":        time.Now().Add(time.Hour * 24 * 30).Unix(), // Token expira em 30 dias
 	}
 
 	// Gera o token assinado

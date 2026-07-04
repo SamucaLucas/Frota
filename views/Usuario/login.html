@@ -9,6 +9,13 @@
     <link rel="icon" href="/static/img/Logo-icon.png" type="image/png">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+        /* CSS adicional para o Checkbox customizado funcionar visualmente */
+        .custom-checkbox input:checked+.custom-box span {
+            display: block !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -19,13 +26,15 @@
 
         <div style="display:flex; flex-direction:column; flex:1">
 
-            <div class="hero" style="padding-bottom:20px">
+            <div class="hero" style="padding-bottom:10px">
                 <div class="hero-accent"></div>
-                <div style="margin-top:4px">
-                    <div class="brand-container">
-                        <img src="/static/img/Logo-branco.png" alt="Sousa Transportes" class="sousa-logo logo-dark">
-
-                        <img src="/static/img/Logo.png" alt="Sousa Transportes" class="sousa-logo logo-white">
+                <div style="margin-top:2px">
+                    <div class="brand-container"
+                        style="max-width: 100%; display: flex; align-items:start; justify-content: start; margin-bottom: 2px;">
+                        <img src="/static/img/Logo-branco.png" alt="Sousa Transportes" class="sousa-logo logo-dark"
+                            style="width: auto; height: auto">
+                        <img src="/static/img/Logo.png" alt="Sousa Transportes" class="sousa-logo logo-white"
+                            style="width: auto; height: auto">
                     </div>
                     <div class="hero-decorative-line"></div>
                     <div class="hero-subtitle">Bem-vindo de volta</div>
@@ -50,23 +59,21 @@
                     <span class="inp-icon">🔒</span>
                     <div style="flex:1">
                         <div class="inp-lbl">Senha</div>
-                        <input class="inp" type="password" name="senha" required placeholder="••••••••">
+                        <input class="inp" type="password" name="senha" id="inputSenha" required placeholder="••••••••">
                     </div>
-                    <span style="font-size:16px; opacity:.5; cursor:pointer">👁</span>
+                    <span id="btnMostrarSenha" style="font-size:16px; opacity:.5; cursor:pointer; padding-left: 8px;"
+                        onclick="toggleSenha()">👁</span>
                 </div>
 
                 <div class="row" style="margin-bottom:20px; margin-top:10px;">
-                    <label
+                    <label class="custom-checkbox"
                         style="display:flex; align-items:center; gap:7px; font-size:12px; color:var(--t2); cursor:pointer">
-
                         <input type="checkbox" name="lembrar" style="display:none;">
-
-                        <div
+                        <div class="custom-box"
                             style="width:16px; height:16px; border-radius:4px; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center;">
                             <span style="color:var(--acc); font-size:10px; font-weight:900; display:none;">✓</span>
                         </div>
-
-                        Lembrar meus dados
+                        Manter conectado
                     </label>
 
                     <span style="font-size:12px; color:var(--t3); cursor:pointer"
@@ -75,17 +82,16 @@
 
                 <button type="submit" class="btn">Entrar no Sistema →</button>
 
-                <div style="text-align:center; margin-bottom:14px">
+                <div style="text-align:center; margin-bottom:14px; margin-top:14px;">
                     <span style="font-size:11px; color:var(--t4); letter-spacing:.3px">OU</span>
                 </div>
 
                 <div style="display:flex; gap:8px; margin-bottom:10px">
-                    <button type="button" class="btn-ghost" onclick="window.location.href='/auth/google/login'">
-                        <span style="font-size:14px; font-weight:800; color:var(--t1)">G</span> Google
+                    <button type="button" class="btn-ghost" onclick="window.location.href='/auth/google/login'"
+                        style="width: 100%;">
+                        <span style="font-size:14px; font-weight:800; color:var(--t1)">G</span> Continuar com Google
                     </button>
                 </div>
-
-
 
                 <div style="text-align:center; margin-top:16px; font-size:12px; color:var(--t3)">Novo por aqui?
                     <a href="/cadastrar" style="color:var(--acc); font-weight:700; text-decoration:none;">Criar
@@ -116,10 +122,8 @@
             </div>
             <button class="pwa-close" onclick="fecharBannerPWA()">×</button>
         </div>
-
         <button id="btn-instalar-android" class="btn" style="display:none; padding:10px; font-size:12px;">Instalar Agora
             ↓</button>
-
         <div id="instrucao-ios" class="ios-instructions" style="display:none;">
             <span>1. Toque em <b>Compartilhar</b> <svg
                     style="width:14px;height:14px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2"
@@ -137,7 +141,22 @@
 
     <script src="/static/app.js"></script>
 
+    <script>
+        function toggleSenha() {
+            const input = document.getElementById("inputSenha");
+            const btn = document.getElementById("btnMostrarSenha");
 
+            if (input.type === "password") {
+                input.type = "text";
+                btn.style.opacity = "1";
+                btn.style.color = "var(--acc)";
+            } else {
+                input.type = "password";
+                btn.style.opacity = "0.5";
+                btn.style.color = "";
+            }
+        }
+    </script>
 </body>
 
 </html>

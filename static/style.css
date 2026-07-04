@@ -199,13 +199,13 @@ body::before {
     display: flex;
     justify-content: flex-start;
     align-items: start;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     width: 100%;
 }
 
 .sousa-logo {
     /* Define um teto perfeito para telas de celular sem estourar as bordas */
-    max-width: 240px; 
+    max-width: 280px; 
     width: 100%;
     height: auto;
     object-fit: contain; /* Garante que a imagem mude de tamanho sem distorcer ou esticar */
