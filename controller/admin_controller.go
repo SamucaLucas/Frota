@@ -14,10 +14,12 @@ import (
 
 // Pacote de dados que será enviado para a tela do Dudu
 type DadosHomeAdmin struct {
-	Usuario    structs.Usuario
-	Pendentes  []structs.Corrida
-	Aprovadas  []structs.Corrida
-	Motoristas []structs.Usuario // Lista de todos os motoristas para o Dudu escolher
+	Usuario       structs.Usuario
+	Pendentes     []structs.Corrida
+	Aprovadas     []structs.Corrida
+	Motoristas    []structs.Usuario // Lista de todos os motoristas para o Dudu escolher
+	TotalPendente int
+	TotalAprovado int
 }
 
 type DadosDespacho struct {
@@ -55,10 +57,12 @@ func HomeAdmin(w http.ResponseWriter, r *http.Request) {
 	db.DB.Preload("Usuario").Preload("Motorista").Where("status = ?", "Aprovada").Order("data_hora_agendada ASC").Find(&aprovadas)
 
 	dados := DadosHomeAdmin{
-		Usuario:    usuario,
-		Pendentes:  pendentes,
-		Aprovadas:  aprovadas,
-		Motoristas: motoristas,
+		Usuario:       usuario,
+		Pendentes:     pendentes,
+		Aprovadas:     aprovadas,
+		Motoristas:    motoristas,
+		TotalPendente: len(pendentes),
+		TotalAprovado: len(aprovadas),
 	}
 
 	err = temp.ExecuteTemplate(w, "AdminHome", dados)
@@ -177,5 +181,35 @@ func DespacharCorrida(w http.ResponseWriter, r *http.Request) {
 		// Volta para a Home do Admin
 		http.Redirect(w, r, "/admin/home", http.StatusSeeOther)
 		return
+	}
+
+}
+
+// MapaAdmin renderiza a página exclusiva do mapa de monitoramento
+func MapaAdmin(w http.ResponseWriter, r *http.Request) {
+	usuarioID, err := services.ExtrairUsuarioID(r)
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	var admin structs.Usuario
+	db.DB.First(&admin, usuarioID)
+
+	// Proteção: Apenas o ADMIN (Dudu) pode acessar essa tela
+	if admin.Papel != "admin" {
+		http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
+		return
+	}
+
+	dados := struct {
+		Usuario structs.Usuario
+	}{
+		Usuario: admin,
+	}
+
+	err = temp.ExecuteTemplate(w, "AdminMapa", dados)
+	if err != nil {
+		log.Println("Erro na renderização do Mapa do Admin:", err)
 	}
 }

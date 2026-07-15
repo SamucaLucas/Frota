@@ -38,6 +38,7 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/admin/home", controller.HomeAdmin)
 	//r.HandleFunc("/admin/atribuir", controller.AtribuirCorrida)
 	r.HandleFunc("/admin/despachar/", controller.DespacharCorrida)
+	r.HandleFunc("/admin/mapa", controller.MapaAdmin)
 
 	return r
 }

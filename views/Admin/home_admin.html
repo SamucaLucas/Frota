@@ -41,6 +41,8 @@
         .list-card {
             display: block !important;
             margin: 0 18px 12px;
+            box-sizing: border-box;
+            /* Garante que o padding não aumente o tamanho do card */
         }
 
         .divl {
@@ -208,6 +210,63 @@
         .sb-theme-btn:active {
             background: var(--border);
         }
+
+        /* --- ESTILOS DOS FILTROS (SPRINT 3) --- */
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            /* AJUSTE AQUI: Mudança de margin-top negativa para positiva para afastar do cabeçalho */
+            margin: 10px 10px 20px;
+            /* AJUSTE AQUI: Adicionado position e z-index para garantir que os botões fiquem sobre a faixa vermelha */
+            position: relative;
+            z-index: 5;
+            overflow-x: auto;
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .filter-container::-webkit-scrollbar {
+            display: none;
+            /* Safari/Chrome */
+        }
+
+        .filter-pill {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--t2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .filter-pill.active {
+            background: var(--t1);
+            color: var(--bg);
+            border-color: var(--t1);
+        }
+
+        .filter-pill .badge-count {
+            background: var(--bg);
+            color: var(--t1);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            border: 1px solid var(--border);
+        }
+
+        .filter-pill.active .badge-count {
+            background: var(--bg);
+            color: var(--t1);
+            border: none;
+        }
     </style>
 </head>
 
@@ -240,6 +299,14 @@
                 <polyline points="10 9 9 9 8 9" />
             </svg>
             Despacho
+        </button>
+        <button class="sb-link" onclick="window.location.href='/admin/mapa'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                <line x1="9" y1="3" x2="9" y2="18" />
+                <line x1="15" y1="6" x2="15" y2="21" />
+            </svg>
+            Mapa da Frota
         </button>
         <button class="sb-link" onclick="window.location.href='/admin/sorteio'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -292,93 +359,134 @@
                     </svg>
                 </button>
 
-                
-
                 <div class="row" style="align-items: flex-end;">
                     <div>
                         <div class="hero-subtitle">Gestão de Frota 👑</div>
                         <div class="hero-title">Central, {{.Usuario.Nome}}</div>
                     </div>
-                    <div style="width: 220px;margin-bottom: -15px;">
-                        <img src="/static/img/Logo.png" class="sousa-logo logo-white" style="width: 100%; height: auto;">
-                        <img src="/static/img/Logo-branco.png" class="sousa-logo logo-dark" style="width: 100%; height: auto;">
+                    <div style="width: 140px; margin-bottom: -15px;">
+                        <img src="/static/img/Logo.png" class="sousa-logo logo-white"
+                            style="width: 100%; height: auto;">
+                        <img src="/static/img/Logo-branco.png" class="sousa-logo logo-dark"
+                            style="width: 100%; height: auto;">
                     </div>
                 </div>
 
                 <div class="hero-accent"></div>
             </div>
 
-            <div class="sec-lbl">Novas Solicitações 🔥</div>
-            {{if .Pendentes}}
-            {{range .Pendentes}}
-            <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;"
-                onclick="window.location.href='/admin/despachar/{{.ID}}'">
-                <div class="row" style="margin-bottom:8px; align-items: flex-start;">
+            <div class="filter-container">
+                <div class="filter-pill active" onclick="filtrarListas('todos')" id="btn-todos">
+                    Todos
+                </div>
+                <div class="filter-pill" onclick="filtrarListas('pendentes')" id="btn-pendentes">
+                    Pendentes <span class="badge-count">{{.TotalPendente}}</span>
+                </div>
+                <div class="filter-pill" onclick="filtrarListas('aprovadas')" id="btn-aprovadas">
+                    Aprovadas <span class="badge-count">{{.TotalAprovado}}</span>
+                </div>
+            </div>
+
+            <div id="secao-pendentes">
+                <div class="sec-lbl">Novas Solicitações 🔥</div>
+                {{if .Pendentes}}
+                {{range .Pendentes}}
+                <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;"
+                    onclick="window.location.href='/admin/despachar/{{.ID}}'">
+                    <div class="row" style="margin-bottom:8px; align-items: flex-start;">
+                        <div
+                            style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
+                            {{.OrigemTexto}} <br><span style="color:var(--t3); font-weight:normal;">→
+                                {{.DestinoTexto}}</span>
+                        </div>
+                        <span class="badge-red" style="margin-top: 2px;">Pendente</span>
+                    </div>
+
                     <div
-                        style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
-                        {{.OrigemTexto}} <br><span style="color:var(--t3); font-weight:normal;">→
-                            {{.DestinoTexto}}</span>
+                        style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                        <span>📅 {{.DataHoraAgendada.Format "02/01/2006 às 15:04"}}</span>
+                        <span>·</span>
+                        <span>👤 {{.Usuario.Nome}}</span>
                     </div>
-                    <span class="badge-red" style="margin-top: 2px;">Pendente</span>
-                </div>
 
-                <div
-                    style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-                    <span>📅 {{.DataHoraAgendada.Format "02/01/2006 às 15:04"}}</span>
-                    <span>·</span>
-                    <span>👤 {{.Usuario.Nome}}</span>
+                    <button class="btn"
+                        style="font-size:12px; padding:12px; width:100%; box-sizing: border-box; margin-top: 12px;"
+                        onclick="event.stopPropagation(); window.location.href='/admin/despachar/{{.ID}}'">
+                        Revisar e Despachar →
+                    </button>
                 </div>
-
-                <button class="btn" style="font-size:12px;padding:12px;width:100%"
-                    onclick="event.stopPropagation(); window.location.href='/admin/despachar/{{.ID}}'">
-                    Revisar e Despachar →
-                </button>
+                {{end}}
+                {{else}}
+                <div class="card list-card" style="text-align: center; padding: 20px 10px;">
+                    <div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div>
+                </div>
+                {{end}}
             </div>
-            {{end}}
-            {{else}}
-            <div class="card list-card" style="text-align: center; padding: 20px 10px;">
-                <div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div>
-            </div>
-            {{end}}
 
-            <div class="sec-lbl">Agenda da Frota 📅</div>
-            {{if .Aprovadas}}
-            {{range .Aprovadas}}
-            <div class="card list-card" style="border-left: 3px solid #2ecc71;">
-                <div class="row" style="margin-bottom: 8px;">
-                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">{{.Usuario.Nome}}</div>
-                    <span class="badge-green">Confirmada</span>
-                </div>
-                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
-                    {{.OrigemTexto}} <span style="color:var(--t4);">→</span> {{.DestinoTexto}}
-                </div>
-                <div class="divl" style="margin: 10px 0;"></div>
-                <div class="row" style="align-items: flex-end;">
-                    <div>
-                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅
-                            {{.DataHoraAgendada.Format "02/01/2006 às 15:04"}}</div>
-                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista:
-                            {{.Motorista.Nome}}</div>
+            <div id="secao-aprovadas">
+                <div class="sec-lbl">Agenda da Frota 📅</div>
+                {{if .Aprovadas}}
+                {{range .Aprovadas}}
+                <div class="card list-card" style="border-left: 3px solid #2ecc71;">
+                    <div class="row" style="margin-bottom: 8px;">
+                        <div style="font-size: 13px; font-weight: 800; color: var(--t1);">{{.Usuario.Nome}}</div>
+                        <span class="badge-green">Confirmada</span>
                     </div>
-                    <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ {{printf "%.2f"
-                        .ValorEstimado}}</div>
+                    <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                        {{.OrigemTexto}} <span style="color:var(--t4);">→</span> {{.DestinoTexto}}
+                    </div>
+                    <div class="divl" style="margin: 10px 0;"></div>
+                    <div class="row" style="align-items: flex-end;">
+                        <div>
+                            <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅
+                                {{.DataHoraAgendada.Format "02/01/2006 às 15:04"}}</div>
+                            <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista:
+                                {{.Motorista.Nome}}</div>
+                        </div>
+                        <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ {{printf "%.2f"
+                            .ValorEstimado}}</div>
+                    </div>
                 </div>
+                {{end}}
+                {{else}}
+                <div class="card list-card" style="text-align: center; padding: 20px 10px;">
+                    <div style="font-size: 12px; color: var(--t3);">A agenda está vazia.</div>
+                </div>
+                {{end}}
             </div>
-            {{end}}
-            {{else}}
-            <div class="card list-card" style="text-align: center; padding: 20px 10px;">
-                <div style="font-size: 12px; color: var(--t3);">A agenda está vazia.</div>
-            </div>
-            {{end}}
 
         </div>
     </div>
 
     <script src="/static/app.js"></script>
     <script>
+        // Função existente
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('open');
+        }
+
+        // NOVA Função de Filtro
+        function filtrarListas(tipo) {
+            // 1. Remove a cor ativa de todos os botões e aplica só no que foi clicado
+            document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + tipo).classList.add('active');
+
+            // 2. Busca os "envelopes" inteiros na tela
+            const secaoPendentes = document.getElementById('secao-pendentes');
+            const secaoAprovadas = document.getElementById('secao-aprovadas');
+
+            // 3. Mostra ou Esconde dependendo do botão clicado
+            if (tipo === 'todos') {
+                secaoPendentes.style.display = 'block';
+                secaoAprovadas.style.display = 'block';
+            } else if (tipo === 'pendentes') {
+                secaoPendentes.style.display = 'block';
+                secaoAprovadas.style.display = 'none';
+            } else if (tipo === 'aprovadas') {
+                secaoPendentes.style.display = 'none';
+                secaoAprovadas.style.display = 'block';
+            }
         }
     </script>
 </body>
