@@ -10,7 +10,6 @@
     }
   },
   "server": {
-    "url": "http://192.168.3.38:8082",
     "cleartext": true
   }
 }
