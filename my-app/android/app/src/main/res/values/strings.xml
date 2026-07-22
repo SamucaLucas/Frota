@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sousa LT</string>
+    <string name="title_activity_main">Sousa LT</string>
+    <string name="package_name">com.sousa.app</string>
+    <string name="custom_url_scheme">com.sousa.app</string>
+</resources>

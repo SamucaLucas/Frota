@@ -301,7 +301,8 @@
             Despacho
         </button>
         <button class="sb-link" onclick="window.location.href='/admin/mapa'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
                 <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
                 <line x1="9" y1="3" x2="9" y2="18" />
                 <line x1="15" y1="6" x2="15" y2="21" />
@@ -388,39 +389,13 @@
             </div>
 
             <div id="secao-pendentes">
-                <div class="sec-lbl">Novas Solicitações 🔥</div>
-                {{if .Pendentes}}
-                {{range .Pendentes}}
-                <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;"
-                    onclick="window.location.href='/admin/despachar/{{.ID}}'">
-                    <div class="row" style="margin-bottom:8px; align-items: flex-start;">
-                        <div
-                            style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
-                            {{.OrigemTexto}} <br><span style="color:var(--t3); font-weight:normal;">→
-                                {{.DestinoTexto}}</span>
-                        </div>
-                        <span class="badge-red" style="margin-top: 2px;">Pendente</span>
-                    </div>
+                <div class="sec-lbl">Novas Solicitações 🔥 (Via API REST)</div>
 
-                    <div
-                        style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-                        <span>📅 {{.DataHoraAgendada.Format "02/01/2006 às 15:04"}}</span>
-                        <span>·</span>
-                        <span>👤 {{.Usuario.Nome}}</span>
+                <div id="lista-pendentes-api">
+                    <div style="text-align: center; padding: 20px; font-size: 12px; color: var(--t3);">
+                        Carregando solicitações...
                     </div>
-
-                    <button class="btn"
-                        style="font-size:12px; padding:12px; width:100%; box-sizing: border-box; margin-top: 12px;"
-                        onclick="event.stopPropagation(); window.location.href='/admin/despachar/{{.ID}}'">
-                        Revisar e Despachar →
-                    </button>
                 </div>
-                {{end}}
-                {{else}}
-                <div class="card list-card" style="text-align: center; padding: 20px 10px;">
-                    <div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div>
-                </div>
-                {{end}}
             </div>
 
             <div id="secao-aprovadas">
@@ -488,6 +463,65 @@
                 secaoAprovadas.style.display = 'block';
             }
         }
+
+        // ==========================================
+        // CONSUMINDO A API REST NO FRONTEND
+        // ==========================================
+        function carregarPendentesDaAPI() {
+            // 1. O celular bate na porta do Go pedindo os dados
+            fetch('/api/admin/pendentes')
+                .then(resposta => resposta.json()) // 2. Transforma o texto em Objeto
+                .then(pendentes => {
+
+                    const container = document.getElementById('lista-pendentes-api');
+
+                    if (pendentes.length === 0) {
+                        container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div></div>';
+                        return;
+                    }
+
+                    let htmlDosCards = ''; // Variável de texto que vai guardar o HTML
+
+                    // 3. Em vez do do Go, usamos o forEach do JavaScript
+                    pendentes.forEach(corrida => {
+
+                        // Detalhe importante: Na API REST, as datas chegam cruas do banco (ex: "2025-06-20T14:30:00Z")
+                        // Precisamos formatar no JS, já que não temos mais o .Format do Go.
+                        let dataFormatada = new Date(corrida.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+                        // 4. Montamos o HTML do card misturando com as variáveis (usando a crase ` `)
+                        htmlDosCards += `
+                        <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;" onclick="window.location.href='/admin/despachar/${corrida.ID}'">
+                            <div class="row" style="margin-bottom:8px; align-items: flex-start;">
+                                <div style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
+                                    ${corrida.OrigemTexto} → ${corrida.DestinoTexto}
+                                </div>
+                                <span class="badge-red" style="margin-top: 2px;">Pendente</span>
+                            </div>
+
+                            <div style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                                <span>📅 ${dataFormatada}</span>
+                                <span>·</span>
+                                <span>👤 ${corrida.Usuario.Nome}</span>
+                            </div>
+
+                            <button class="btn" style="font-size:12px; padding:12px; width:100%; box-sizing: border-box; margin-top: 12px;" onclick="event.stopPropagation(); window.location.href='/admin/despachar/${corrida.ID}'">
+                                Revisar e Despachar →
+                            </button>
+                        </div>`;
+                    });
+
+                    // 5. Injeta todo o HTML gerado de uma vez dentro da div vazia
+                    container.innerHTML = htmlDosCards;
+                })
+                .catch(erro => {
+                    console.error("Erro ao buscar a API:", erro);
+                    document.getElementById('lista-pendentes-api').innerHTML = '<p style="color:red; text-align:center;">Erro ao carregar dados.</p>';
+                });
+        }
+
+        // Manda o JS carregar a lista assim que a página abre
+        carregarPendentesDaAPI();
     </script>
 </body>
 
