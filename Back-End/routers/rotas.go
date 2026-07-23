@@ -10,6 +10,7 @@ func ConfigurarRotas() *http.ServeMux {
 
 	r := http.NewServeMux()
 
+/*
 	fs := http.FileServer(http.Dir("static"))
 	r.Handle("/static/", http.StripPrefix("/static/", fs))
 
@@ -41,9 +42,9 @@ func ConfigurarRotas() *http.ServeMux {
 	//r.HandleFunc("/admin/atribuir", controller.AtribuirCorrida)
 	r.HandleFunc("/admin/despachar/", controller.DespacharCorrida)
 	r.HandleFunc("/admin/mapa", controller.MapaAdmin)
-
+*/
 	// Rotas de API
-	r.HandleFunc("/api/login", controller.ApiLoginUsuario)
+	r.HandleFunc("/api/login", controller.LoginUsuario)
 
 	return r
 }

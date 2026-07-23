@@ -1,17 +1,6 @@
 package controller
 
-import (
-	"log"
-	"net/http"
-	"strings"
-
-	"Frota/db"
-	"Frota/services"
-	"Frota/structs"
-
-	"gorm.io/gorm"
-)
-
+/*
 type DadosHomeMotorista struct {
 	Usuario    structs.Usuario
 	Atribuidas []structs.Corrida
@@ -97,3 +86,4 @@ func ConcluirCorrida(w http.ResponseWriter, r *http.Request) {
 	// Redireciona de volta para a Home do Motorista
 	http.Redirect(w, r, "/motorista/home", http.StatusSeeOther)
 }
+*/

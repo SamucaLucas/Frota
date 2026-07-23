@@ -2,95 +2,89 @@ package controller
 
 import (
 	"encoding/json"
-	"html/template"
-	"log"
 	"net/http"
-	"os"
 	"strings"
-	"time"
 
-	"Frota/db"
 	"Frota/models"
 	"Frota/services"
-	"Frota/structs"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 //API Rest
 
-// Estrutura para ler o JSON que o celular vai mandar
-type CredenciaisLogin struct {
-	Email string `json:"email"`
-	Senha string `json:"senha"`
+type RequisicaoLogin struct {
+	Email   string `json:"email"`
+	Senha   string `json:"senha"`
+	Lembrar bool   `json:"lembrar"` // Opcional
 }
 
-// ApiLoginUsuario (Nova função REST)
-func ApiLoginUsuario(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	// Se for apenas uma verificação de segurança do navegador (OPTIONS), responde com OK e pára aqui
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"erro": "Método não permitido"})
-		return
-	}
-	
+func LoginUsuario(w http.ResponseWriter, r *http.Request) {
+	// 1. Avisar ao Front-end que a resposta será em formato JSON
 	w.Header().Set("Content-Type", "application/json")
 
-	// 1. Lê o JSON que veio do frontend
-	var creds CredenciaisLogin
-	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+	// 2. Garantir que é um POST
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Método não permitido"})
+		return
+	}
+
+	// 3. Ler o JSON enviado pelo aplicativo (Celular)
+	var req RequisicaoLogin
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"erro": "Dados inválidos"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Formato de dados inválido."})
 		return
 	}
 
-	email := strings.ToLower(strings.TrimSpace(creds.Email))
-	senha := creds.Senha
+	// 4. Limpar o e-mail (Tudo minúsculo e sem espaços)
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	senha := req.Senha
 
-	// 2. Busca o usuário no banco (Mesma lógica que você já tem!)
-	var usuario structs.Usuario
-	if err := db.DB.Where("email = ?", email).First(&usuario).Error; err != nil {
+	// 5. Validação simples
+	if email == "" || senha == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Por favor, preencha o e-mail e a palavra-passe."})
+		return
+	}
+
+	// 6. Procurar o utilizador na base de dados
+	usuario, err := models.BuscarUsuarioPorEmail(email)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"erro": "E-mail ou senha incorretos"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "E-mail ou palavra-passe inválidos."})
 		return
 	}
 
-	// 3. Verifica a senha
+	// 7. Comparar a palavra-passe digitada com o Hash
 	if !services.CompararSenha(usuario.Senha, senha) {
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"erro": "E-mail ou senha incorretos"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "E-mail ou palavra-passe inválidos."})
 		return
 	}
 
-	// 4. Gera o Token JWT
-	tokenString, err := services.GerarToken(usuario.ID, usuario.Papel)
+	// 8. Gerar o Token JWT
+	token, err := services.GerarToken(usuario.ID, usuario.Papel)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"erro": "Erro ao gerar token"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Erro interno ao iniciar a sessão."})
 		return
 	}
 
-	// 5. Sucesso! Devolve o token e o papel (para o JS saber para qual tela redirecionar)
+	// 9. Devolver o Sucesso, o Token e o Papel para o Celular!
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"sucesso": true,
-		"token":   tokenString,
+		"token":   token,
 		"papel":   usuario.Papel,
 	})
 }
 
+/*
 //Golang
 
-// O padrão "views/*/*.html" diz ao Go para ler todos os arquivos HTML dentro de qualquer subpasta de views
-var temp = template.Must(template.ParseGlob("views/*/*.html"))
+// O padrão "views.html" diz ao Go para ler todos os arquivos HTML dentro de qualquer subpasta de views
+var temp = template.Must(template.ParseGlob("views/*.html"))
 
 // EmDesenvolvimento renderiza a tela de aviso de funcionalidades futuras
 func EmDesenvolvimento(w http.ResponseWriter, r *http.Request) {
@@ -341,3 +335,4 @@ func TermosUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+*/

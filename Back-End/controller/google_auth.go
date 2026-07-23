@@ -3,12 +3,10 @@ package controller
 import (
 	"Frota/models"
 	"Frota/services"
-	"Frota/structs"
 	"context"
 	"encoding/json"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -109,6 +107,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
 }
 
+/*
 // CompletarCadastroGoogle finaliza o registro após capturar o WhatsApp
 func CompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
@@ -133,10 +132,10 @@ func CompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 
 	// 3. Cria o usuário finalmente
 	novoUsuario := structs.Usuario{
-		Nome:     nome,
-		Email:    email,
-		Whatsapp: whatsapp,
-		Papel:    "passageiro",
+		Nome:          nome,
+		Email:         email,
+		Whatsapp:      whatsapp,
+		Papel:         "passageiro",
 		AceitouTermos: aceitou,
 	}
 	models.CriarUsuario(&novoUsuario)
@@ -152,3 +151,4 @@ func CompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
 }
+*/

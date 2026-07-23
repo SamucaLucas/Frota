@@ -1,0 +1,4 @@
+- [x] Configure WebView in `MainActivity.java` to allow Mixed Content
+- [x] Create `network_security_config.xml` with cleartext permissions
+- [x] Link `network_security_config.xml` in `AndroidManifest.xml`
+- [x] Verify build and sync

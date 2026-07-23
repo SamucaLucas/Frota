@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - Sousa Locações e Transportes</title>
-    <link rel="icon" href="/static/img/Logo-icon.png" type="image/png">
-    <link rel="manifest" href="/static/manifest.json">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="manifest" href="../static/manifest.json">
+    <link rel="stylesheet" href="../static/style.css">
 
     <style>
         /* CSS adicional para o Checkbox customizado funcionar visualmente */
@@ -30,9 +30,9 @@
                 <div style="margin-top:2px">
                     <div class="brand-container"
                         style="max-width: 100%; display: flex; align-items:start; justify-content: start; margin-bottom: 2px;">
-                        <img src="/static/img/Logo-branco.png" alt="Sousa Transportes" class="sousa-logo logo-dark"
+                        <img src="../static/img/Logo-branco.png" alt="Sousa Transportes" class="sousa-logo logo-dark"
                             style="width: auto; height: auto">
-                        <img src="/static/img/Logo.png" alt="Sousa Transportes" class="sousa-logo logo-white"
+                        <img src="../static/img/Logo.png" alt="Sousa Transportes" class="sousa-logo logo-white"
                             style="width: auto; height: auto">
                     </div>
                     <div class="hero-decorative-line"></div>
@@ -111,7 +111,7 @@
         </div>
     </div>
 
-    <script src="/static/app.js"></script>
+    <script src="../static/app.js"></script>
 
     <script>
         function toggleSenha() {
@@ -148,45 +148,32 @@
                 email: emailInput,
                 senha: senhaInput
             };
-
-            // Manda para a rota API do Go (com o IP do seu PC no capacitor.config)
-            fetch('http://192.168.3.38:8082/api/login', {
-            
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dados)
+            fetch("http://192.168.3.38:8082/api/login", { // Ajuste sua rota se necessário
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: emailInput, senha: senhaInput })
             })
-                .then(resposta => resposta.json())
-                .then(resultado => {
-                    if (resultado.erro) {
-                        msgErro.innerText = resultado.erro;
-                        msgErro.style.display = 'block';
-                    } else if (resultado.sucesso) {
-                        // Mensagem de feedback rápido
-                        msgSucesso.innerText = "Login aprovado! Entrando...";
-                        msgSucesso.style.display = 'block';
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        // Salva o token no celular para usar nas próximas requisições
+                        localStorage.setItem("token", dados.token);
 
-                        // SALVA O TOKEN NO CELULAR DO USUÁRIO!
-                        localStorage.setItem('token_frota', resultado.token);
-
-                        // Redireciona dependendo do papel do usuário
-                        setTimeout(() => {
-                            if (resultado.papel === "admin") {
-                                window.location.href = "/Admin/home_admin.html";
-                            } else if (resultado.papel === "motorista") {
-                                window.location.href = "/Motorista/home_motorista.html";
-                            } else {
-                                window.location.href = "/Passageiro/home_passageiro.html";
-                            }
-                        }, 500); // Meio segundo de delay para o usuário ver a mensagem verde
+                        // O Javascript local redireciona para a tela correta baseada no papel!
+                        if (dados.papel === "admin") {
+                            window.location.href = "../Admin/home_admin.html";
+                        } else if (dados.papel === "motorista") {
+                            window.location.href = "../Motorista/home_motorista.html";
+                        } else {
+                            window.location.href = "../Passageiro/home_Passageiro.html";
+                        }
+                    } else {
+                        alert(dados.erro); // Mostra o erro ("E-mail inválido", etc) na tela
                     }
                 })
-                .catch(erro => {
-                    console.error("Erro na API:", erro);
-                    msgErro.innerText = "Erro ao conectar com o servidor. Verifique a internet.";
-                    msgErro.style.display = 'block';
+                .catch(error => {
+                    console.error('Erro na requisição:', error);
+                    alert('Erro ao conectar com o servidor. Verifique sua conexão ou tente novamente mais tarde.');
                 });
         });
     </script>

@@ -8,8 +8,5 @@
       "launchAutoHide": true,
       "launchShowDuration": 2000
     }
-  },
-  "server": {
-    "cleartext": true
   }
 }

@@ -1,18 +1,6 @@
 package controller
 
-import (
-	"encoding/json"
-	"log"
-	"net/http"
-	"strings"
-
-	"github.com/gorilla/mux"
-
-	"Frota/db"
-	"Frota/services"
-	"Frota/structs"
-)
-
+/*
 // Pacote de dados que será enviado para a tela do Dudu
 type DadosHomeAdmin struct {
 	Usuario       structs.Usuario
@@ -235,3 +223,4 @@ func ApiCorridasPendentes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(pendentes)
 }
+*/

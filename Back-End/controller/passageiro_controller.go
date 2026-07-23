@@ -1,16 +1,6 @@
 package controller
 
-import (
-	"log"
-	"net/http"
-	"strconv"
-	"time"
-
-	"Frota/db"
-	"Frota/services"
-	"Frota/structs"
-)
-
+/*
 type DadosHomePassageiro struct {
 	Usuario         structs.Usuario
 	ProximasViagens []structs.Corrida
@@ -105,7 +95,7 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
         if errLoc != nil {
             log.Println("Erro ao carregar Timezone:", errLoc)
             // Caso falhe por falta de pacotes no SO, usa o fuso local do sistema
-            loc = time.Local 
+            loc = time.Local
         }
 
         // 2. Substitua o time.Parse antigo por time.ParseInLocation
@@ -142,3 +132,4 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
 	}
 }
+*/
