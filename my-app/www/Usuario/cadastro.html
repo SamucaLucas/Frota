@@ -112,7 +112,7 @@
             btn.disabled = true;
 
             // Envia os dados no formato JSON para a API do Go
-            fetch("http://192.168.3.38:8082/api/cadastrar", {
+            fetch(`${window.API_URL}/api/cadastrar`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

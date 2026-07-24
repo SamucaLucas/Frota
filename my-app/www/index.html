@@ -8,7 +8,6 @@
 
 <body>
     <script>
-        const API_URL = "http://192.168.3.38:8082";
         const token = localStorage.getItem("token");
 
         if (!token) {
@@ -16,7 +15,7 @@
             window.location.href = "Usuario/login.html";
         } else {
             // Se tem token, pergunta para a API se ele é válido e qual o papel
-            fetch(`${API_URL}/api/verificar-token`, {
+            fetch(`${window.API_URL}/api/verificar-token`, {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${token}`

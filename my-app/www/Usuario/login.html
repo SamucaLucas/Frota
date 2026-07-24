@@ -113,8 +113,8 @@
     <script src="../static/app.js"></script>
 
     <script>
-        // Centraliza a URL da API para facilitar trocas no futuro
-        const API_URL = "http://192.168.3.38:8082";
+        // Puxa a variável global que criamos no app.js!
+        
 
         function toggleSenha() {
             const input = document.getElementById("inputSenha");
@@ -140,10 +140,13 @@
             const emailInput = document.getElementById('email').value;
             const senhaInput = document.getElementById('inputSenha').value;
             const msgErro = document.getElementById('mensagem-erro');
+            const btnSubmit = this.querySelector('button[type="submit"]');
 
             msgErro.style.display = 'none';
+            btnSubmit.innerHTML = 'Entrando...';
+            btnSubmit.disabled = true;
 
-            fetch(`${API_URL}/api/login`, {
+            fetch(`${window.API_URL}/api/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: emailInput, senha: senhaInput })
@@ -151,8 +154,16 @@
                 .then(res => res.json())
                 .then(dados => {
                     if (dados.sucesso) {
-                        localStorage.setItem("token", dados.token);
+                        
+                        // A LÓGICA DO CHECKBOX VEM PARA CÁ!
+                        const lembrar = document.querySelector('input[name="lembrar"]').checked;
+                        if (lembrar) {
+                            localStorage.setItem("token", dados.token); // Salva permanente
+                        } else {
+                            sessionStorage.setItem("token", dados.token); // Salva temporário
+                        }
 
+                        // Redireciona conforme o papel
                         if (dados.papel === "admin") {
                             window.location.href = "../Admin/home_admin.html";
                         } else if (dados.papel === "motorista") {
@@ -163,12 +174,16 @@
                     } else {
                         msgErro.textContent = dados.erro || "Erro de login";
                         msgErro.style.display = 'block';
+                        btnSubmit.innerHTML = 'Entrar no Sistema →';
+                        btnSubmit.disabled = false;
                     }
                 })
                 .catch(error => {
                     console.error('Erro na requisição:', error);
                     msgErro.textContent = 'Erro ao conectar com o servidor. Verifique sua conexão.';
                     msgErro.style.display = 'block';
+                    btnSubmit.innerHTML = 'Entrar no Sistema →';
+                    btnSubmit.disabled = false;
                 });
         });
 
@@ -176,14 +191,11 @@
         // MÁGICA DA API REST (LOGIN GOOGLE HÍBRIDO)
         // ==========================================
         async function fazerLoginGoogle() {
-            // Verifica se está rodando num App Nativo (Celular) pelo Capacitor
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
                 try {
-                    // 1. Abre a janelinha nativa do Google no celular
                     const googleUser = await CapacitorGoogleAuth.signIn();
 
-                    // 2. Manda os dados para a nossa nova API Go do Google
-                    const response = await fetch(`${API_URL}/api/google/login`, {
+                    const response = await fetch(`${window.API_URL}/api/google/login`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -195,12 +207,11 @@
                     const dados = await response.json();
 
                     if (dados.precisa_completar) {
-                        // Se for usuário novo, salva e-mail temporário e joga pra tela de WhatsApp
                         localStorage.setItem("email_temp_google", dados.email);
                         localStorage.setItem("nome_temp_google", dados.nome);
                         window.location.href = "completar_cadastro.html";
                     } else if (dados.sucesso) {
-                        // Se for usuário antigo, faz o login direto!
+                        // Google sempre salva permanente (padrão de apps)
                         localStorage.setItem("token", dados.token);
 
                         if (dados.papel === "admin") window.location.href = "../Admin/home_admin.html";
@@ -212,8 +223,7 @@
                     alert("Falha ao abrir login do Google no aplicativo.");
                 }
             } else {
-                // Fluxo SITE (WEB): Redirecionamento clássico HTTP!
-                window.location.href = `${API_URL}/auth/google/login`;
+                window.location.href = `${window.API_URL}/auth/google/login`;
             }
         }
     </script>

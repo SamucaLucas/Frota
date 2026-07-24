@@ -1,3 +1,6 @@
+const API_URL = "http://192.168.3.38:8082";
+window.API_URL = API_URL;
+
 // --- MOTOR DO MODO CLARO / ESCURO ---
 const toggleButton = document.getElementById('theme-toggle');
 const currentTheme = localStorage.getItem('theme');

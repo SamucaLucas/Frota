@@ -77,7 +77,7 @@
             const emailTemporario = urlParams.get('email') || localStorage.getItem("email_temp_google") || "";
             const nomeTemporario = urlParams.get('nome') || localStorage.getItem("nome_temp_google") || "";
 
-            fetch("http://192.168.3.38:8082/api/google/completar", {
+            fetch(`${window.API_URL}/api/google/completar`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -1,4 +1,3 @@
-{{define "PassageiroAgendar"}}
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -13,15 +12,12 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* Scroll acontece dentro do .app-container (definido no style.css),
-           igual ao MotoristaHome — não sobrescrever aqui evita a travada no iOS. */
         .agendar-content {
             flex: 1;
             padding: 20px;
             padding-bottom: 40px;
         }
 
-        /* Topo Fixo (Sticky) */
         .header-top {
             display: flex;
             align-items: center;
@@ -210,147 +206,18 @@
             border-radius: 50%;
             box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
         }
-
-        /* --- ESTILOS DO MENU LATERAL (SIDEBAR) --- */
-        .menu-btn {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--t1);
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 260px;
-            height: 100%;
-            background: var(--bg);
-            z-index: 1000;
-            transition: left 0.3s ease;
-            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .sidebar.open {
-            left: 0;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(2px);
-            z-index: 999;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .overlay.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .sb-header {
-            padding: 30px 20px 20px;
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--t1);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .sb-close {
-            background: none;
-            border: none;
-            color: var(--t3);
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .sb-link {
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: var(--t2);
-            font-size: 14px;
-            font-weight: 600;
-            font-family: 'Sora', sans-serif;
-            text-decoration: none;
-            border: none;
-            border-bottom: 1px solid var(--border);
-            background: transparent;
-            border-left: 3px solid transparent;
-            cursor: pointer;
-            text-align: left;
-        }
-
-        .sb-link svg {
-            width: 22px;
-            height: 22px;
-            opacity: 0.7;
-        }
-
-        .sb-link.active {
-            color: var(--acc);
-            border-left-color: var(--acc);
-            background: var(--acc-bg);
-        }
-
-        .sb-link.active svg {
-            opacity: 1;
-        }
-
-        .sb-theme-btn {
-            margin: 20px;
-            padding: 12px;
-            border-radius: 12px;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--t1);
-            font-weight: 700;
-            font-family: 'Sora', sans-serif;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: background 0.2s;
-        }
-
-        .sb-theme-btn:active {
-            background: var(--border);
-        }
     </style>
 </head>
 
 <body>
     <script>
-        // Lê o tema salvo no navegador
         if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
             document.body.classList.add('light-mode');
             document.documentElement.classList.add('light-mode');
         }
     </script>
 
-
     <div class="app-container">
-
         <div class="header-top">
             <div style="display: flex; align-items: center; gap: 16px;">
                 <button class="back-btn" onclick="window.history.back()">
@@ -364,14 +231,12 @@
                     <div style="font-size: 11px; color: var(--t3);">Defina a rota digitando ou tocando no mapa</div>
                 </div>
             </div>
-
         </div>
 
         <div class="agendar-content">
-            <form method="POST" action="/passageiro/agendar" id="form-agendar" data-base-urbano="{{.PrecoBaseUrbano}}"
-                data-km-urbano="{{.PrecoKmUrbano}}" data-km-inter="{{.PrecoKmInter}}"
-                data-limite-urbano="{{.LimiteKmUrbano}}">
+            <div id="mensagem-erro" class="toast-msg toast-error" style="display: none; margin-bottom: 16px;"></div>
 
+            <form id="form-agendar">
                 <div class="form-group">
                     <label class="form-label">📍 Origem</label>
                     <div class="input-wrapper">
@@ -416,7 +281,7 @@
 
                 <div class="form-group">
                     <label class="form-label">📅 Data e Horário</label>
-                    <input type="datetime-local" name="data_hora" class="form-control" required>
+                    <input type="datetime-local" id="data_hora" name="data_hora" class="form-control" required>
                 </div>
 
                 <div id="estimativa-card"
@@ -433,28 +298,116 @@
                 <input type="hidden" id="km_rodado" name="km_rodado">
                 <input type="hidden" id="valor_estimado" name="valor_estimado">
 
-                <button type="submit" class="btn" style="padding: 16px; font-size: 15px;">Solicitar Agendamento</button>
+                <button type="submit" class="btn" style="padding: 16px; font-size: 15px; width: 100%;">Solicitar
+                    Agendamento</button>
             </form>
         </div>
     </div>
 
     <script src="../static/app.js"></script>
+
     <script>
-        // Pega o token da URL (se veio do login do Google Web)
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenURL = urlParams.get('token');
-
-        if (tokenURL) {
-            // Salva o token no navegador
-            localStorage.setItem("token", tokenURL);
-            // Limpa o ?token= da barra de endereço para ficar bonito
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('open');
+        // ==========================================
+        // SEGURANÇA E LEITURA DO TOKEN
+        // ==========================================
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+        if (!token) {
+            window.location.href = "../Usuario/login.html";
         }
 
+        // Valores de segurança (fallback) caso o celular esteja sem internet
+        let taxasAtuais = {
+            base_urbano: 10.00,
+            km_urbano: 2.50,
+            km_inter: 3.50,
+            limite_urbano: 20.0
+        };
+
+        // Assim que a tela carrega, ele puxa do Go os preços oficiais de hoje!
+        fetch(`${window.API_URL}/api/config-precos`)
+            .then(res => res.json())
+            .then(dados => {
+                taxasAtuais = dados; // Sobrescreve com os valores do servidor!
+                console.log("Taxas atualizadas:", taxasAtuais);
+            })
+            .catch(err => console.log("Usando taxas offline padrão", err));
+
+        // ==========================================
+        // ENVIO DO FORMULÁRIO PARA A API (REST)
+        // ==========================================
+        document.getElementById('form-agendar').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const msgErro = document.getElementById('mensagem-erro');
+            msgErro.style.display = 'none';
+
+            // Valida se os pontos do mapa foram realmente selecionados
+            if (!document.getElementById('origem_lat').value || !document.getElementById('destino_lat').value) {
+                msgErro.textContent = "Por favor, selecione as localizações exatas de origem e destino na busca ou no mapa.";
+                msgErro.style.display = 'block';
+                window.scrollTo(0, 0);
+                return;
+            }
+
+            const btn = this.querySelector('button[type="submit"]');
+            btn.innerHTML = 'Enviando...';
+            btn.disabled = true;
+
+            // Monta o objeto JSON igualzinho as Structs que o Go vai ler
+            const dadosViagem = {
+                origem_texto: document.getElementById('origem_texto').value,
+                origem_lat: parseFloat(document.getElementById('origem_lat').value),
+                origem_lng: parseFloat(document.getElementById('origem_lng').value),
+                destino_texto: document.getElementById('destino_texto').value,
+                destino_lat: parseFloat(document.getElementById('destino_lat').value),
+                destino_lng: parseFloat(document.getElementById('destino_lng').value),
+                data_hora: document.getElementById('data_hora').value,
+                km_rodado: parseFloat(document.getElementById('km_rodado').value) || 0,
+                valor_estimado: parseFloat(document.getElementById('valor_estimado').value) || 0
+            };
+
+            fetch(`${window.API_URL}/api/passageiro/agendar`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(dadosViagem)
+            })
+                .then(res => {
+                    if (res.status === 401 || res.status === 403) throw new Error("Sessão expirada");
+                    return res.json();
+                })
+                .then(dados => {
+                    if (dados.sucesso) {
+                        alert("Viagem solicitada com sucesso! Aguarde um motorista aceitar.");
+                        window.location.href = "home_Passageiro.html";
+                    } else {
+                        msgErro.textContent = dados.erro;
+                        msgErro.style.display = 'block';
+                        window.scrollTo(0, 0);
+                    }
+                })
+                .catch(err => {
+                    if (err.message === "Sessão expirada") {
+                        localStorage.removeItem("token");
+                        sessionStorage.removeItem("token");
+                        window.location.href = "../Usuario/login.html";
+                    } else {
+                        msgErro.textContent = "Erro ao conectar com o servidor.";
+                        msgErro.style.display = 'block';
+                        window.scrollTo(0, 0);
+                    }
+                })
+                .finally(() => {
+                    btn.innerHTML = 'Solicitar Agendamento';
+                    btn.disabled = false;
+                });
+        });
+
+        // ==========================================
+        // LÓGICA DO MAPA (MANTIDA INTACTA)
+        // ==========================================
         let timeoutBusca;
         let mapa, origemMarker, destinoMarker;
         let modoSelecaoMapa = null;
@@ -462,30 +415,15 @@
         const latPadrao = -6.4975;
         const lngPadrao = -49.8794;
 
-        // CRIAÇÃO DOS ÍCONES VERDE E VERMELHO
-        const iconeOrigem = L.divIcon({
-            className: 'custom-icon',
-            html: '<div class="pin-origem-visual"></div>',
-            iconSize: [22, 22],
-            iconAnchor: [11, 11]
-        });
-
-        const iconeDestino = L.divIcon({
-            className: 'custom-icon',
-            html: '<div class="pin-destino-visual"></div>',
-            iconSize: [22, 22],
-            iconAnchor: [11, 11]
-        });
+        const iconeOrigem = L.divIcon({ className: 'custom-icon', html: '<div class="pin-origem-visual"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+        const iconeDestino = L.divIcon({ className: 'custom-icon', html: '<div class="pin-destino-visual"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
 
         document.addEventListener("DOMContentLoaded", function () {
             mapa = L.map('mapa', { zoomControl: false }).setView([latPadrao, lngPadrao], 13);
             L.control.zoom({ position: 'bottomright' }).addTo(mapa);
 
             const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
-            const tileUrl = isLight
-                ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-
+            const tileUrl = isLight ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
             L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(mapa);
 
             mapa.on('click', function (e) {
@@ -516,10 +454,8 @@
         function atualizarPosicaoPorPino(tipo, lat, lng) {
             document.getElementById(`${tipo}_lat`).value = lat;
             document.getElementById(`${tipo}_lng`).value = lng;
-
             const inputTexto = document.getElementById(`${tipo}_texto`);
             inputTexto.value = "Buscando nome do local...";
-
             atualizarMarcadorNoMapa(tipo, lat, lng);
 
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
@@ -530,7 +466,7 @@
                     if (data.address.suburb && data.address.road) endereco += " - " + data.address.suburb;
 
                     inputTexto.value = endereco;
-                    ativarInsercaoMapa(tipo); // Desliga o botão
+                    ativarInsercaoMapa(tipo);
                     calcularEstimativa();
                 })
                 .catch(() => {
@@ -542,29 +478,19 @@
 
         function atualizarMarcadorNoMapa(tipo, lat, lng) {
             const coordenadas = [lat, lng];
-
             if (tipo === 'origem') {
-                if (origemMarker) {
-                    origemMarker.setLatLng(coordenadas);
-                } else {
+                if (origemMarker) { origemMarker.setLatLng(coordenadas); }
+                else {
                     origemMarker = L.marker(coordenadas, { icon: iconeOrigem, draggable: true }).addTo(mapa);
-                    origemMarker.on('dragend', function (e) {
-                        const p = origemMarker.getLatLng();
-                        atualizarPosicaoPorPino('origem', p.lat, p.lng);
-                    });
+                    origemMarker.on('dragend', function () { const p = origemMarker.getLatLng(); atualizarPosicaoPorPino('origem', p.lat, p.lng); });
                 }
             } else {
-                if (destinoMarker) {
-                    destinoMarker.setLatLng(coordenadas);
-                } else {
+                if (destinoMarker) { destinoMarker.setLatLng(coordenadas); }
+                else {
                     destinoMarker = L.marker(coordenadas, { icon: iconeDestino, draggable: true }).addTo(mapa);
-                    destinoMarker.on('dragend', function (e) {
-                        const p = destinoMarker.getLatLng();
-                        atualizarPosicaoPorPino('destino', p.lat, p.lng);
-                    });
+                    destinoMarker.on('dragend', function () { const p = destinoMarker.getLatLng(); atualizarPosicaoPorPino('destino', p.lat, p.lng); });
                 }
             }
-
             if (origemMarker && destinoMarker) {
                 const grupo = new L.featureGroup([origemMarker, destinoMarker]);
                 mapa.fitBounds(grupo.getBounds().pad(0.3));
@@ -582,34 +508,26 @@
             input.addEventListener('input', function () {
                 clearTimeout(timeoutBusca);
                 const query = this.value;
-
                 if (query.length < 4) { list.style.display = 'none'; return; }
-
                 list.innerHTML = '<div class="loading-spinner">Buscando endereço...</div>';
                 list.style.display = 'block';
 
                 timeoutBusca = setTimeout(() => {
-                    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=5`;
-                    const viewboxPara = `-51.0,-4.5,-48.0,-7.5`;
-                    url += `&viewbox=${viewboxPara}`;
-
+                    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=5&viewbox=-51.0,-4.5,-48.0,-7.5`;
                     fetch(url)
                         .then(response => response.json())
                         .then(data => {
                             list.innerHTML = '';
                             if (data.length === 0) { list.innerHTML = '<div class="loading-spinner">Nenhum endereço encontrado.</div>'; return; }
-
                             data.forEach(local => {
                                 const div = document.createElement('div');
                                 div.className = 'autocomplete-item';
                                 div.innerHTML = `<span>📍</span> ${local.display_name.split(',').slice(0, 3).join(', ')}`;
-
                                 div.onclick = function () {
                                     input.value = local.display_name.split(',').slice(0, 3).join(', ');
                                     latHidden.value = local.lat;
                                     lngHidden.value = local.lon;
                                     list.style.display = 'none';
-
                                     atualizarMarcadorNoMapa(tipo, parseFloat(local.lat), parseFloat(local.lon));
                                     calcularEstimativa();
                                 };
@@ -625,43 +543,70 @@
             });
         }
 
-        function pegarLocalizacao() {
+        async function pegarLocalizacao() {
             const btnGps = document.querySelector('.btn-util');
             const inputOrigem = document.getElementById('origem_texto');
-
-            if (!navigator.geolocation) return alert("Seu dispositivo não suporta geolocalização.");
 
             inputOrigem.value = "Buscando sinal de satélite...";
             btnGps.style.opacity = "0.5";
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
+            try {
+                let lat, lng;
 
-                    document.getElementById('origem_lat').value = lat;
-                    document.getElementById('origem_lng').value = lng;
+                // ==========================================
+                // MÁGICA HÍBRIDA DO GPS
+                // ==========================================
+                if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                    // Fluxo CELULAR (App Nativo Android/iOS)
+                    const permission = await Capacitor.Plugins.Geolocation.checkPermissions();
+                    if (permission.location !== 'granted') {
+                        await Capacitor.Plugins.Geolocation.requestPermissions();
+                    }
+                    const coordinates = await Capacitor.Plugins.Geolocation.getCurrentPosition({
+                        enableHighAccuracy: true
+                    });
+                    lat = coordinates.coords.latitude;
+                    lng = coordinates.coords.longitude;
 
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            let endereco = data.address.road || "Minha Localização";
-                            if (data.address.suburb) endereco += ", " + data.address.suburb;
+                } else {
+                    // Fluxo WEB (Navegador normal / Live Server)
+                    if (!navigator.geolocation) {
+                        throw new Error("Seu navegador não suporta GPS.");
+                    }
 
-                            inputOrigem.value = endereco;
-                            btnGps.style.opacity = "1";
+                    // Envolvemos em uma Promise para funcionar com o await igual ao Nativo
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
+                    });
 
-                            atualizarMarcadorNoMapa('origem', lat, lng);
-                            calcularEstimativa();
-                        });
-                },
-                () => {
-                    inputOrigem.value = "";
-                    btnGps.style.opacity = "1";
-                    alert("Ative a localização nas configurações do seu celular.");
-                },
-                { enableHighAccuracy: true }
-            );
+                    lat = position.coords.latitude;
+                    lng = position.coords.longitude;
+                }
+
+                // ==========================================
+                // PREENCHE A TELA (Igual para os dois fluxos)
+                // ==========================================
+                document.getElementById('origem_lat').value = lat;
+                document.getElementById('origem_lng').value = lng;
+
+                // Converte a coordenada em nome de rua
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let endereco = data.address.road || "Minha Localização";
+                        if (data.address.suburb) endereco += ", " + data.address.suburb;
+                        inputOrigem.value = endereco;
+                        btnGps.style.opacity = "1";
+                        atualizarMarcadorNoMapa('origem', lat, lng);
+                        calcularEstimativa();
+                    });
+
+            } catch (error) {
+                inputOrigem.value = "";
+                btnGps.style.opacity = "1";
+                alert("Não foi possível obter a localização. Verifique seu GPS e permissões.");
+                console.error("Erro GPS:", error);
+            }
         }
 
         function calcularEstimativa() {
@@ -677,14 +622,13 @@
                     .then(res => res.json())
                     .then(data => {
                         if (data.routes && data.routes.length > 0) {
-                            const distanciaMetros = data.routes[0].distance;
-                            const distanciaKm = parseFloat((distanciaMetros / 1000).toFixed(1));
+                            const distanciaKm = parseFloat((data.routes[0].distance / 1000).toFixed(1));
 
-                            const formElement = document.getElementById('form-agendar');
-                            const precoBaseUrbano = parseFloat(formElement.getAttribute('data-base-urbano')) || 10.00;
-                            const precoKmUrbano = parseFloat(formElement.getAttribute('data-km-urbano')) || 2.50;
-                            const precoKmInter = parseFloat(formElement.getAttribute('data-km-inter')) || 3.50;
-                            const limiteKmUrbano = parseFloat(formElement.getAttribute('data-limite-urbano')) || 20.0;
+                            // AQUI ESTÁ A MÁGICA: Puxando da variável dinâmica em vez de número fixo
+                            const precoBaseUrbano = taxasAtuais.base_urbano;
+                            const precoKmUrbano = taxasAtuais.km_urbano;
+                            const precoKmInter = taxasAtuais.km_inter;
+                            const limiteKmUrbano = taxasAtuais.limite_urbano;
 
                             let valorFinal = 0;
                             let tipoViagem = "";
@@ -713,8 +657,16 @@
         configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng', 'origem');
         configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng', 'destino');
 
+        function fazerLogout(avisarApi = true) {
+            if (avisarApi) {
+                fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
+            }
+            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
+            window.location.href = "../Usuario/login.html";
+        }
+
     </script>
 </body>
 
 </html>
-{{end}}

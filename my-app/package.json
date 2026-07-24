@@ -16,6 +16,7 @@
     "@capacitor/android": "^8.4.2",
     "@capacitor/camera": "latest",
     "@capacitor/core": "latest",
+    "@capacitor/geolocation": "^8.2.0",
     "@capacitor/splash-screen": "latest"
   },
   "devDependencies": {
