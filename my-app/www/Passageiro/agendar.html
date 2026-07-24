@@ -364,7 +364,7 @@
                     <div style="font-size: 11px; color: var(--t3);">Defina a rota digitando ou tocando no mapa</div>
                 </div>
             </div>
-            
+
         </div>
 
         <div class="agendar-content">
@@ -440,6 +440,16 @@
 
     <script src="../static/app.js"></script>
     <script>
+        // Pega o token da URL (se veio do login do Google Web)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenURL = urlParams.get('token');
+
+        if (tokenURL) {
+            // Salva o token no navegador
+            localStorage.setItem("token", tokenURL);
+            // Limpa o ?token= da barra de endereço para ficar bonito
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('open');
@@ -702,6 +712,7 @@
 
         configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng', 'origem');
         configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng', 'destino');
+
     </script>
 </body>
 

@@ -2,11 +2,17 @@ package controller
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"Frota/models"
 	"Frota/services"
+	"Frota/structs"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 //API Rest
@@ -15,6 +21,60 @@ type RequisicaoLogin struct {
 	Email   string `json:"email"`
 	Senha   string `json:"senha"`
 	Lembrar bool   `json:"lembrar"` // Opcional
+}
+
+// ApiVerificarToken valida o Token JWT do usuário (Web ou App) e devolve seu perfil em JSON
+func ApiVerificarToken(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	tokenString := ""
+
+	// 1. Tenta pegar o Token do Header "Authorization: Bearer <TOKEN>" (Padrão para App Nativo/API)
+	authHeader := r.Header.Get("Authorization")
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+	}
+
+	// 2. Fallback: Se não veio no Header, tenta ler do Cookie (Para fluxo Web tradicional)
+	if tokenString == "" {
+		cookie, err := r.Cookie("jwt_frota")
+		if err == nil {
+			tokenString = cookie.Value
+		}
+	}
+
+	// Se não encontrou o token em lugar nenhum:
+	if tokenString == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{"valido": false, "erro": "Token não fornecido"})
+		return
+	}
+
+	// 3. Valida o Token JWT
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if err == nil && token.Valid {
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			if papel, okPapel := claims["papel"].(string); okPapel {
+				usuarioID := claims["id"] // ou o campo que usa no seu JWT
+
+				// Responde com sucesso, ID e o Papel em JSON
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"valido":     true,
+					"usuario_id": usuarioID,
+					"papel":      strings.ToLower(strings.TrimSpace(papel)),
+				})
+				return
+			}
+		}
+	}
+
+	// 4. Token inválido ou expirado
+	w.WriteHeader(http.StatusUnauthorized)
+	json.NewEncoder(w).Encode(map[string]interface{}{"valido": false, "erro": "Token inválido ou expirado"})
 }
 
 func LoginUsuario(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +137,115 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 		"sucesso": true,
 		"token":   token,
 		"papel":   usuario.Papel,
+	})
+}
+
+// Criamos uma estrutura para receber os dados JSON enviados pelo celular
+type RequisicaoCadastro struct {
+	Nome     string `json:"nome"`
+	Email    string `json:"email"`
+	Whatsapp string `json:"whatsapp"`
+	Senha    string `json:"senha"`
+}
+
+func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
+	// 1. Avisar ao Front-end que a resposta será em formato JSON
+	w.Header().Set("Content-Type", "application/json")
+
+	// 2. Garantir que é um POST (O GET já não existe, pois a tela abre no próprio celular)
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Método não permitido"})
+		return
+	}
+
+	// 3. Ler o JSON enviado pelo App
+	var req RequisicaoCadastro
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Formato de dados inválido."})
+		return
+	}
+
+	// 4. Limpeza de dados (TrimSpace e ToLower)
+	nome := strings.TrimSpace(req.Nome)
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	senha := req.Senha
+	whatsapp := strings.TrimSpace(req.Whatsapp)
+
+	// 5. Validação simples
+	if nome == "" || email == "" || senha == "" || whatsapp == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Por favor, preencha todos os campos obrigatórios."})
+		return
+	}
+
+	// 6. Criptografar a senha
+	senhaHash, err := services.HashSenha(senha)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Erro interno ao processar a senha."})
+		return
+	}
+
+	// 7. Montar a Struct do Banco de Dados
+	usuario := structs.Usuario{
+		Nome:          nome,
+		Email:         email,
+		Senha:         senhaHash,
+		Whatsapp:      whatsapp,
+		Papel:         "passageiro", // Todo cadastro novo nasce como passageiro
+		AceitouTermos: true,         // Como já validamos no front, podemos assumir true aqui
+	}
+
+	// 8. O Controller delega a gravação para o Model
+	err = models.CriarUsuario(&usuario)
+	if err != nil {
+		// Retornamos 409 Conflict se o e-mail já existir
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Este e-mail já está cadastrado em nosso sistema."})
+		return
+	}
+
+	// 9. AUTO-LOGIN: Cria o token JWT para já logar o usuário automaticamente
+	tokenString, errToken := services.GerarToken(usuario.ID, usuario.Papel)
+	if errToken != nil {
+		log.Println("Erro ao gerar token no auto-login:", errToken)
+		w.WriteHeader(http.StatusCreated)
+		// Devolvemos sucesso no cadastro, mas pedimos para logar manual se o token falhar
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": true, "erro": "Conta criada! Por favor, faça login manualmente."})
+		return
+	}
+
+	// 10. Sucesso total! Devolvemos o Token para o Celular
+	// Não gravamos Cookie, enviamos no JSON. O Javascript lá no HTML vai salvar no LocalStorage!
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"sucesso": true,
+		"token":   tokenString,
+	})
+}
+
+// ApiLogout limpa os cookies do servidor (Web) e confirma o encerramento da sessão
+func ApiLogout(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Sobrescreve e destrói o cookie no navegador (se existir)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "jwt_frota",
+		Value:    "",
+		Expires:  time.Now().Add(-7 * 24 * time.Hour),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	// Retorna confirmação em JSON para o Front-end
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"sucesso":  true,
+		"mensagem": "Logout realizado com sucesso",
 	})
 }
 

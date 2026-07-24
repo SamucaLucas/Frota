@@ -297,12 +297,14 @@
                         <div class="hero-title">Minha Central</div>
                     </div>
                     <div style="width: 220px;margin-bottom: -15px;">
-                        <img src="../static/img/Logo.png" class="sousa-logo logo-white" style="width: 100%; height: auto;">
-                        <img src="../static/img/Logo-branco.png" class="sousa-logo logo-dark" style="width: 100%; height: auto;">
+                        <img src="../static/img/Logo.png" class="sousa-logo logo-white"
+                            style="width: 100%; height: auto;">
+                        <img src="../static/img/Logo-branco.png" class="sousa-logo logo-dark"
+                            style="width: 100%; height: auto;">
                     </div>
                 </div>
             </div>
-            
+
             <div style="background: var(--card2); padding: 14px 18px; border-bottom: 1px solid var(--border)"
                 class="row">
                 <div
@@ -397,6 +399,16 @@
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('open');
+        }
+        // Pega o token da URL (se veio do login do Google Web)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenURL = urlParams.get('token');
+
+        if (tokenURL) {
+            // Salva o token no navegador
+            localStorage.setItem("token", tokenURL);
+            // Limpa o ?token= da barra de endereço para ficar bonito
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
     </script>
 </body>

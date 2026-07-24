@@ -435,6 +435,16 @@
 
     <script src="../static/app.js"></script>
     <script>
+        // Pega o token da URL (se veio do login do Google Web)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenURL = urlParams.get('token');
+
+        if (tokenURL) {
+            // Salva o token no navegador
+            localStorage.setItem("token", tokenURL);
+            // Limpa o ?token= da barra de endereço para ficar bonito
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         // Função existente
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');

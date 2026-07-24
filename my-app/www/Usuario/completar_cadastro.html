@@ -1,10 +1,9 @@
-{{define "CompletarCadastro"}}
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Finalizar Cadastro - Sousa</title>
     <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
     <link rel="stylesheet" href="../static/style.css">
@@ -12,6 +11,9 @@
 
 <body>
     <div class="app-container">
+
+        <button id="theme-toggle" class="theme-btn">☀️ Claro</button>
+
         <div class="hero">
             <div class="hero-accent"></div>
             <div class="hero-title" style="margin-top:20px">Quase lá!</div>
@@ -19,12 +21,16 @@
                 agendamento.</div>
         </div>
 
-        <form action="/auth/google/completar" method="POST" style="padding: 24px;">
+        <form id="formCompletar" style="padding: 24px; flex: 1;">
+
+            <div id="mensagem-erro" class="toast-msg toast-error" style="display: none;"></div>
+
             <div class="inp-group">
-                <label class="inp-lbl">WhatsApp (DDD + Número)</label>
+                <div class="inp-lbl">WhatsApp (DDD + Número)</div>
                 <div class="inp-wrap">
                     <span class="inp-icon">📱</span>
-                    <input class="inp" type="tel" name="whatsapp" required placeholder="(94) 99999-9999">
+                    <input class="inp" type="tel" id="whatsapp" name="whatsapp" required placeholder="(94) 99999-9999"
+                        maxlength="15" oninput="this.value = mascaraWhatsApp(this.value)">
                 </div>
             </div>
 
@@ -32,14 +38,79 @@
                 style="display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; background:var(--bg3); border-radius:12px; padding:12px; border:1px solid var(--border)">
                 <input type="checkbox" name="aceitou" value="true" required
                     style="margin-top:2px; width:15px; height:15px; accent-color:var(--acc); flex-shrink:0">
-                <span style="font-size:11px; color:var(--t3); line-height:1.5">Li e aceito os <a href="/termos"
-                        style="color:var(--acc); text-decoration: none; font-weight: 700;">Termos de Uso e a Política
-                        de Privacidade</a></span>
+                <span style="font-size:11px; color:var(--t3); line-height:1.5">Li e aceito os
+                    <a href="Termo.html" style="color:var(--acc); text-decoration: none; font-weight: 700;">Termos de
+                        Uso e a Política de Privacidade</a>
+                </span>
             </div>
-            <button type="submit" class="btn">Finalizar Cadastro →</button>
+
+            <button type="submit" class="btn" style="width: 100%;">Finalizar Cadastro →</button>
         </form>
     </div>
+
+    <script src="../static/app.js"></script>
+
+    <script>
+        // Função que aplica a máscara do WhatsApp em tempo real
+        function mascaraWhatsApp(v) {
+            v = v.replace(/\D/g, ""); // Remove tudo o que não é dígito
+            if (v.length > 11) v = v.substring(0, 11); // Limita a 11 dígitos numéricos
+            if (v.length > 2) v = v.replace(/^(\d{2})(\d)/g, "($1) $2"); // Coloca parênteses
+            if (v.length > 7) v = v.replace(/(\d{5})(\d)/, "$1-$2"); // Coloca o hífen
+            return v;
+        }
+
+        document.getElementById('formCompletar').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const whatsappInput = document.getElementById('whatsapp').value;
+            const msgErro = document.getElementById('mensagem-erro');
+            const btn = this.querySelector('button[type="submit"]');
+
+            msgErro.style.display = 'none';
+            btn.innerHTML = 'Salvando...';
+            btn.disabled = true;
+
+            // MÁGICA HÍBRIDA: Tenta pegar os dados da URL (Web/Live Server) 
+            // Se não achar na URL, pega do LocalStorage (App Nativo)
+            const urlParams = new URLSearchParams(window.location.search);
+            const emailTemporario = urlParams.get('email') || localStorage.getItem("email_temp_google") || "";
+            const nomeTemporario = urlParams.get('nome') || localStorage.getItem("nome_temp_google") || "";
+
+            fetch("http://192.168.3.38:8082/api/google/completar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: emailTemporario,
+                    nome: nomeTemporario, // <-- AQUI ESTAVA FALTANDO O NOME!
+                    whatsapp: whatsappInput
+                })
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        // Limpa os dados temporários e salva o token oficial
+                        localStorage.removeItem("email_temp_google");
+                        localStorage.removeItem("nome_temp_google");
+                        localStorage.setItem("token", dados.token);
+
+                        // Vai direto para a Home!
+                        window.location.href = "../Passageiro/home_Passageiro.html";
+                    } else {
+                        msgErro.textContent = dados.erro;
+                        msgErro.style.display = 'block';
+                        btn.innerHTML = 'Finalizar Cadastro →';
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    msgErro.textContent = "Erro de conexão com o servidor.";
+                    msgErro.style.display = 'block';
+                    btn.innerHTML = 'Finalizar Cadastro →';
+                    btn.disabled = false;
+                });
+        });
+    </script>
 </body>
 
 </html>
-{{end}}

@@ -43,8 +43,21 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/admin/despachar/", controller.DespacharCorrida)
 	r.HandleFunc("/admin/mapa", controller.MapaAdmin)
 */
-	// Rotas de API
+	// Rotas de API - Usuario
 	r.HandleFunc("/api/login", controller.LoginUsuario)
+	r.HandleFunc("/api/cadastrar", controller.CadastrarUsuario)
+	r.HandleFunc("/api/google/login", controller.ApiGoogleLogin)              
+    r.HandleFunc("/api/google/completar", controller.ApiCompletarCadastroGoogle)
+	r.HandleFunc("/api/verificar-token", controller.ApiVerificarToken)
+    r.HandleFunc("/api/logout", controller.ApiLogout)
+
+		// Rotas do Google
+	r.HandleFunc("/auth/google/login", controller.GoogleLogin)
+	r.HandleFunc("/auth/google/callback", controller.GoogleCallback)
+	r.HandleFunc("/auth/google/completar", controller.CompletarCadastroGoogle)
+
+
+
 
 	return r
 }

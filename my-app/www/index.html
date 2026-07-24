@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
@@ -8,8 +8,42 @@
 
 <body>
     <script>
-        // Joga o aplicativo nativo direto para a sua pasta de Usuário!
-        window.location.href = "Usuario/login.html";
+        const API_URL = "http://192.168.3.38:8082";
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            // Se não tem token salvo, manda direto para o Login
+            window.location.href = "Usuario/login.html";
+        } else {
+            // Se tem token, pergunta para a API se ele é válido e qual o papel
+            fetch(`${API_URL}/api/verificar-token`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.valido) {
+                        // Redireciona localmente conforme o papel
+                        if (dados.papel === "admin") {
+                            window.location.href = "Admin/home_admin.html";
+                        } else if (dados.papel === "motorista") {
+                            window.location.href = "Motorista/home_motorista.html";
+                        } else {
+                            window.location.href = "Passageiro/home_Passageiro.html";
+                        }
+                    } else {
+                        // Token expirado/inválido: limpa o storage e manda pro login
+                        localStorage.removeItem("token");
+                        window.location.href = "Usuario/login.html";
+                    }
+                })
+                .catch(() => {
+                    // Em caso de offline/falha de servidor, pode mandar pro login ou tela de aviso
+                    window.location.href = "Usuario/login.html";
+                });
+        }
     </script>
 </body>
 

@@ -3,10 +3,14 @@ package controller
 import (
 	"Frota/models"
 	"Frota/services"
+	"Frota/structs"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -14,8 +18,10 @@ import (
 )
 
 var googleOauthConfig *oauth2.Config
+var FRONTEND_WEB_URL = "http://127.0.0.1:5500/my-app/www"
+var WEB_URL = "http://127.0.0.1:5500"
 
-// ConfigurarGoogleOAuth deve ser chamado no main.go para iniciar as variáveis
+// ConfigurarGoogleOAuth deve ser chamado no main.go
 func ConfigurarGoogleOAuth() {
 	googleOauthConfig = &oauth2.Config{
 		RedirectURL:  os.Getenv("GOOGLE_CALLBACK_URL"),
@@ -26,111 +32,101 @@ func ConfigurarGoogleOAuth() {
 	}
 }
 
-// GoogleLogin redireciona o usuário para a tela de login do Google
+// ====================================================================
+// FLUXO 1: WEB TRADICIONAL (Com redirecionamentos e Cookies)
+// ====================================================================
+
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {
-	// "estado-aleatorio" deveria ser uma string aleatória real em produção para segurança (CSRF)
 	url := googleOauthConfig.AuthCodeURL("estado-aleatorio")
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-// GoogleCallback recebe a resposta do Google após o usuário aceitar
 func GoogleCallback(w http.ResponseWriter, r *http.Request) {
+	// URL base do seu Live Server (ou do site em produção)
+	frontendWebURL := os.Getenv("FRONTEND_WEB_URL")
+	if frontendWebURL == "" {
+		frontendWebURL = "http://127.0.0.1:5500/my-app/www" // Endereço do seu Live Server
+	}
+
 	estado := r.FormValue("state")
 	if estado != "estado-aleatorio" {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, frontendWebURL+"/Usuario/login.html?erro=Estado+Invalido", http.StatusSeeOther)
 		return
 	}
 
 	codigo := r.FormValue("code")
 	tokenGo, err := googleOauthConfig.Exchange(context.Background(), codigo)
 	if err != nil {
-		http.Redirect(w, r, "/login?erro=Falha+no+Google", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, frontendWebURL+"/Usuario/login.html?erro=Falha+no+Google", http.StatusSeeOther)
 		return
 	}
 
 	// Busca os dados do usuário usando o token do Google
 	resposta, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + tokenGo.AccessToken)
 	if err != nil {
-		http.Redirect(w, r, "/login?erro=Falha+ao+obter+dados", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, frontendWebURL+"/Usuario/login.html?erro=Falha+ao+obter+dados", http.StatusSeeOther)
 		return
 	}
 	defer resposta.Body.Close()
 
-	// Lê os dados que o Google enviou
 	var dadosGoogle map[string]interface{}
 	json.NewDecoder(resposta.Body).Decode(&dadosGoogle)
 
-	email := dadosGoogle["email"].(string)
+	email := strings.ToLower(strings.TrimSpace(dadosGoogle["email"].(string)))
 	nome := dadosGoogle["name"].(string)
-
-	// =========================================================
-	// A INTELIGÊNCIA DE REGISTRO E LOGIN ENTRA AQUI
-	// =========================================================
 
 	// 1. Tenta buscar o usuário no banco de dados
 	usuario, err := models.BuscarUsuarioPorEmail(email)
 
-	// 2. Se deu erro (não encontrou), vamos criar o usuário automaticamente!
+	// 2. Se NÃO encontrou (Usuário Novo): manda para a tela de Completar Cadastro no Live Server!
 	if err != nil {
-		http.SetCookie(w, &http.Cookie{
-			Name:     "temp_google_data",
-			Value:    email + "|" + nome,
-			Expires:  time.Now().Add(5 * time.Minute),
-			Path:     "/",
-			HttpOnly: true, // Boa prática de segurança
-		})
-
-		// ADICIONA ESTE RETURN!
-		// Sem ele, o código continua a correr e tenta gerar o token abaixo
-		http.Redirect(w, r, "/auth/google/completar", http.StatusSeeOther)
+		// Passa o e-mail e nome via URL para a tela estática capturar
+		urlCompletar := fmt.Sprintf("%s/Usuario/completar_cadastro.html?email=%s&nome=%s", frontendWebURL, url.QueryEscape(email), url.QueryEscape(nome))
+		http.Redirect(w, r, urlCompletar, http.StatusSeeOther)
 		return
 	}
 
-	// 3. O usuário agora existe (seja antigo ou recém-criado). Vamos gerar o JWT!
+	// 3. Se ENCONTROU (Usuário Antigo): Gera o Token JWT
 	tokenJWT, err := services.GerarToken(usuario.ID, usuario.Papel)
 	if err != nil {
-		http.Redirect(w, r, "/login?erro=Erro+ao+gerar+token", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, frontendWebURL+"/Usuario/login.html?erro=Erro+ao+gerar+token", http.StatusSeeOther)
 		return
 	}
 
-	// 4. Salva o JWT nos Cookies (Acesso seguro)
-	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt_frota",
-		Value:    tokenJWT,
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-		Secure:   false,
-		Path:     "/",
-	})
+	// 4. Redireciona para a Home correta no Live Server passando o token na URL para o JS salvar!
+	var homeURL string
+	if usuario.Papel == "admin" {
+		homeURL = frontendWebURL + "/Admin/home_admin.html"
+	} else if usuario.Papel == "motorista" {
+		homeURL = frontendWebURL + "/Motorista/home_motorista.html"
+	} else {
+		homeURL = frontendWebURL + "/Passageiro/home_Passageiro.html"
+	}
 
-	// 5. Manda para a tela de Construção!
-	http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
+	// Redireciona com o token na URL
+	http.Redirect(w, r, fmt.Sprintf("%s?token=%s", homeURL, tokenJWT), http.StatusSeeOther)
 }
 
-/*
-// CompletarCadastroGoogle finaliza o registro após capturar o WhatsApp
 func CompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		temp.ExecuteTemplate(w, "CompletarCadastro", nil)
+		// Se estiver usando templates na web, renderiza aqui
+		// temp.ExecuteTemplate(w, "CompletarCadastro", nil)
 		return
 	}
-	aceitou := r.FormValue("aceitou") == "true"
 
-	// 1. Recupera o cookie temporário
+	aceitou := r.FormValue("aceitou") == "true" || r.FormValue("aceitou") == "on"
+
 	cookie, err := r.Cookie("temp_google_data")
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
-	// 2. Extrai nome e e-mail (usando strings.Split ou similar)
-	// Exemplo simplificado: "email|nome"
 	partes := strings.Split(cookie.Value, "|")
 	email := partes[0]
 	nome := partes[1]
 	whatsapp := r.FormValue("whatsapp")
 
-	// 3. Cria o usuário finalmente
 	novoUsuario := structs.Usuario{
 		Nome:          nome,
 		Email:         email,
@@ -140,15 +136,102 @@ func CompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 	}
 	models.CriarUsuario(&novoUsuario)
 
-	// 4. Limpa o cookie temporário
 	http.SetCookie(w, &http.Cookie{Name: "temp_google_data", MaxAge: -1, Path: "/"})
 
-	// 5. Gera o token e loga
 	tokenJWT, _ := services.GerarToken(novoUsuario.ID, novoUsuario.Papel)
-	http.SetCookie(w, &http.Cookie{
-		Name: "jwt_frota", Value: tokenJWT, Expires: time.Now().Add(24 * time.Hour), HttpOnly: true, Path: "/",
-	})
+	http.SetCookie(w, &http.Cookie{Name: "jwt_frota", Value: tokenJWT, Expires: time.Now().Add(24 * time.Hour), HttpOnly: true, Path: "/"})
 
 	http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
 }
-*/
+
+// ====================================================================
+// FLUXO 2: APP NATIVO / API REST (JSON sem redirecionamento)
+// ====================================================================
+
+// Estruturas auxiliares para ler o JSON do App
+type ReqGoogleLogin struct {
+	Email string `json:"email"`
+	Nome  string `json:"nome"`
+}
+
+type ReqGoogleCompletar struct {
+	Email    string `json:"email"`
+	Nome     string `json:"nome"`
+	Whatsapp string `json:"whatsapp"`
+}
+
+// ApiGoogleLogin recebe os dados do Google capturados pelo celular
+func ApiGoogleLogin(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req ReqGoogleLogin
+	json.NewDecoder(r.Body).Decode(&req)
+
+	// Tenta achar o usuário
+	usuario, err := models.BuscarUsuarioPorEmail(req.Email)
+
+	// Se NÃO encontrou, avisa o Front-end para abrir a tela de completar WhatsApp
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"sucesso":           true,
+			"precisa_completar": true, // A MÁGICA: O JS vai ler isso e trocar de tela
+			"email":             req.Email,
+			"nome":              req.Nome,
+		})
+		return
+	}
+
+	// Se encontrou, gera o JWT e já faz o login automático!
+	tokenJWT, _ := services.GerarToken(usuario.ID, usuario.Papel)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"sucesso":           true,
+		"precisa_completar": false,
+		"token":             tokenJWT,
+		"papel":             usuario.Papel,
+	})
+}
+
+// ApiCompletarCadastroGoogle é chamada quando o usuário digita o WhatsApp na tela do App
+func ApiCompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req ReqGoogleCompletar
+	json.NewDecoder(r.Body).Decode(&req)
+
+	if req.Whatsapp == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "WhatsApp é obrigatório"})
+		return
+	}
+
+	novoUsuario := structs.Usuario{
+		Nome:          req.Nome,
+		Email:         req.Email,
+		Whatsapp:      req.Whatsapp,
+		Papel:         "passageiro",
+		AceitouTermos: true,
+	}
+
+	err := models.CriarUsuario(&novoUsuario)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Erro ao criar conta."})
+		return
+	}
+
+	// Gera o token
+	tokenJWT, _ := services.GerarToken(novoUsuario.ID, novoUsuario.Papel)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"sucesso": true,
+		"token":   tokenJWT,
+		"papel":   novoUsuario.Papel,
+	})
+}

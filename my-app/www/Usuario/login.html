@@ -87,14 +87,13 @@
                 </div>
 
                 <div style="display:flex; gap:8px; margin-bottom:10px">
-                    <button type="button" class="btn-ghost" onclick="window.location.href='/auth/google/login'"
-                        style="width: 100%;">
+                    <button type="button" class="btn-ghost" onclick="fazerLoginGoogle()" style="width: 100%;">
                         <span style="font-size:14px; font-weight:800; color:var(--t1)">G</span> Continuar com Google
                     </button>
                 </div>
 
                 <div style="text-align:center; margin-top:16px; font-size:12px; color:var(--t3)">Novo por aqui?
-                    <a href="/Usuario/cadastro.html"
+                    <a href="../Usuario/cadastro.html"
                         style="color:var(--acc); font-weight:700; text-decoration:none;">Criar
                         conta</a>
                 </div>
@@ -114,6 +113,9 @@
     <script src="../static/app.js"></script>
 
     <script>
+        // Centraliza a URL da API para facilitar trocas no futuro
+        const API_URL = "http://192.168.3.38:8082";
+
         function toggleSenha() {
             const input = document.getElementById("inputSenha");
             const btn = document.getElementById("btnMostrarSenha");
@@ -130,25 +132,18 @@
         }
 
         // ==========================================
-        // MÁGICA DA API REST (ENVIO DO FORMULÁRIO)
+        // MÁGICA DA API REST (LOGIN NORMAL)
         // ==========================================
         document.getElementById('formLogin').addEventListener('submit', function (event) {
-            event.preventDefault(); // Impede a tela de piscar
+            event.preventDefault();
 
             const emailInput = document.getElementById('email').value;
             const senhaInput = document.getElementById('inputSenha').value;
             const msgErro = document.getElementById('mensagem-erro');
-            const msgSucesso = document.getElementById('mensagem-sucesso');
 
             msgErro.style.display = 'none';
-            msgSucesso.style.display = 'none';
 
-            // Empacota em JSON
-            const dados = {
-                email: emailInput,
-                senha: senhaInput
-            };
-            fetch("http://192.168.3.38:8082/api/login", { // Ajuste sua rota se necessário
+            fetch(`${API_URL}/api/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: emailInput, senha: senhaInput })
@@ -156,10 +151,8 @@
                 .then(res => res.json())
                 .then(dados => {
                     if (dados.sucesso) {
-                        // Salva o token no celular para usar nas próximas requisições
                         localStorage.setItem("token", dados.token);
 
-                        // O Javascript local redireciona para a tela correta baseada no papel!
                         if (dados.papel === "admin") {
                             window.location.href = "../Admin/home_admin.html";
                         } else if (dados.papel === "motorista") {
@@ -168,14 +161,61 @@
                             window.location.href = "../Passageiro/home_Passageiro.html";
                         }
                     } else {
-                        alert(dados.erro); // Mostra o erro ("E-mail inválido", etc) na tela
+                        msgErro.textContent = dados.erro || "Erro de login";
+                        msgErro.style.display = 'block';
                     }
                 })
                 .catch(error => {
                     console.error('Erro na requisição:', error);
-                    alert('Erro ao conectar com o servidor. Verifique sua conexão ou tente novamente mais tarde.');
+                    msgErro.textContent = 'Erro ao conectar com o servidor. Verifique sua conexão.';
+                    msgErro.style.display = 'block';
                 });
         });
+
+        // ==========================================
+        // MÁGICA DA API REST (LOGIN GOOGLE HÍBRIDO)
+        // ==========================================
+        async function fazerLoginGoogle() {
+            // Verifica se está rodando num App Nativo (Celular) pelo Capacitor
+            if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                try {
+                    // 1. Abre a janelinha nativa do Google no celular
+                    const googleUser = await CapacitorGoogleAuth.signIn();
+
+                    // 2. Manda os dados para a nossa nova API Go do Google
+                    const response = await fetch(`${API_URL}/api/google/login`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            email: googleUser.email,
+                            nome: googleUser.displayName
+                        })
+                    });
+
+                    const dados = await response.json();
+
+                    if (dados.precisa_completar) {
+                        // Se for usuário novo, salva e-mail temporário e joga pra tela de WhatsApp
+                        localStorage.setItem("email_temp_google", dados.email);
+                        localStorage.setItem("nome_temp_google", dados.nome);
+                        window.location.href = "completar_cadastro.html";
+                    } else if (dados.sucesso) {
+                        // Se for usuário antigo, faz o login direto!
+                        localStorage.setItem("token", dados.token);
+
+                        if (dados.papel === "admin") window.location.href = "../Admin/home_admin.html";
+                        else if (dados.papel === "motorista") window.location.href = "../Motorista/home_motorista.html";
+                        else window.location.href = "../Passageiro/home_Passageiro.html";
+                    }
+                } catch (error) {
+                    console.error("Erro no login Google Nativo:", error);
+                    alert("Falha ao abrir login do Google no aplicativo.");
+                }
+            } else {
+                // Fluxo SITE (WEB): Redirecionamento clássico HTTP!
+                window.location.href = `${API_URL}/auth/google/login`;
+            }
+        }
     </script>
 </body>
 

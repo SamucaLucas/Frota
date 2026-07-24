@@ -1,4 +1,3 @@
-{{define "Cadastro"}}
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -22,66 +21,131 @@
             <div class="hero">
                 <div class="hero-accent"></div>
                 <div style="display:flex; align-items:center; gap:12px; margin-top:6px">
-                    <a href="/login"
+                    <a href="login.html"
                         style="width:34px; height:34px; border:none; background:rgba(255,255,255,.12); border-radius:10px; color:#fff; cursor:pointer; font-size:17px; display:flex; align-items:center; justify-content:center; font-family:inherit; text-decoration:none;">←</a>
                     <span class="hero-title" style="font-size:18px;">Criar Conta</span>
                 </div>
             </div>
 
-            <form action="/cadastrar" method="POST" style="flex:1; padding:18px 18px 0; background:var(--bg2)">
+            <form id="formCadastro" style="flex:1; padding:18px 18px 0; background:var(--bg2)">
 
-                {{if .Erro}} <div class="toast-msg toast-error">{{.Erro}}</div> {{end}}
-                {{if .Sucesso}} <div class="toast-msg toast-success">{{.Sucesso}}</div> {{end}}
+                <div id="mensagem-erro" class="toast-msg toast-error" style="display: none;"></div>
+                <div id="mensagem-sucesso" class="toast-msg toast-success" style="display: none;"></div>
 
                 <div class="inp-wrap">
                     <span class="inp-icon">👤</span>
                     <div style="flex:1">
-                        <div class="inp">Nome Completo</div>
-                        <input class="inp" type="text" name="nome" required placeholder="Nome completo">
+                        <div class="inp-lbl">Nome Completo</div>
+                        <input class="inp" type="text" id="nome" name="nome" required placeholder="Nome completo">
                     </div>
                 </div>
 
                 <div class="inp-wrap">
                     <span class="inp-icon">✉️</span>
                     <div style="flex:1">
-                        <div class="inp">E-mail</div>
-                        <input class="inp" type="email" name="email" required placeholder="seu@email.com">
+                        <div class="inp-lbl">E-mail</div>
+                        <input class="inp" type="email" id="email" name="email" required placeholder="seu@email.com"
+                            autocapitalize="none">
                     </div>
                 </div>
 
                 <div class="inp-wrap">
                     <span class="inp-icon">📱</span>
                     <div style="flex:1">
-                        <div class="inp">WhatsApp</div>
-                        <input class="inp" type="tel" name="whatsapp" required placeholder="(94) 99999-9999">
+                        <div class="inp-lbl">WhatsApp</div>
+                        <input class="inp" type="tel" id="whatsapp" name="whatsapp" required
+                            placeholder="(94) 99999-9999" maxlength="15"
+                            oninput="this.value = mascaraWhatsApp(this.value)">
                     </div>
                 </div>
 
                 <div class="inp-wrap" style="margin-bottom:16px">
                     <span class="inp-icon">🔒</span>
                     <div style="flex:1">
-                        <div class="inp">Senha</div>
-                        <input class="inp" type="password" name="senha" required placeholder="Mínimo 8 caracteres">
+                        <div class="inp-lbl">Senha</div>
+                        <input class="inp" type="password" id="senha" name="senha" required
+                            placeholder="Mínimo 8 caracteres">
                     </div>
                 </div>
 
                 <div
                     style="display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; background:var(--bg3); border-radius:12px; padding:12px; border:1px solid var(--border)">
-                    <input type="checkbox" name="aceitou" value="false" required
+                    <input type="checkbox" id="aceitou" name="aceitou" value="true" required
                         style="margin-top:2px; width:15px; height:15px; accent-color:var(--acc); flex-shrink:0">
-                    <span style="font-size:11px; color:var(--t3); line-height:1.5">Li e aceito os <a href="/termos"
-                            style="color:var(--acc); text-decoration: none; font-weight: 700;">Termos de Uso e a
-                            Política
-                            de Privacidade</a></span>
+                    <span style="font-size:11px; color:var(--t3); line-height:1.5">Li e aceito os
+                        <a href="Termo.html" style="color:var(--acc); text-decoration: none; font-weight: 700;">Termos
+                            de Uso e a Política de Privacidade</a>
+                    </span>
                 </div>
 
-                <button type="submit" class="btn">Criar Minha Conta</button>
+                <button type="submit" class="btn" style="width: 100%;">Criar Minha Conta</button>
             </form>
         </div>
     </div>
 
     <script src="../static/app.js"></script>
+
+    <script>
+        function mascaraWhatsApp(v) {
+            v = v.replace(/\D/g, "");
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 2) v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+            if (v.length > 7) v = v.replace(/(\d{5})(\d)/, "$1-$2");
+            return v;
+        }
+        // ==========================================
+        // MÁGICA DA API REST (ENVIO DO CADASTRO)
+        // ==========================================
+        document.getElementById('formCadastro').addEventListener('submit', function (event) {
+            event.preventDefault(); // Impede a tela de recarregar
+
+            const nomeInput = document.getElementById('nome').value;
+            const emailInput = document.getElementById('email').value;
+            const whatsappInput = document.getElementById('whatsapp').value;
+            const senhaInput = document.getElementById('senha').value;
+
+            const msgErro = document.getElementById('mensagem-erro');
+            const btn = this.querySelector('button[type="submit"]');
+
+            msgErro.style.display = 'none';
+            btn.innerHTML = 'Criando conta...';
+            btn.disabled = true;
+
+            // Envia os dados no formato JSON para a API do Go
+            fetch("http://192.168.3.38:8082/api/cadastrar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    nome: nomeInput,
+                    email: emailInput,
+                    whatsapp: whatsappInput,
+                    senha: senhaInput
+                })
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        // Se a API já devolver o token de login após o cadastro, nós salvamos:
+                        if (dados.token) localStorage.setItem("token", dados.token);
+
+                        // Redireciona o cliente para a Home de Passageiro!
+                        window.location.href = "../Passageiro/home_Passageiro.html";
+                    } else {
+                        // Mostra erro (ex: E-mail já cadastrado)
+                        msgErro.textContent = dados.erro;
+                        msgErro.style.display = 'block';
+                        btn.innerHTML = 'Criar Minha Conta';
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    msgErro.textContent = "Erro de conexão com o servidor.";
+                    msgErro.style.display = 'block';
+                    btn.innerHTML = 'Criar Minha Conta';
+                    btn.disabled = false;
+                });
+        });
+    </script>
 </body>
 
 </html>
-{{end}}
