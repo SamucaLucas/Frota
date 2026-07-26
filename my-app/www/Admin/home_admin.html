@@ -1,4 +1,3 @@
-{{define "AdminHome"}}
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -42,7 +41,6 @@
             display: block !important;
             margin: 0 18px 12px;
             box-sizing: border-box;
-            /* Garante que o padding não aumente o tamanho do card */
         }
 
         .divl {
@@ -78,7 +76,7 @@
             color: #EF4444;
         }
 
-        /* --- ESTILOS DO MENU LATERAL (SIDEBAR) --- */
+        /* SIDEBAR */
         .menu-btn {
             position: absolute;
             top: 24px;
@@ -189,7 +187,6 @@
             opacity: 1;
         }
 
-        /* Estilo do Botão de Tema na Sidebar */
         .sb-theme-btn {
             margin: 20px;
             padding: 12px;
@@ -211,23 +208,19 @@
             background: var(--border);
         }
 
-        /* --- ESTILOS DOS FILTROS (SPRINT 3) --- */
+        /* FILTROS */
         .filter-container {
             display: flex;
             gap: 10px;
-            /* AJUSTE AQUI: Mudança de margin-top negativa para positiva para afastar do cabeçalho */
             margin: 10px 10px 20px;
-            /* AJUSTE AQUI: Adicionado position e z-index para garantir que os botões fiquem sobre a faixa vermelha */
             position: relative;
             z-index: 5;
             overflow-x: auto;
             scrollbar-width: none;
-            /* Firefox */
         }
 
         .filter-container::-webkit-scrollbar {
             display: none;
-            /* Safari/Chrome */
         }
 
         .filter-pill {
@@ -285,11 +278,9 @@
             <button class="sb-close" onclick="toggleMenu()">×</button>
         </div>
 
-        <button id="theme-toggle" class="sb-theme-btn">
-            ☀️ Alternar Tema
-        </button>
+        <button id="theme-toggle" class="sb-theme-btn">☀️ Alternar Tema</button>
 
-        <button class="sb-link active" onclick="window.location.href='/admin/home'">
+        <button class="sb-link active" onclick="window.location.href='home_admin.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
@@ -300,7 +291,7 @@
             </svg>
             Despacho
         </button>
-        <button class="sb-link" onclick="window.location.href='/admin/mapa'">
+        <button class="sb-link" onclick="window.location.href='mapa.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
@@ -309,14 +300,14 @@
             </svg>
             Mapa da Frota
         </button>
-        <button class="sb-link" onclick="window.location.href='/admin/sorteio'">
+        <button class="sb-link" onclick="window.location.href='../Em dev/contrucao.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
             Sorteio
         </button>
-        <button class="sb-link" onclick="window.location.href='/admin/motoristas'">
+        <button class="sb-link" onclick="window.location.href='../Em dev/contrucao.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -326,7 +317,7 @@
             </svg>
             Motoristas
         </button>
-        <button class="sb-link" onclick="window.location.href='/admin/config'">
+        <button class="sb-link" onclick="window.location.href='../Em dev/contrucao.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3" />
@@ -335,7 +326,7 @@
             </svg>
             Configurações
         </button>
-        <button class="sb-link" onclick="window.location.href='/logout'"
+        <button class="sb-link" onclick="fazerLogout()"
             style="margin-top: auto; color: #EF4444; border-bottom: none; border-top: 1px solid var(--border);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
@@ -363,7 +354,7 @@
                 <div class="row" style="align-items: flex-end;">
                     <div>
                         <div class="hero-subtitle">Gestão de Frota 👑</div>
-                        <div class="hero-title">Central, {{.Usuario.Nome}}</div>
+                        <div class="hero-title">Central, <span id="admin-nome">...</span></div>
                     </div>
                     <div style="width: 140px; margin-bottom: -15px;">
                         <img src="../static/img/Logo.png" class="sousa-logo logo-white"
@@ -372,7 +363,6 @@
                             style="width: 100%; height: auto;">
                     </div>
                 </div>
-
                 <div class="hero-accent"></div>
             </div>
 
@@ -381,16 +371,15 @@
                     Todos
                 </div>
                 <div class="filter-pill" onclick="filtrarListas('pendentes')" id="btn-pendentes">
-                    Pendentes <span class="badge-count">{{.TotalPendente}}</span>
+                    Pendentes <span class="badge-count" id="total-pendentes">0</span>
                 </div>
                 <div class="filter-pill" onclick="filtrarListas('aprovadas')" id="btn-aprovadas">
-                    Aprovadas <span class="badge-count">{{.TotalAprovado}}</span>
+                    Aprovadas <span class="badge-count" id="total-aprovadas">0</span>
                 </div>
             </div>
 
             <div id="secao-pendentes">
-                <div class="sec-lbl">Novas Solicitações 🔥 (Via API REST)</div>
-
+                <div class="sec-lbl">Novas Solicitações 🔥</div>
                 <div id="lista-pendentes-api">
                     <div style="text-align: center; padding: 20px; font-size: 12px; color: var(--t3);">
                         Carregando solicitações...
@@ -400,34 +389,11 @@
 
             <div id="secao-aprovadas">
                 <div class="sec-lbl">Agenda da Frota 📅</div>
-                {{if .Aprovadas}}
-                {{range .Aprovadas}}
-                <div class="card list-card" style="border-left: 3px solid #2ecc71;">
-                    <div class="row" style="margin-bottom: 8px;">
-                        <div style="font-size: 13px; font-weight: 800; color: var(--t1);">{{.Usuario.Nome}}</div>
-                        <span class="badge-green">Confirmada</span>
-                    </div>
-                    <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
-                        {{.OrigemTexto}} <span style="color:var(--t4);">→</span> {{.DestinoTexto}}
-                    </div>
-                    <div class="divl" style="margin: 10px 0;"></div>
-                    <div class="row" style="align-items: flex-end;">
-                        <div>
-                            <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅
-                                {{.DataHoraAgendada.Format "02/01/2006 às 15:04"}}</div>
-                            <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista:
-                                {{.Motorista.Nome}}</div>
-                        </div>
-                        <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ {{printf "%.2f"
-                            .ValorEstimado}}</div>
+                <div id="lista-aprovadas-api">
+                    <div style="text-align: center; padding: 20px; font-size: 12px; color: var(--t3);">
+                        Carregando agenda...
                     </div>
                 </div>
-                {{end}}
-                {{else}}
-                <div class="card list-card" style="text-align: center; padding: 20px 10px;">
-                    <div style="font-size: 12px; color: var(--t3);">A agenda está vazia.</div>
-                </div>
-                {{end}}
             </div>
 
         </div>
@@ -435,33 +401,18 @@
 
     <script src="../static/app.js"></script>
     <script>
-        // Pega o token da URL (se veio do login do Google Web)
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenURL = urlParams.get('token');
-
-        if (tokenURL) {
-            // Salva o token no navegador
-            localStorage.setItem("token", tokenURL);
-            // Limpa o ?token= da barra de endereço para ficar bonito
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-        // Função existente
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('open');
         }
 
-        // NOVA Função de Filtro
         function filtrarListas(tipo) {
-            // 1. Remove a cor ativa de todos os botões e aplica só no que foi clicado
             document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
             document.getElementById('btn-' + tipo).classList.add('active');
 
-            // 2. Busca os "envelopes" inteiros na tela
             const secaoPendentes = document.getElementById('secao-pendentes');
             const secaoAprovadas = document.getElementById('secao-aprovadas');
 
-            // 3. Mostra ou Esconde dependendo do botão clicado
             if (tipo === 'todos') {
                 secaoPendentes.style.display = 'block';
                 secaoAprovadas.style.display = 'block';
@@ -475,65 +426,124 @@
         }
 
         // ==========================================
-        // CONSUMINDO A API REST NO FRONTEND
+        // FLUXO DE CARREGAMENTO (API REST)
         // ==========================================
-        function carregarPendentesDaAPI() {
-            // 1. O celular bate na porta do Go pedindo os dados
-            fetch('/api/admin/pendentes')
-                .then(resposta => resposta.json()) // 2. Transforma o texto em Objeto
-                .then(pendentes => {
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
-                    const container = document.getElementById('lista-pendentes-api');
+        if (!token) {
+            window.location.href = "../Usuario/login.html";
+        } else {
+            carregarDadosAdmin();
+        }
 
-                    if (pendentes.length === 0) {
-                        container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div></div>';
-                        return;
-                    }
-
-                    let htmlDosCards = ''; // Variável de texto que vai guardar o HTML
-
-                    // 3. Em vez do do Go, usamos o forEach do JavaScript
-                    pendentes.forEach(corrida => {
-
-                        // Detalhe importante: Na API REST, as datas chegam cruas do banco (ex: "2025-06-20T14:30:00Z")
-                        // Precisamos formatar no JS, já que não temos mais o .Format do Go.
-                        let dataFormatada = new Date(corrida.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-
-                        // 4. Montamos o HTML do card misturando com as variáveis (usando a crase ` `)
-                        htmlDosCards += `
-                        <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;" onclick="window.location.href='/admin/despachar/${corrida.ID}'">
-                            <div class="row" style="margin-bottom:8px; align-items: flex-start;">
-                                <div style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
-                                    ${corrida.OrigemTexto} → ${corrida.DestinoTexto}
-                                </div>
-                                <span class="badge-red" style="margin-top: 2px;">Pendente</span>
-                            </div>
-
-                            <div style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-                                <span>📅 ${dataFormatada}</span>
-                                <span>·</span>
-                                <span>👤 ${corrida.Usuario.Nome}</span>
-                            </div>
-
-                            <button class="btn" style="font-size:12px; padding:12px; width:100%; box-sizing: border-box; margin-top: 12px;" onclick="event.stopPropagation(); window.location.href='/admin/despachar/${corrida.ID}'">
-                                Revisar e Despachar →
-                            </button>
-                        </div>`;
-                    });
-
-                    // 5. Injeta todo o HTML gerado de uma vez dentro da div vazia
-                    container.innerHTML = htmlDosCards;
+        function carregarDadosAdmin() {
+            fetch(`${window.API_URL}/api/admin/home`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+                .then(res => {
+                    if (res.status === 401 || res.status === 403) throw new Error("Sessão expirada");
+                    return res.json();
                 })
-                .catch(erro => {
-                    console.error("Erro ao buscar a API:", erro);
-                    document.getElementById('lista-pendentes-api').innerHTML = '<p style="color:red; text-align:center;">Erro ao carregar dados.</p>';
+                .then(dados => {
+                    if (dados.sucesso) {
+                        // Preenche Cabeçalho e Contadores
+                        document.getElementById('admin-nome').textContent = dados.usuario.Nome;
+                        document.getElementById('total-pendentes').textContent = dados.pendentes ? dados.pendentes.length : 0;
+                        document.getElementById('total-aprovadas').textContent = dados.aprovadas ? dados.aprovadas.length : 0;
+
+                        // Renderiza as Listas
+                        renderizarPendentes(dados.pendentes);
+                        renderizarAprovadas(dados.aprovadas);
+                    } else {
+                        alert("Erro ao carregar painel: " + dados.erro);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (err.message === "Sessão expirada") {
+                        fazerLogout(false);
+                    }
                 });
         }
 
-        // Manda o JS carregar a lista assim que a página abre
-        carregarPendentesDaAPI();
+        function renderizarPendentes(pendentes) {
+            const container = document.getElementById('lista-pendentes-api');
+            if (!pendentes || pendentes.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div></div>';
+                return;
+            }
+
+            let html = '';
+            pendentes.forEach(corrida => {
+                let dataFormatada = new Date(corrida.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                html += `
+                <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;" onclick="window.location.href='despachar.html?id=${corrida.ID}'">
+                    <div class="row" style="margin-bottom:8px; align-items: flex-start;">
+                        <div style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
+                            ${corrida.OrigemTexto} → ${corrida.DestinoTexto}
+                        </div>
+                        <span class="badge-red" style="margin-top: 2px;">Pendente</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                        <span>📅 ${dataFormatada}</span>
+                        <span>·</span>
+                        <span>👤 ${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</span>
+                    </div>
+                    <button class="btn" style="font-size:12px; padding:12px; width:100%; box-sizing: border-box; margin-top: 12px;" onclick="event.stopPropagation(); window.location.href='despachar.html?id=${corrida.ID}'">
+                        Revisar e Despachar →
+                    </button>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderizarAprovadas(aprovadas) {
+            const container = document.getElementById('lista-aprovadas-api');
+            if (!aprovadas || aprovadas.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">A agenda está vazia.</div></div>';
+                return;
+            }
+
+            let html = '';
+            aprovadas.forEach(corrida => {
+                let dataFormatada = new Date(corrida.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
+                let valor = corrida.ValorEstimado ? corrida.ValorEstimado.toFixed(2) : "0.00";
+
+                html += `
+                <div class="card list-card" style="border-left: 3px solid #2ecc71;">
+                    <div class="row" style="margin-bottom: 8px;">
+                        <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</div>
+                        <span class="badge-green">Confirmada</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                        ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
+                    </div>
+                    <div class="divl" style="margin: 10px 0;"></div>
+                    <div class="row" style="align-items: flex-end;">
+                        <div>
+                            <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 ${dataFormatada}</div>
+                            <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
+                        </div>
+                        <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ ${valor}</div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function fazerLogout(avisarApi = true) {
+            if (avisarApi) {
+                fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
+            }
+            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
+            window.location.href = "../Usuario/login.html";
+        }
     </script>
 </body>
 
 </html>
-{{end}}

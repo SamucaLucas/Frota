@@ -56,7 +56,15 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/api/passageiro/agendar", controller.AgendarViagem)
 	r.HandleFunc("/api/config-precos", controller.ApiConfigPrecos)
 
-	
+	// Rotas de API - Admin
+	r.HandleFunc("/api/admin/home", controller.HomeAdmin)
+	r.HandleFunc("/api/admin/despachar/", controller.ApiGetDespachar) // GET com o ID no final
+	r.HandleFunc("/api/admin/atribuir", controller.ApiPostAtribuir)   // POST salvando os dados
+
+	// Rotas de API - Motorista
+	r.HandleFunc("/api/motorista/home", controller.ApiHomeMotorista)
+	r.HandleFunc("/api/motorista/concluir", controller.ApiPostConcluirCorrida)
+
 	// Rotas do Google
 	r.HandleFunc("/auth/google/login", controller.GoogleLogin)
 	r.HandleFunc("/auth/google/callback", controller.GoogleCallback)

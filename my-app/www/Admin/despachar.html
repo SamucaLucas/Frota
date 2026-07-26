@@ -1,4 +1,3 @@
-{{define "AdminDespachar"}}
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -8,6 +7,21 @@
     <title>Despachar Corrida - Admin</title>
     <link rel="stylesheet" href="../static/style.css">
     <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
         .home-content {
             flex: 1;
             overflow-y: auto;
@@ -106,7 +120,7 @@
             border-color: var(--acc);
         }
 
-        /* --- ESTILOS DO MENU LATERAL --- */
+        /* SIDEBAR */
         .menu-btn {
             background: var(--card);
             border: 1px solid var(--border);
@@ -221,90 +235,110 @@
         }
     </script>
 
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sb-header">
+            Painel Admin
+            <button class="sb-close" onclick="toggleMenu()">×</button>
+        </div>
+        <button class="sb-link active" onclick="window.location.href='home_admin.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+            </svg>
+            Despacho
+        </button>
+        <button class="sb-link" onclick="window.location.href='mapa.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                <line x1="9" y1="3" x2="9" y2="18" />
+                <line x1="15" y1="6" x2="15" y2="21" />
+            </svg>
+            Mapa da Frota
+        </button>
+        <button class="sb-link" onclick="fazerLogout()"
+            style="margin-top: auto; color: #EF4444; border-bottom: none; border-top: 1px solid var(--border);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Sair da Conta
+        </button>
+    </div>
 
     <div class="app-container">
         <div class="home-content">
 
             <div class="header-top">
-                <button class="back-btn" onclick="window.location.href='/admin/home'">
+                <button class="back-btn" onclick="window.location.href='home_admin.html'">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                 </button>
                 <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Despachar</div>
-
+                <button class="menu-btn" onclick="toggleMenu()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
             </div>
 
-            <div class="card-hot">
+            <div id="mensagem-erro" class="toast-msg toast-error" style="display: none; margin-bottom: 16px;"></div>
+
+            <div class="card-hot" id="dados-corrida" style="display: none;">
                 <div
                     style="font-size:10px;color:var(--acc);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">
-                    📋 Solicitação #{{.Corrida.ID}}
+                    📋 Solicitação #<span id="corrida-id">...</span>
                 </div>
                 <div class="divl" style="margin-top:0"></div>
 
                 <div style="margin-bottom:8px">
                     <div class="meta">Passageiro</div>
-                    <div class="val">{{.Corrida.Usuario.Nome}} · {{.Corrida.Usuario.Whatsapp}}</div>
+                    <div class="val" id="corrida-passageiro">...</div>
                 </div>
                 <div style="margin-bottom:8px">
                     <div class="meta">Data e Hora Agendada</div>
-                    <div class="val">{{.Corrida.DataHoraAgendada.Format "02/01/2006 às 15:04"}}</div>
+                    <div class="val" id="corrida-data">...</div>
                 </div>
                 <div style="margin-bottom:8px">
                     <div class="meta">📍 Origem</div>
-                    <div class="val">{{.Corrida.OrigemTexto}}</div>
+                    <div class="val" id="corrida-origem">...</div>
                 </div>
                 <div style="margin-bottom:8px">
                     <div class="meta">🏁 Destino</div>
-                    <div class="val">{{.Corrida.DestinoTexto}}</div>
+                    <div class="val" id="corrida-destino">...</div>
                 </div>
                 <div class="divl"></div>
                 <div>
                     <div class="meta">Valor Estimado</div>
-                    <div class="val" style="color:var(--acc); font-weight: 800;">R$ {{printf "%.2f"
-                        .Corrida.ValorEstimado}}</div>
+                    <div class="val" style="color:var(--acc); font-weight: 800;" id="corrida-valor">R$ 0,00</div>
                 </div>
             </div>
 
             <div class="sec-lbl">Atribuir corrida para:</div>
 
-            <form method="POST" action="" id="form-despacho">
-                {{range .Motoristas}}
-                <label class="driver-card" onclick="selDrv(this)">
-                    <input type="radio" name="motorista_id" value="{{.ID}}" required>
-                    <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
-                        <div
-                            style="width:40px;height:40px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
-                            🚗
-                        </div>
-                        <div>
-                            <div style="font-size:13px;font-weight:600;color:var(--t1);">{{.Nome}}</div>
-                            <div style="font-size:10px;color:#22C55E;font-weight:600">● Motorista Disponível</div>
-                        </div>
-                    </div>
-                    <div class="dchk"></div>
-                </label>
-                {{end}}
-
-                <label class="driver-card" onclick="selDrv(this)">
-                    <input type="radio" name="motorista_id" value="{{.Usuario.ID}}" required>
-                    <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
-                        <div
-                            style="width:40px;height:40px;background:var(--acc-bg);border-radius:12px;border:1px solid var(--acc-border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
-                            👤
-                        </div>
-                        <div>
-                            <div style="font-size:13px;font-weight:600;color:var(--t1);">Assumir eu mesmo</div>
-                            <div style="font-size:10px;color:var(--t3);">Administrador</div>
-                        </div>
-                    </div>
-                    <div class="dchk"></div>
-                </label>
+            <form id="form-despacho">
+                <div id="lista-motoristas">
+                    <div style="text-align: center; font-size: 12px; color: var(--t3); padding: 20px;">Carregando
+                        motoristas...</div>
+                </div>
 
                 <div style="margin-top: 24px;">
-                    <button type="submit" class="btn" style="width: 100%; padding: 16px; font-size: 14px;">✓ Confirmar
-                        Atribuição</button>
+                    <button type="submit" class="btn" style="width: 100%; padding: 16px; font-size: 14px;"
+                        id="btn-submit" disabled>
+                        ✓ Confirmar Atribuição
+                    </button>
                 </div>
             </form>
 
@@ -313,16 +347,6 @@
 
     <script src="../static/app.js"></script>
     <script>
-        // Pega o token da URL (se veio do login do Google Web)
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenURL = urlParams.get('token');
-
-        if (tokenURL) {
-            // Salva o token no navegador
-            localStorage.setItem("token", tokenURL);
-            // Limpa o ?token= da barra de endereço para ficar bonito
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('open');
@@ -340,8 +364,156 @@
             element.style.borderColor = 'var(--acc)';
             element.style.background = 'var(--acc-bg)';
         }
+
+        function fazerLogout(avisarApi = true) {
+            if (avisarApi) {
+                fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
+            }
+            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
+            window.location.href = "../Usuario/login.html";
+        }
+
+        // ==========================================
+        // FLUXO DE CARREGAMENTO (API REST)
+        // ==========================================
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+        if (!token) window.location.href = "../Usuario/login.html";
+
+        // 1. Pega o ID da corrida na URL (ex: despachar.html?id=5)
+        const urlParams = new URLSearchParams(window.location.search);
+        const corridaIdStr = urlParams.get('id');
+
+        if (!corridaIdStr) {
+            alert("ID da corrida não encontrado.");
+            window.location.href = "home_admin.html";
+        }
+
+        // 2. Busca os dados da Corrida e a lista de Motoristas
+        fetch(`${window.API_URL}/api/admin/despachar/${corridaIdStr}`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.status === 401 || res.status === 403) throw new Error("Acesso Negado");
+                return res.json();
+            })
+            .then(dados => {
+                if (dados.sucesso) {
+                    preencherDetalhesCorrida(dados.corrida);
+                    renderizarMotoristas(dados.motoristas, dados.admin_id);
+                    document.getElementById('btn-submit').disabled = false;
+                } else {
+                    alert("Erro: " + dados.erro);
+                    window.location.href = "home_admin.html";
+                }
+            })
+            .catch(err => {
+                if (err.message === "Acesso Negado") fazerLogout(false);
+                console.error(err);
+            });
+
+        function preencherDetalhesCorrida(c) {
+            document.getElementById('dados-corrida').style.display = 'block';
+            document.getElementById('corrida-id').textContent = c.ID;
+            document.getElementById('corrida-passageiro').textContent = `${c.Usuario.Nome} · ${c.Usuario.Whatsapp}`;
+
+            const dataFmt = new Date(c.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            document.getElementById('corrida-data').textContent = dataFmt;
+
+            document.getElementById('corrida-origem').textContent = c.OrigemTexto;
+            document.getElementById('corrida-destino').textContent = c.DestinoTexto;
+            document.getElementById('corrida-valor').textContent = `R$ ${c.ValorEstimado.toFixed(2).replace('.', ',')}`;
+        }
+
+        function renderizarMotoristas(motoristas, adminId) {
+            const container = document.getElementById('lista-motoristas');
+            let html = "";
+
+            // Lista os motoristas reais
+            if (motoristas && motoristas.length > 0) {
+                motoristas.forEach(m => {
+                    html += `
+                    <label class="driver-card" onclick="selDrv(this)">
+                        <input type="radio" name="motorista_id" value="${m.ID}" required>
+                        <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                            <div style="width:40px;height:40px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+                                🚗
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:var(--t1);">${m.Nome}</div>
+                                <div style="font-size:10px;color:#22C55E;font-weight:600">● Motorista Disponível</div>
+                            </div>
+                        </div>
+                        <div class="dchk"></div>
+                    </label>`;
+                });
+            }
+
+            // Opção para o próprio Admin assumir
+            html += `
+            <label class="driver-card" onclick="selDrv(this)">
+                <input type="radio" name="motorista_id" value="${adminId}" required>
+                <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                    <div style="width:40px;height:40px;background:var(--acc-bg);border-radius:12px;border:1px solid var(--acc-border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+                        👤
+                    </div>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--t1);">Assumir eu mesmo</div>
+                        <div style="font-size:10px;color:var(--t3);">Administrador</div>
+                    </div>
+                </div>
+                <div class="dchk"></div>
+            </label>`;
+
+            container.innerHTML = html;
+        }
+
+        // ==========================================
+        // ENVIAR A ATRIBUIÇÃO VIA POST (JSON)
+        // ==========================================
+        document.getElementById('form-despacho').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const motoristaId = document.querySelector('input[name="motorista_id"]:checked').value;
+            const msgErro = document.getElementById('mensagem-erro');
+            const btn = document.getElementById('btn-submit');
+
+            msgErro.style.display = 'none';
+            btn.innerHTML = 'Atribuindo...';
+            btn.disabled = true;
+
+            fetch(`${window.API_URL}/api/admin/atribuir`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    corrida_id: parseInt(corridaIdStr),
+                    motorista_id: parseInt(motoristaId)
+                })
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        alert("Corrida atribuída com sucesso!");
+                        window.location.href = "home_admin.html";
+                    } else {
+                        msgErro.textContent = dados.erro;
+                        msgErro.style.display = 'block';
+                        btn.innerHTML = '✓ Confirmar Atribuição';
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    msgErro.textContent = "Erro de conexão.";
+                    msgErro.style.display = 'block';
+                    btn.innerHTML = '✓ Confirmar Atribuição';
+                    btn.disabled = false;
+                });
+        });
     </script>
 </body>
 
 </html>
-{{end}}

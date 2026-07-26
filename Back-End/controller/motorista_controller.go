@@ -1,80 +1,138 @@
-package controller
+package controller // ou o seu package atual
 
-/*
-type DadosHomeMotorista struct {
-	Usuario    structs.Usuario
-	Atribuidas []structs.Corrida
-	Concluidas []structs.Corrida
-}
+import (
+	"Frota/db"
+	"Frota/services"
+	"Frota/structs"
+	"encoding/json"
+	"net/http"
 
-func HomeMotorista(w http.ResponseWriter, r *http.Request) {
+	// "Frota/db"
+	// "Frota/services"
+	// "Frota/structs"
+	"gorm.io/gorm"
+)
+
+// ApiHomeMotorista (GET) devolve os dados do painel do motorista
+func ApiHomeMotorista(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
 	usuarioID, err := services.ExtrairUsuarioID(r)
 	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Sessão expirada. Faça login novamente."})
 		return
 	}
 
 	var motorista structs.Usuario
-	db.DB.First(&motorista, usuarioID)
+	if err := db.DB.First(&motorista, usuarioID).Error; err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Usuário não encontrado."})
+		return
+	}
 
 	// Proteção: Apenas motoristas entram aqui
 	if motorista.Papel != "motorista" {
-		http.Redirect(w, r, "/passageiro/home", http.StatusSeeOther)
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Acesso negado. Área restrita a motoristas."})
 		return
 	}
 
 	// 1. Busca as corridas que o Dudu despachou para este motorista
 	var atribuidas []structs.Corrida
-	db.DB.Preload("Usuario").Where("status = ? AND motorista_id = ?", "Aprovada", usuarioID).Order("data_hora_agendada ASC").Find(&atribuidas)
+	db.DB.Preload("Usuario").
+		Where("status = ? AND motorista_id = ?", "Aprovada", usuarioID).
+		Order("data_hora_agendada ASC").
+		Find(&atribuidas)
 
-	// 2. Busca o histórico de corridas que ele já finalizou hoje
+	// 2. Busca o histórico de corridas que ele já finalizou
 	var concluidas []structs.Corrida
-	db.DB.Preload("Usuario").Where("status = ? AND motorista_id = ?", "Concluida", usuarioID).Order("data_hora_agendada DESC").Limit(10).Find(&concluidas)
+	db.DB.Preload("Usuario").
+		Where("status = ? AND motorista_id = ?", "Concluida", usuarioID).
+		Order("data_hora_agendada DESC").
+		Limit(10).
+		Find(&concluidas)
 
-	dados := DadosHomeMotorista{
-		Usuario:    motorista,
-		Atribuidas: atribuidas,
-		Concluidas: concluidas,
-	}
-
-	err = temp.ExecuteTemplate(w, "MotoristaHome", dados)
-	if err != nil {
-		log.Println("Erro na renderização do Motorista:", err)
-	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"sucesso":    true,
+		"usuario":    motorista,
+		"atribuidas": atribuidas,
+		"concluidas": concluidas,
+	})
 }
 
-// ConcluirCorrida é acionada quando o motorista finaliza a viagem
-func ConcluirCorrida(w http.ResponseWriter, r *http.Request) {
+// ReqConcluir mapeia o JSON enviado pelo celular
+type ReqConcluir struct {
+	CorridaID int `json:"corrida_id"`
+}
+
+// ApiPostConcluirCorrida (POST) acionada quando o motorista finaliza a viagem
+func ApiPostConcluirCorrida(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/motorista/home", http.StatusSeeOther)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
-	corridaID := strings.TrimPrefix(r.URL.Path, "/motorista/concluir/")
-	if corridaID == "" {
-		http.Redirect(w, r, "/motorista/home", http.StatusSeeOther)
+	usuarioID, err := services.ExtrairUsuarioID(r)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Sessão expirada."})
 		return
 	}
 
-	// 1. Atualiza o status da corrida para "Concluida"
-	errDb := db.DB.Model(&structs.Corrida{}).Where("id = ?", corridaID).Update("status", "Concluida").Error
+	// Lê o JSON enviado pelo App {"corrida_id": X}
+	var req ReqConcluir
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Dados inválidos."})
+		return
+	}
+
+	if req.CorridaID == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "ID da corrida não informado."})
+		return
+	}
+
+	// 1. Busca a corrida e verifica segurança
+	var corrida structs.Corrida
+	if err := db.DB.First(&corrida, req.CorridaID).Error; err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Corrida não encontrada."})
+		return
+	}
+
+	// TRAVA DE SEGURANÇA: O motorista só pode concluir a própria corrida
+	if corrida.MotoristaID == nil || *corrida.MotoristaID != usuarioID {
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Você não tem permissão para alterar esta corrida."})
+		return
+	}
+
+	// 2. Atualiza o status da corrida para "Concluida"
+	errDb := db.DB.Model(&structs.Corrida{}).Where("id = ?", req.CorridaID).Update("status", "Concluida").Error
 	if errDb != nil {
-		log.Println("Erro ao concluir corrida:", errDb)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Erro ao salvar no banco."})
+		return
 	}
 
 	// ==========================================
 	// 🏆 MÁGICA DOS TOKENS: Recompensar o Passageiro
 	// ==========================================
-
-	// 2. Busca a corrida para saber quem foi o passageiro
-	var corrida structs.Corrida
-	db.DB.First(&corrida, corridaID)
-
 	if corrida.UsuarioID != 0 {
-		// 3. Adiciona +1 Token no saldo do Passageiro (Usando GORM Expr para somar de forma segura)
+		// Adiciona +1 Token no saldo do Passageiro
 		db.DB.Model(&structs.Usuario{}).Where("id = ?", corrida.UsuarioID).UpdateColumn("tokens", gorm.Expr("tokens + ?", 1))
 
-		// 4. Salva o recibo no Histórico de Tokens para o extrato do passageiro
+		// Salva o recibo no Histórico de Tokens para o extrato do passageiro
 		historico := structs.HistoricoToken{
 			UsuarioID:     corrida.UsuarioID,
 			Quantidade:    1,
@@ -83,7 +141,10 @@ func ConcluirCorrida(w http.ResponseWriter, r *http.Request) {
 		db.DB.Create(&historico)
 	}
 
-	// Redireciona de volta para a Home do Motorista
-	http.Redirect(w, r, "/motorista/home", http.StatusSeeOther)
+	// Responde sucesso para o Front-end!
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"sucesso":  true,
+		"mensagem": "Corrida finalizada com sucesso!",
+	})
 }
-*/
