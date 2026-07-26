@@ -4,10 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Carregando...</title>
+    <link rel="manifest" href="../manifest.json">
 </head>
 
 <body>
     <script>
+
         const token = localStorage.getItem("token");
 
         if (!token) {
@@ -42,6 +44,11 @@
                     // Em caso de offline/falha de servidor, pode mandar pro login ou tela de aviso
                     window.location.href = "Usuario/login.html";
                 });
+        }
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js')
+                .then(() => console.log('[PWA] Service Worker Registrado com Sucesso!'))
+                .catch(err => console.log('[PWA] Falha ao registrar Service Worker:', err));
         }
     </script>
 </body>

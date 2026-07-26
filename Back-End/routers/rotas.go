@@ -10,39 +10,6 @@ func ConfigurarRotas() *http.ServeMux {
 
 	r := http.NewServeMux()
 
-	/*
-		fs := http.FileServer(http.Dir("static"))
-		r.Handle("/static/", http.StripPrefix("/static/", fs))
-
-		r.HandleFunc("/construcao", controller.EmDesenvolvimento)
-		// --- Rotas de Usuário (Passageiro) ---
-		r.HandleFunc("/", controller.IndexHandler)
-		r.HandleFunc("/cadastrar", controller.CadastrarUsuario)
-		r.HandleFunc("/login", controller.LoginUsuario)
-		r.HandleFunc("/logout", controller.LogoutHandler)
-		r.HandleFunc("/termos", controller.TermosUsuario)
-
-		// Rotas do Google
-		r.HandleFunc("/auth/google/login", controller.GoogleLogin)
-		r.HandleFunc("/auth/google/callback", controller.GoogleCallback)
-		r.HandleFunc("/auth/google/completar", controller.CompletarCadastroGoogle)
-
-		// Rotas do Passageiro
-		r.HandleFunc("/passageiro/home", controller.HomePassageiro)
-		r.HandleFunc("/passageiro/agendar", controller.AgendarViagem)
-
-		// Rotas do Motorista
-		r.HandleFunc("/motorista/home", controller.HomeMotorista)
-		r.HandleFunc("/motorista/concluir/", controller.ConcluirCorrida)
-
-		// Rotas do Admin
-		r.HandleFunc("/admin/home", controller.HomeAdmin)
-		r.HandleFunc("/api/admin/pendentes", controller.ApiCorridasPendentes)
-
-		//r.HandleFunc("/admin/atribuir", controller.AtribuirCorrida)
-		r.HandleFunc("/admin/despachar/", controller.DespacharCorrida)
-		r.HandleFunc("/admin/mapa", controller.MapaAdmin)
-	*/
 	// Rotas de API - Usuario
 	r.HandleFunc("/api/login", controller.LoginUsuario)
 	r.HandleFunc("/api/cadastrar", controller.CadastrarUsuario)
