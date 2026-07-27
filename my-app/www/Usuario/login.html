@@ -142,9 +142,6 @@
     <script src="../static/app.js"></script>
 
     <script>
-        const API_URL = window.API_URL;
-
-
 
         // ==========================================
         // LÓGICA DE SENHA E CHECKBOX
@@ -179,7 +176,7 @@
             btnSubmit.innerHTML = 'Entrando...';
             btnSubmit.disabled = true;
 
-            fetch(`${API_URL}/api/login`, {
+            fetch(`${window.API_URL}/api/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: emailInput, senha: senhaInput })
@@ -228,7 +225,7 @@
                 try {
                     const googleUser = await CapacitorGoogleAuth.signIn();
 
-                    const response = await fetch(`${API_URL}/api/google/login`, {
+                    const response = await fetch(`${window.API_URL}/api/google/login`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -255,7 +252,7 @@
                     alert("Falha ao abrir login do Google no aplicativo.");
                 }
             } else {
-                window.location.href = `${API_URL}/auth/google/login`;
+                window.location.href = `${window.API_URL}/auth/google/login`;
             }
         }
 

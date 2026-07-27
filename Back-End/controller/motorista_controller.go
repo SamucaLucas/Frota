@@ -6,6 +6,7 @@ import (
 	"Frota/structs"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	// "Frota/db"
 	// "Frota/services"
@@ -147,4 +148,48 @@ func ApiPostConcluirCorrida(w http.ResponseWriter, r *http.Request) {
 		"sucesso":  true,
 		"mensagem": "Corrida finalizada com sucesso!",
 	})
+
+}
+
+// Estrutura temporária para ler o JSON que vem do celular
+type PayloadLocalizacao struct {
+	MotoristaID uint    `json:"motorista_id"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+	Status      string  `json:"status"`
+}
+
+// AtualizarLocalizacao recebe as coordenadas do Capacitor e salva no banco
+func AtualizarLocalizacao(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var payload PayloadLocalizacao
+
+	// Lê o JSON do corpo da requisição
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, `{"erro": "Dados inválidos"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Monta o objeto para o banco de dados
+	localizacao := structs.LocalizacaoMotorista{
+		MotoristaID: payload.MotoristaID,
+		Latitude:    payload.Latitude,
+		Longitude:   payload.Longitude,
+		Status:      payload.Status,
+		UpdatedAt:   time.Now(),
+	}
+
+	// Save() no GORM com a PK preenchida faz um "Upsert" (Salva se não existir, Atualiza se existir)
+	if err := db.DB.Save(&localizacao).Error; err != nil {
+		http.Error(w, `{"erro": "Falha ao salvar localização"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"mensagem": "Localização atualizada com sucesso!"})
 }

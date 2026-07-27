@@ -178,3 +178,25 @@ func ApiPostAtribuir(w http.ResponseWriter, r *http.Request) {
 		"sucesso": true,
 	})
 }
+
+// BuscarLocalizacoesAdmin retorna a posição de todos os motoristas ativos
+func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
+	// 1. Validação de Segurança: Bloqueia qualquer coisa que não seja GET
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"erro": "Método não permitido"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var localizacoes []structs.LocalizacaoMotorista
+
+	// 2. Busca todo mundo no banco de dados
+	if err := db.DB.Find(&localizacoes).Error; err != nil {
+		http.Error(w, `{"erro": "Falha ao buscar localizações"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// 3. Retorna o JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(localizacoes)
+}
