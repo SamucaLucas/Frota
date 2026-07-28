@@ -370,18 +370,26 @@
             popupAnchor: [0, -32]
         });
 
-        // Função que bate na API do Go e atualiza os motoristas no mapa
-        // Função que bate na API do Go (na porta correta 8082) e atualiza o mapa
+        // Função que bate na API do Go e atualiza o mapa
         async function atualizarMapaTempoReal() {
             try {
-                // Mude aqui para a porta exata onde o seu Go está rodando (8082)
-                const response = await fetch('http://localhost:8082/api/admin/motoristas/localizacao');
+                // Utiliza a variável global que aponta para o Render (ou localhost)
+                const urlBase = window.API_URL;
+                const tokenAdmin = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+                // Note que estou usando a rota que você já tem no Go
+                const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, {
+                    headers: { "Authorization": `Bearer ${tokenAdmin}` } // Sempre mande o token!
+                });
+
                 if (!response.ok) throw new Error('Erro na rede: ' + response.status);
 
                 const motoristas = await response.json();
-                console.log("Dados recebidos da API:", motoristas);
 
                 if (!Array.isArray(motoristas)) return;
+
+                // Cria um array com os IDs ativos nesta exata requisição
+                const idsAtivos = motoristas.map(m => m.motorista_id || m.MotoristaID);
 
                 motoristas.forEach(mot => {
                     const id = mot.motorista_id || mot.MotoristaID;
@@ -392,6 +400,7 @@
                     if (!id || !lat || !lng) return;
 
                     if (marcadoresMotoristas[id]) {
+                        // O carrinho já existe: move suavemente e atualiza o status
                         marcadoresMotoristas[id].setLatLng([lat, lng]);
                         marcadoresMotoristas[id].getPopup().setContent(`
                             <div style="font-family:Sora; font-size:12px;">
@@ -400,6 +409,7 @@
                             </div>
                         `);
                     } else {
+                        // Carrinho novo: plota no mapa
                         let novoMarcador = L.marker([lat, lng], { icon: iconeCarro })
                             .bindPopup(`
                                 <div style="font-family:Sora; font-size:12px;">
@@ -412,6 +422,17 @@
                         marcadoresMotoristas[id] = novoMarcador;
                     }
                 });
+
+                // LIMPEZA: Remove do mapa motoristas que caíram, fecharam o app ou estão Indisponíveis
+                Object.keys(marcadoresMotoristas).forEach(idMarcador => {
+                    // O ID do objeto é uma String, então convertemos para conferir com o array numérico do Go
+                    const idInt = parseInt(idMarcador);
+                    if (!idsAtivos.includes(idInt)) {
+                        map.removeLayer(marcadoresMotoristas[idMarcador]); // Remove do Leaflet
+                        delete marcadoresMotoristas[idMarcador]; // Remove da memória do navegador
+                    }
+                });
+
             } catch (error) {
                 console.error("Erro ao buscar localizações dos motoristas:", error);
             }
