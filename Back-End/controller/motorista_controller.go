@@ -6,6 +6,7 @@ import (
 	"Frota/structs"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	// "Frota/db"
@@ -192,4 +193,87 @@ func AtualizarLocalizacao(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"mensagem": "Localização atualizada com sucesso!"})
+}
+
+// Struct temporária para receber o JSON do Taxímetro
+type PayloadCorridaLivre struct {
+	MotoristaID   uint    `json:"motorista_id"`
+	UsuarioID     uint    `json:"usuario_id"`
+	OrigemLat     float64 `json:"origem_lat"`
+	OrigemLng     float64 `json:"origem_lng"`
+	DestinoLat    float64 `json:"destino_lat"`
+	DestinoLng    float64 `json:"destino_lng"`
+	KMRodado      float64 `json:"km_rodado"`
+	ValorEstimado float64 `json:"valor_estimado"` // NOVO CAMPO
+	ValorFinal    float64 `json:"valor_final"`
+	DataInicio    string  `json:"data_inicio"`
+}
+
+func SalvarCorridaLivre(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"erro": "Método não permitido"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var payload PayloadCorridaLivre
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, `{"erro": "Dados inválidos"}`, http.StatusBadRequest)
+		return
+	}
+
+	// VALIDAÇÃO DE SEGURANÇA NO BACKEND (Nunca confie apenas no Front)
+	if payload.ValorFinal < 10.00 {
+		http.Error(w, `{"erro": "Violação de regra: O valor final não pode ser inferior a R$ 10,00"}`, http.StatusBadRequest)
+		return
+	}
+
+	dataInicio, _ := time.Parse(time.RFC3339, payload.DataInicio)
+
+	novaCorrida := structs.Corrida{
+		UsuarioID:        payload.UsuarioID,
+		MotoristaID:      &payload.MotoristaID,
+		Tipo:             "livre",
+		DataHoraAgendada: dataInicio,
+		OrigemTexto:      "Embarque Avulso (Rua)",
+		OrigemLat:        payload.OrigemLat,
+		OrigemLng:        payload.OrigemLng,
+		DestinoTexto:     "Desembarque (Corrida Livre)",
+		DestinoLat:       payload.DestinoLat,
+		DestinoLng:       payload.DestinoLng,
+		KMRodado:         payload.KMRodado,
+		ValorEstimado:    payload.ValorEstimado, // Recebe do JS
+		ValorFinal:       payload.ValorFinal,    // Recebe do JS
+		Status:           "Concluida",
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+	}
+
+	if err := db.DB.Create(&novaCorrida).Error; err != nil {
+		http.Error(w, `{"erro": "Falha ao salvar corrida"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// GATILHO DE RECOMPENSA: Injeta 1 Token para o Passageiro
+	if payload.UsuarioID != 1 { // Supondo que 1 seja o usuário genérico
+		db.DB.Model(&structs.Usuario{}).Where("id = ?", payload.UsuarioID).UpdateColumn("tokens", gorm.Expr("tokens + ?", 1))
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"mensagem":   "Corrida livre salva com sucesso!",
+		"corrida_id": novaCorrida.ID,
+	})
+}
+
+func BuscarPassageiroAvulso(w http.ResponseWriter, r *http.Request) {
+	// Pega o que o motorista digitou e já converte tudo para minúsculo no Go
+	q := strings.ToLower(r.URL.Query().Get("q"))
+	var usuarios []structs.Usuario
+
+	// Usa o LOWER() do SQL para ignorar se o e-mail no banco tem letra maiúscula
+	db.DB.Where("LOWER(email) LIKE ? OR whatsapp LIKE ?", "%"+q+"%", "%"+q+"%").Limit(5).Find(&usuarios)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(usuarios)
 }

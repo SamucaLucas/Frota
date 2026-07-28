@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Taxímetro - Corrida Livre</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        body {
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: 'Sora', sans-serif;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .back-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .painel-taximetro {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .valor-display {
+            font-size: 52px;
+            font-weight: 900;
+            color: var(--acc);
+            margin-bottom: 10px;
+        }
+
+        .km-display {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--t1);
+            margin-bottom: 40px;
+        }
+
+        .status-badge {
+            background: var(--bg3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--t2);
+            margin-bottom: 30px;
+        }
+
+        .btn-iniciar {
+            background: #10B981;
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 800;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            cursor: pointer;
+        }
+
+        .btn-parar {
+            background: #EF4444;
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 800;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+            display: none;
+            cursor: pointer;
+        }
+
+        /* --- ESTILOS DO MODAL DE SALVAR CORRIDA --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+        }
+
+        .modal-content h3 {
+            margin: 0 0 10px 0;
+            color: var(--t1);
+            font-size: 20px;
+        }
+
+        .modal-resumo {
+            font-size: 16px;
+            color: var(--t2);
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .busca-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .busca-row input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg2);
+            color: var(--t1);
+            font-family: 'Sora', sans-serif;
+        }
+
+        .busca-row button {
+            background: var(--acc);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .lista-passageiros {
+            max-height: 150px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .radio-passageiro {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg2);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .radio-passageiro input {
+            accent-color: var(--acc);
+            transform: scale(1.2);
+        }
+
+        .radio-passageiro span {
+            color: var(--t1);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .btn-cancelar {
+            background: transparent;
+            border: none;
+            color: var(--t3);
+            font-weight: 700;
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <button class="back-btn" onclick="window.location.href='home_motorista.html'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Corrida Livre</div>
+    </div>
+
+    <div class="painel-taximetro">
+        <div class="status-badge" id="status-texto">Aguardando Início...</div>
+        <div class="valor-display" id="valor-atual">R$ 10,00</div>
+        <div class="km-display" id="km-atual">0.00 KM</div>
+
+        <button class="btn-iniciar" id="btn-iniciar" onclick="iniciarTaximetro()">▶ INICIAR CORRIDA</button>
+        <button class="btn-parar" id="btn-parar" onclick="finalizarTaximetro()">■ FINALIZAR E COBRAR</button>
+    </div>
+
+    <!-- MODAL DE SALVAR CORRIDA (Oculto por padrão) -->
+    <div class="modal-overlay" id="modal-salvar" style="display: none;">
+        <div class="modal-content">
+            <h3>Concluir Corrida</h3>
+            <div class="modal-resumo" id="modal-resumo-texto"></div>
+
+            <!-- CAMPO DE VALOR RECEBIDO -->
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--t3);">VALOR RECEBIDO (R$)</label>
+                <input type="number" id="input-valor-recebido" step="0.01" min="10.00"
+                    style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg2); color: var(--t1); font-size: 18px; font-weight: bold; margin-top: 5px;">
+                <small style="color: var(--acc); font-size: 10px;">Mínimo permitido: R$ 10,00</small>
+            </div>
+
+            <div style="text-align: left;">
+                <label
+                    style="font-size: 12px; font-weight: 700; color: var(--t3); margin-bottom: 8px; display: block;">VINCULAR
+                    PASSAGEIRO (OPCIONAL)</label>
+                <div class="busca-row">
+                    <input type="text" id="input-busca" placeholder="E-mail ou Telefone do cliente">
+                    <button type="button" id="btn-buscar-pass" onclick="buscarPassageiroAPI()">Buscar</button>
+                </div>
+
+                <div class="lista-passageiros" id="lista-passageiros">
+                    <!-- Opção Padrão (Sempre Visível) -->
+                    <label class="radio-passageiro">
+                        <input type="radio" name="passageiro_selecionado" value="1" checked>
+                        <span>Passageiro Avulso (Sem Token)</span>
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn-iniciar" onclick="salvarCorridaBanco()"
+                style="padding: 16px; font-size: 16px; margin-top: 10px;">💾 Salvar e Gerar Recibo</button>
+            <button class="btn-cancelar" onclick="fecharModal()">Voltar ao Taxímetro</button>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <script src="../static/gps_tracker.js"></script>
+    <script>
+        // Variáveis de Estado da Corrida
+        let taximetroAtivo = false;
+        let kmTotal = 0.0;
+
+        // Variáveis para o Banco de Dados
+        let dataHoraInicio = null;
+        let coordenadaOrigem = { lat: 0, lng: 0 };
+        let ultimaLatCorrida = null;
+        let ultimaLngCorrida = null;
+
+        // Regras de Negócio
+        const BASE_URBANO = 10.00;
+        const KM_URBANO = 2.50;
+        const KM_INTER = 4.00;
+        const LIMITE_URBANO = 20.0;
+        const URL_API = window.API_URL || "http://192.168.3.38:8082";
+
+        function calcularPreco(km) {
+            let valor = 0;
+            if (km <= LIMITE_URBANO) {
+                valor = km * KM_URBANO;
+            } else {
+                valor = (LIMITE_URBANO * KM_URBANO) + ((km - LIMITE_URBANO) * KM_INTER);
+            }
+            return valor < BASE_URBANO ? BASE_URBANO : valor;
+        }
+
+        function atualizarTela() {
+            document.getElementById("km-atual").innerText = kmTotal.toFixed(2) + " KM";
+            const preco = calcularPreco(kmTotal);
+            document.getElementById("valor-atual").innerText = "R$ " + preco.toFixed(2).replace('.', ',');
+        }
+
+        function iniciarTaximetro() {
+            if (!window.GPSGlobal) {
+                alert("O motor de GPS não foi carregado. Verifique sua conexão.");
+                return;
+            }
+
+            taximetroAtivo = true;
+            kmTotal = 0.0;
+            ultimaLatCorrida = null;
+            ultimaLngCorrida = null;
+            coordenadaOrigem = { lat: 0, lng: 0 };
+            dataHoraInicio = new Date().toISOString(); // Guarda a hora do início para o BD
+
+            document.getElementById("btn-iniciar").style.display = "none";
+            document.getElementById("btn-parar").style.display = "block";
+            document.getElementById("status-texto").innerText = "🟢 Corrida em Andamento";
+            document.getElementById("status-texto").style.color = "#10B981";
+            document.getElementById("status-texto").style.background = "rgba(16, 185, 129, 0.1)";
+
+            atualizarTela();
+
+            // 1. Muda o status pro mapa do Admin ver dinamicamente
+            window.GPSGlobal.mudarStatus("Em Corrida Livre");
+
+            // 2. "Pluga" o taxímetro no GPS Global
+            window.GPSGlobal.callbackTela = function (latAtual, lngAtual) {
+                if (!taximetroAtivo) return;
+
+                // Grava a coordenada de origem no primeiro pulso
+                if (coordenadaOrigem.lat === 0) {
+                    coordenadaOrigem = { lat: latAtual, lng: lngAtual };
+                }
+
+                if (ultimaLatCorrida !== null && ultimaLngCorrida !== null) {
+                    // Usa a fórmula de Haversine que agora mora no GPSGlobal
+                    kmTotal += window.GPSGlobal.calcularDistancia(ultimaLatCorrida, ultimaLngCorrida, latAtual, lngAtual);
+                    atualizarTela();
+                }
+
+                ultimaLatCorrida = latAtual;
+                ultimaLngCorrida = lngAtual;
+            };
+        }
+
+        // ==========================================
+        // LÓGICA DO MODAL E FECHAMENTO DE CORRIDA
+        // ==========================================
+        function finalizarTaximetro() {
+            taximetroAtivo = false;
+
+            // "Despluga" o taxímetro e avisa o Admin que o motorista voltou a ficar livre
+            if (window.GPSGlobal) {
+                window.GPSGlobal.callbackTela = null;
+                window.GPSGlobal.mudarStatus("Disponível");
+            }
+
+            const valorSugerido = calcularPreco(kmTotal);
+
+            // Preenche o resumo e já injeta o valor sugerido no campo de input
+            document.getElementById("modal-resumo-texto").innerHTML =
+                `<b>Valor Sugerido:</b> R$ ${valorSugerido.toFixed(2).replace('.', ',')} <br> <b>Distância:</b> ${kmTotal.toFixed(2)} KM`;
+
+            document.getElementById("input-valor-recebido").value = valorSugerido.toFixed(2);
+
+            document.getElementById("modal-salvar").style.display = "flex";
+        }
+
+        function fecharModal() {
+            document.getElementById("modal-salvar").style.display = "none";
+        }
+
+        // Busca o passageiro na API do Go com Feedback Visual (UX) e Tratamento de Erros
+        async function buscarPassageiroAPI() {
+            const inputBusca = document.getElementById("input-busca");
+            const btnBusca = document.getElementById("btn-buscar-pass");
+            const query = inputBusca.value.trim();
+
+            if (!query) {
+                alert("Por favor, digite um e-mail ou telefone para buscar.");
+                return;
+            }
+
+            // Efeito visual de carregamento
+            const textoOriginal = btnBusca.innerText;
+            btnBusca.innerText = "Buscando...";
+            btnBusca.disabled = true;
+
+            try {
+                const response = await fetch(`${URL_API}/api/motorista/buscar-passageiro?q=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error("Erro na requisição");
+
+                const usuarios = await response.json();
+                const containerLista = document.getElementById("lista-passageiros");
+
+                // Limpa resultados anteriores, mantendo a opção avulsa padrão
+                containerLista.innerHTML = `
+                    <label class="radio-passageiro">
+                        <input type="radio" name="passageiro_selecionado" value="1" checked>
+                        <span>Passageiro Avulso (Sem Token)</span>
+                    </label>
+                `;
+
+                // Verifica se a lista veio vazia
+                if (!usuarios || usuarios.length === 0) {
+                    alert(`Nenhum passageiro encontrado com o dado: "${query}".\nVerifique se digitou corretamente.`);
+                } else {
+                    // Se achou, monta a lista tratando Maiúsculas/Minúsculas
+                    usuarios.forEach(user => {
+                        const id = user.id || user.ID;
+                        const nome = user.nome || user.Nome || "Cliente";
+                        const telefone = user.telefone || user.Telefone || "";
+                        const email = user.email || user.Email || "";
+
+                        const contato = telefone !== "" ? telefone : email;
+
+                        const label = document.createElement("label");
+                        label.className = "radio-passageiro";
+                        label.innerHTML = `
+                            <input type="radio" name="passageiro_selecionado" value="${id}">
+                            <span>${nome} (${contato})</span>
+                        `;
+                        containerLista.appendChild(label);
+                    });
+                }
+
+            } catch (err) {
+                alert("Erro ao conectar com o servidor para buscar o passageiro.");
+            } finally {
+                // Devolve o botão ao estado normal independente de dar certo ou erro
+                btnBusca.innerText = textoOriginal;
+                btnBusca.disabled = false;
+            }
+        }
+
+        // Salva a corrida definitiva no banco de dados e gera o Recibo
+        async function salvarCorridaBanco() {
+            // Lê o ID de forma segura puxando da função global
+            const motoristaId = window.GPSGlobal ? window.GPSGlobal.obterIdToken() : 1;
+            const radioSelecionado = document.querySelector('input[name="passageiro_selecionado"]:checked');
+            const passageiroId = radioSelecionado ? parseInt(radioSelecionado.value) : 1;
+
+            const valorSugerido = calcularPreco(kmTotal);
+            let valorRecebido = parseFloat(document.getElementById("input-valor-recebido").value);
+
+            // VALIDAÇÃO DE SEGURANÇA NO FRONTEND
+            if (isNaN(valorRecebido) || valorRecebido < BASE_URBANO) {
+                alert(`O valor recebido não pode ser menor que a base de R$ ${BASE_URBANO.toFixed(2).replace('.', ',')}.`);
+                return; // Trava o envio
+            }
+
+            const payload = {
+                motorista_id: motoristaId,
+                usuario_id: passageiroId,
+                origem_lat: coordenadaOrigem.lat || ultimaLatCorrida,
+                origem_lng: coordenadaOrigem.lng || ultimaLngCorrida,
+                destino_lat: ultimaLatCorrida,
+                destino_lng: ultimaLngCorrida,
+                km_rodado: kmTotal,
+                valor_estimado: valorSugerido, // Manda o que o app calculou
+                valor_final: valorRecebido,    // Manda o que o motorista de fato cobrou
+                data_inicio: dataHoraInicio || new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(`${URL_API}/api/motorista/corrida-livre`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const dados = await response.json();
+
+                if (response.ok) {
+                    fecharModal();
+                    alert(`✅ Corrida Salva com Sucesso!\nTokens ativados!\nID da Corrida: ${dados.corrida_id}`);
+
+                    // Reset total da tela
+                    kmTotal = 0.0;
+                    ultimaLatCorrida = null;
+                    ultimaLngCorrida = null;
+                    coordenadaOrigem = { lat: 0, lng: 0 };
+                    atualizarTela();
+
+                    document.getElementById("btn-parar").style.display = "none";
+                    document.getElementById("btn-iniciar").style.display = "block";
+                    document.getElementById("status-texto").innerText = "Aguardando Início...";
+                    document.getElementById("status-texto").style.color = "var(--t2)";
+                    document.getElementById("status-texto").style.background = "var(--bg3)";
+
+                    // FUTURO: Aqui chamaremos a função gerarReciboPDF(dados.corrida_id)
+                } else {
+                    alert("Erro ao salvar: " + dados.erro);
+                }
+            } catch (err) {
+                alert("Falha de conexão com o servidor ao salvar.");
+            }
+        }
+    </script>
+</body>
+
+</html>

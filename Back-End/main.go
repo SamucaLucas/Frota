@@ -5,11 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	// "Frota/config"
 	"Frota/controller"
 	"Frota/db"
 	"Frota/routers"
+	"Frota/structs"
 
 	"github.com/joho/godotenv"
 )
@@ -35,6 +37,33 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func IniciarMonitoramentoMotoristas() {
+	// Cria um "relógio" que bate a cada 1 minuto
+	ticker := time.NewTicker(1 * time.Minute)
+
+	// Cria uma Goroutine (uma thread rodando em segundo plano separada da API)
+	go func() {
+		for {
+			<-ticker.C // Espera o relógio bater
+
+			// Define o tempo limite: Agora menos 2 minutos
+			tempoLimite := time.Now().Add(-2 * time.Minute)
+
+			// Atualiza no banco: Quem não manda sinal há mais de 2 minutos e ainda está "Disponível", vira "Indisponível"
+			// Substitua "SuaTabelaDeLocalizacao" pela tabela real onde você salva o GPS (ex: models.LocalizacaoMotorista)
+			resultado := db.DB.Model(&structs.LocalizacaoMotorista{}).
+				Where("updated_at < ? AND status = ?", tempoLimite, "Disponível").
+				Update("status", "Indisponível")
+
+			if resultado.Error != nil {
+				log.Println("Erro ao varrer motoristas inativos:", resultado.Error)
+			} else if resultado.RowsAffected > 0 {
+				log.Printf("🧹 Varredor: %d motoristas inativos foram marcados como Indisponíveis.\n", resultado.RowsAffected)
+			}
+		}
+	}()
+}
+
 func main() {
 	// 1. Carregar as variáveis de ambiente do arquivo .env
 	err := godotenv.Load()
@@ -50,6 +79,8 @@ func main() {
 
 	// 3. Aqui carregaremos as rotas (pasta routers)
 	r := routers.ConfigurarRotas()
+
+	IniciarMonitoramentoMotoristas()
 
 	// Subindo o servidor
 	port := os.Getenv("PORT")

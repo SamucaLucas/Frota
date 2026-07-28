@@ -1,29 +1,28 @@
-# Fix for Mixed Content Error (HTTPS to HTTP)
+# Fix for Login Error in Native App (Mixed Content and CORS)
 
-The application is running on `https://localhost` (Capacitor default) and trying to access an API at `http://192.168.3.38:8082`. The Android WebView blocks this by default as it is "Mixed Content" (insecure HTTP request from a secure HTTPS page).
+The app works in the mobile browser because it's likely being accessed via the same IP/Origin as the API, or the browser is less strict with `http` to `http` requests. In the native app, Capacitor uses `https://localhost` as the origin, which causes two problems when calling an `http` API:
+1. **Mixed Content**: HTTPS pages cannot call HTTP APIs (Blocked by Chromium).
+2. **CORS**: The server might not be configured to allow requests from `https://localhost`.
 
 ## Proposed Changes
 
-### [app] (file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app)
+### [Capacitor Config] (file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/capacitor.config.json)
 
-#### [MODIFY] [MainActivity.java](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/java/com/sousa/app/MainActivity.java)
+#### [MODIFY] [capacitor.config.json](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/capacitor.config.json)
 
-- Override the `onStart` method to configure the WebView to allow mixed content.
-- Use `WebSettings.MIXED_CONTENT_ALWAYS_ALLOW` to permit HTTP requests from the HTTPS local server.
+- Change the `androidScheme` to `http`. This converts the app's origin to `http://localhost`, eliminating the "Mixed Content" security block when calling your `http://192.168.3.38` API.
+- Enable `CapacitorHttp` plugin. This will automatically intercept `fetch` calls and run them through native Android code, which bypasses CORS restrictions.
 
-#### [NEW] [network_security_config.xml](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/res/xml/network_security_config.xml)
+### [Frontend Code] (file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/Usuario/login.html)
 
-- Explicitly allow cleartext traffic for the local IP `192.168.3.38` and `localhost`.
-- This ensures the Android network layer doesn't block the request even if the WebView allows it.
+#### [MODIFY] [login.html](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/Usuario/login.html)
 
-#### [MODIFY] [AndroidManifest.xml](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/AndroidManifest.xml)
-
-- Reference the new `network_security_config.xml` in the `<application>` tag.
-- (Optional but recommended) Keep `android:usesCleartextTraffic="true"`.
+- Prevent Service Worker registration when running in a native environment. Service Workers have extremely strict security and often block non-HTTPS traffic regardless of WebView settings.
 
 ## Verification Plan
 
 ### Manual Verification
-- Deploy the app to the device.
-- Attempt to login again.
-- Verify in the Inspector that the "Mixed Content" error no longer appears and the request succeeds.
+- Rebuild the app: `npm run build` and then `npx cap copy android`.
+- Run the app on the device.
+- Try to login.
+- Check logcat for any remaining `chromium` errors.

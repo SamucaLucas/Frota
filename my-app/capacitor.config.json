@@ -3,10 +3,18 @@
   "appName": "Sousa LT",
   "webDir": "www",
   "bundledWebRuntime": false,
+  "server": {
+    "//": "Para Produção: mude androidScheme para https por segurança",
+    "androidScheme": "http",
+    "cleartext": true
+  },
   "plugins": {
     "SplashScreen": {
       "launchAutoHide": true,
       "launchShowDuration": 2000
+    },
+    "CapacitorHttp": {
+      "enabled": true
     }
   }
 }

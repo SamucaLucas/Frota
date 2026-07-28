@@ -1,27 +1,39 @@
-# Walkthrough - Fixed Mixed Content (HTTP to HTTPS) Error for Testing
+# Walkthrough - Fix for Login Error in Native App (Testing Mode)
 
-I have updated the application to allow HTTP requests from the local HTTPS server, which is necessary for your tests since the API is running on an insecure HTTP endpoint (`192.168.3.38:8082`).
+I have updated the Capacitor configuration and the frontend code to allow the native app to communicate with your local HTTP server (`http://192.168.3.38:8082`) without being blocked by security policies.
 
-## Changes
+## Changes Made
 
-### [app] (file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app)
+### 1. Capacitor Configuration
+- **File**: [capacitor.config.json](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/capacitor.config.json)
+- **Change**: Added `androidScheme: "http"` and enabled the `CapacitorHttp` plugin.
+- **Why**: By default, Capacitor uses `https`, which blocks calls to `http` (Mixed Content). Using `http://localhost` as the app's internal origin solves this. `CapacitorHttp` also helps bypass CORS issues.
 
-#### [MainActivity.java](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/java/com/sousa/app/MainActivity.java)
-- Configured the WebView to allow mixed content modes (`MIXED_CONTENT_ALWAYS_ALLOW`). This tells the browser engine in the app to not block HTTP requests coming from the `https://localhost` shell.
+### 2. Frontend Security (Service Workers)
+- **Files**: [login.html](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/Usuario/login.html) and [index.html](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/index.html)
+- **Change**: Added a check to skip Service Worker registration when running as a native app.
+- **Why**: Service Workers have extremely strict security that often blocks HTTP traffic even if the WebView is configured to allow it.
 
-#### [network_security_config.xml](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/res/xml/network_security_config.xml)
-- Created a new configuration that explicitly permits "cleartext traffic" (HTTP) for `localhost` and your specific development IP `192.168.3.38`.
+## 🛡️ How to Revert for Production (Safe Mode)
 
-#### [AndroidManifest.xml](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/AndroidManifest.xml)
-- Linked the `network_security_config` to the application tag.
+When you are ready to move to production and use HTTPS for everything, follow these steps:
 
-## Verification Results
+> [!IMPORTANT]
+> **1. Capacitor Config:**
+> In `capacitor.config.json`, change `androidScheme` back to `"https"` or remove the line.
 
-### Automated Tests
-- **Gradle Sync**: Successful. The project is ready to be deployed.
+> [!IMPORTANT]
+> **2. Service Workers:**
+> In `login.html` and `index.html`, remove the condition `!(window.Capacitor && window.Capacitor.isNativePlatform())` from the `navigator.serviceWorker.register` check.
 
-### Manual Verification Required
-- Please deploy the app to your device again. The "Mixed Content" error in the inspector should now be gone, and the login request to `http://192.168.3.38:8082` should proceed correctly.
+> [!IMPORTANT]
+> **3. Android Manifest:**
+> Remove `android:usesCleartextTraffic="true"` and `android:networkSecurityConfig="@xml/network_security_config"` from `AndroidManifest.xml` if you no longer need local testing.
 
-> [!WARNING]
-> This configuration is ideal for **development and testing**. For a production app, it is strongly recommended to use HTTPS for all API endpoints and revert these changes to ensure user data security.
+## Next Steps for You
+
+Since I modified files in the `www` folder, you need to synchronize these changes with the Android project:
+
+1.  Open your terminal in the project root.
+2.  Run: `npx cap copy android`
+3.  Build and run the app again in Android Studio.
