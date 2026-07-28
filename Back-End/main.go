@@ -88,10 +88,13 @@ func main() {
 		port = "8082" // Notei que no seu teste anterior estava 8082! Ajuste se necessário.
 	}
 
-	fmt.Println("🚀 Servidor Frota API rodando: http://localhost:" + port)
+	fmt.Println("🚀 Servidor da Frota rodando na porta:", port)
 
-	// A MÁGICA ACONTECE AQUI: Envolvemos as suas rotas 'r' dentro do nosso corsMiddleware!
-	if err := http.ListenAndServe(":"+port, corsMiddleware(r)); err != nil {
-		log.Fatal("❌ Erro fatal ao iniciar o servidor: ", err)
+	// 3. Inicia o servidor com o CORS ativado
+	err = http.ListenAndServe("0.0.0.0:"+port, corsMiddleware(r))
+	if err != nil {
+		fmt.Println("Erro ao iniciar servidor:", err)
 	}
+
+	
 }
