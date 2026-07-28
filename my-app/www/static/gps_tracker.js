@@ -1,10 +1,10 @@
 // ==========================================
-// MOTOR GLOBAL DE RASTREAMENTO (CAPACITOR)
+// MOTOR GLOBAL DE RASTREAMENTO (HÍBRIDO: NATIVO E WEB)
 // ==========================================
 
 window.GPSGlobal = {
     watcherId: null,
-    statusAtual: "Disponível", // Status padrão ao logar
+    statusAtual: "Disponível", 
     ultimaLat: null,
     ultimaLng: null,
     callbackTela: null,
@@ -14,94 +14,116 @@ window.GPSGlobal = {
         if (!token) return null;
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.usuario_id || payload.id || payload.sub || null;
+            return payload.id || payload.ID || payload.Id || payload.usuario_id || payload.UsuarioID || payload.sub || null;
         } catch (e) {
             return null;
         }
     },
 
+    obterToken: function() {
+        return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+    },
+
     iniciar: async function () {
-        
-        if (!window.Capacitor || !window.Capacitor.isNativePlatform()) {
-            console.warn("[GPS Global] Rodando no navegador. Background inativo.");
-            return;
-        }
-
-
         if (this.watcherId !== null) return;
 
         const motoristaId = this.obterIdToken();
         if (!motoristaId) return;
 
-        const baseUrl = window.API_URL || "http://192.168.3.38:8082";
+        const baseUrl = window.API_URL || "https://sua-api.onrender.com";
+        const token = this.obterToken();
 
         console.log("[GPS Global] Iniciado para o motorista ID:", motoristaId);
-        
-        // Garante que o Admin saiba que ele entrou
         this.forcarEnvioStatus("Disponível"); 
 
-        this.watcherId = await window.Capacitor.Plugins.BackgroundGeolocation.addWatcher(
-            {
-                backgroundMessage: "Sua localização está sendo atualizada.",
-                backgroundTitle: "Motorista Ativo",
-                requestPermissions: true,
-                stale: false,
-                distanceFilter: 0
-            },
-            (location, error) => {
-                if (error) return;
-
-                const lat = location.latitude;
-                const lng = location.longitude;
-
-                this.ultimaLat = lat;
-                this.ultimaLng = lng;
-
-                // 1. Envia para a API do Admin ver no mapa
-                fetch(`${baseUrl}/api/motorista/localizacao`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        motorista_id: motoristaId,
-                        latitude: lat,
-                        longitude: lng,
-                        status: this.statusAtual 
-                    })
-                }).catch(() => { });
-
-                // 2. Se alguma tela estiver plugada (ex: Taxímetro), manda os dados para ela
-                if (typeof this.callbackTela === 'function') {
-                    this.callbackTela(lat, lng);
+        // 1. SE FOR APLICATIVO NATIVO (ANDROID)
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+            this.watcherId = await window.Capacitor.Plugins.BackgroundGeolocation.addWatcher(
+                {
+                    backgroundMessage: "Sua localização está sendo atualizada.",
+                    backgroundTitle: "Motorista Ativo",
+                    requestPermissions: true,
+                    stale: false,
+                    distanceFilter: 0
+                },
+                (location, error) => {
+                    if (error) {
+                        console.error("Erro no GPS Nativo:", error);
+                        return;
+                    }
+                    this.processarCoordenada(location.latitude, location.longitude, motoristaId, baseUrl, token);
                 }
+            );
+        } 
+        // 2. SE FOR NAVEGADOR WEB (PC OU PWA)
+        else {
+            console.warn("[GPS Global] Rodando no navegador. Usando GPS Web (Foreground).");
+            if ("geolocation" in navigator) {
+                this.watcherId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        this.processarCoordenada(position.coords.latitude, position.coords.longitude, motoristaId, baseUrl, token);
+                    },
+                    (error) => {
+                        console.error("Erro no GPS Web:", error);
+                    },
+                    { enableHighAccuracy: true, maximumAge: 0 }
+                );
+            } else {
+                console.error("Geolocalização não é suportada neste navegador.");
             }
-        );
+        }
+    },
+
+    processarCoordenada: function(lat, lng, motoristaId, baseUrl, token) {
+        this.ultimaLat = lat;
+        this.ultimaLng = lng;
+
+        // Envia para o Go com o Token de Autorização!
+        fetch(`${baseUrl}/api/motorista/localizacao`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({
+                motorista_id: parseInt(motoristaId),
+                latitude: lat,
+                longitude: lng,
+                status: this.statusAtual 
+            })
+        }).catch(() => { });
+
+        // Manda os dados para o Taxímetro, se ele estiver aberto
+        if (typeof this.callbackTela === 'function') {
+            this.callbackTela(lat, lng);
+        }
     },
 
     parar: function () {
-        // Dispara o status Indisponível antes de desligar os motores
         this.forcarEnvioStatus("Indisponível");
 
-        if (this.watcherId !== null && window.Capacitor) {
-            window.Capacitor.Plugins.BackgroundGeolocation.removeWatcher({ id: this.watcherId });
+        if (this.watcherId !== null) {
+            // Desliga o motor correto dependendo de onde o app está rodando
+            if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                window.Capacitor.Plugins.BackgroundGeolocation.removeWatcher({ id: this.watcherId });
+            } else if ("geolocation" in navigator) {
+                navigator.geolocation.clearWatch(this.watcherId);
+            }
             this.watcherId = null;
         }
     },
 
     mudarStatus: function (novoStatus) {
         this.statusAtual = novoStatus;
-        // Força um envio instantâneo para o Admin ver a mudança na hora, sem esperar o GPS pulsar
         this.forcarEnvioStatus(novoStatus);
     },
 
-    // Função vital para mandar o "Último Suspiro" ou forçar atualizações
-    // Função vital para mandar o "Último Suspiro" ou forçar atualizações
     forcarEnvioStatus: function (statusForcado) {
         const motoristaId = this.obterIdToken();
-        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-        
+        const token = this.obterToken();
         if (!motoristaId) return; 
 
-        const baseUrl = window.API_URL || "http://192.168.3.38:8082";
+        const baseUrl = window.API_URL || "https://sua-api.onrender.com";
         const lat = this.ultimaLat || 0.0;
         const lng = this.ultimaLng || 0.0;
 
@@ -112,17 +134,15 @@ window.GPSGlobal = {
             status: statusForcado
         });
 
-        // Usamos o fetch com 'keepalive' em vez de sendBeacon. 
-        // Ele garante o envio no fechamento do app e aceita headers de Autenticação!
         fetch(`${baseUrl}/api/motorista/localizacao`, {
             method: 'POST',
-            keepalive: true, // A mágica acontece aqui
+            keepalive: true,
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Garante que o Go não vai bloquear
+                'Authorization': `Bearer ${token}` 
             },
             body: payload
-        }).catch(err => console.error("Erro no último suspiro:", err));
+        }).catch(err => console.error("Erro no envio forçado:", err));
     },
 
     calcularDistancia: function (lat1, lon1, lat2, lon2) {
@@ -135,18 +155,12 @@ window.GPSGlobal = {
     }
 };
 
-// ==========================================
-// GATILHOS DE CICLO DE VIDA DO APP
-// ==========================================
-
-// 1. Liga o GPS ao abrir o App (se estiver logado)
 document.addEventListener("DOMContentLoaded", () => {
     if (localStorage.getItem("token") || sessionStorage.getItem("token")) {
         window.GPSGlobal.iniciar();
     }
 });
 
-// 2. Desliga e avisa o Admin que ficou Indisponível quando o motorista MATA (fecha) o App
 window.addEventListener("beforeunload", () => {
     if (window.GPSGlobal.watcherId !== null) {
         window.GPSGlobal.forcarEnvioStatus("Indisponível");

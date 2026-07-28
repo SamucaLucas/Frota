@@ -47,7 +47,14 @@
         }
         // AMBIENTE DE TESTE: Desativamos o Service Worker no App Nativo para permitir requisições HTTP (Mixed Content).
         // MODO SEGURO (PRODUÇÃO): Remova a verificação isNativePlatform() se estiver usando HTTPS.
-        if ('serviceWorker' in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform())) {
+        /*if ('serviceWorker' in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform())) {
+            navigator.serviceWorker.register('../sw.js')
+                .then(() => console.log('[PWA] Service Worker Registrado com Sucesso!'))
+                .catch(err => console.log('[PWA] Falha ao registrar Service Worker:', err));
+        }*/
+        
+        // Registra o PWA apenas se estiver no Navegador (Web) usando HTTPS
+        if ('serviceWorker' in navigator && (!window.Capacitor || !window.Capacitor.isNativePlatform())) {
             navigator.serviceWorker.register('../sw.js')
                 .then(() => console.log('[PWA] Service Worker Registrado com Sucesso!'))
                 .catch(err => console.log('[PWA] Falha ao registrar Service Worker:', err));
