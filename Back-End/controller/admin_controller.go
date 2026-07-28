@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+func Ping(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte(`{"status":"ok"}`))
+	}
+
 // HomeAdmin retorna os dados do painel do administrador em formato JSON
 func HomeAdmin(w http.ResponseWriter, r *http.Request) {
 	// 1. Avisa ao Front-end que a resposta é um JSON

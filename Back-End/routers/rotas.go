@@ -10,6 +10,9 @@ func ConfigurarRotas() *http.ServeMux {
 
 	r := http.NewServeMux()
 
+	// Rota pública para Health Check / UptimeRobot
+	r.HandleFunc("/api/ping", controller.Ping)
+
 	// Rotas de API - Usuario
 	r.HandleFunc("/api/login", controller.LoginUsuario)
 	r.HandleFunc("/api/cadastrar", controller.CadastrarUsuario)
