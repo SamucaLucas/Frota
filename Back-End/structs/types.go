@@ -172,3 +172,15 @@ type TransacaoFinanceira struct {
 func (TransacaoFinanceira) TableName() string {
 	return "transacoes_financeiras"
 }
+
+type LocalizacaoMotorista struct {
+	MotoristaID uint      `gorm:"primaryKey" json:"motorista_id"` // Usar como Primary Key garante que o GORM vai sobrescrever!
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
+	Status      string    `json:"status"` // Ex: "Disponível", "Em Corrida", "Inativo"
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (LocalizacaoMotorista) TableName() string {
+	return "localizacao_motoristas"
+}

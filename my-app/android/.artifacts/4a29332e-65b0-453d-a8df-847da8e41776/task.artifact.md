@@ -1,4 +1,4 @@
-- [x] Configure WebView in `MainActivity.java` to allow Mixed Content
-- [x] Create `network_security_config.xml` with cleartext permissions
-- [x] Link `network_security_config.xml` in `AndroidManifest.xml`
-- [x] Verify build and sync
+- [x] Update `capacitor.config.json` to use `http` scheme and enable `CapacitorHttp`
+- [x] Modify `login.html` to disable Service Worker on native platforms
+- [x] Add comments explaining how to revert for production security
+- [x] Verify Gradle sync (if needed) and instructions for the user

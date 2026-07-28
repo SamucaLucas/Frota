@@ -47,13 +47,14 @@ func ConectarBanco() {
 		&structs.PrecoRota{},
 		&structs.Patrocinio{},
 		&structs.TransacaoFinanceira{},
+		&structs.LocalizacaoMotorista{},
 	)
 
 	if err != nil {
 		log.Fatal("❌ Erro ao rodar as migrações (AutoMigrate):\n", err)
 	}
 
-	fmt.Println("🚀 Todas as 9 tabelas foram criadas/sincronizadas com sucesso!")
+	fmt.Println("🚀 Todas as 10 tabelas foram criadas/sincronizadas com sucesso!")
 
 	// 5. Atribuindo a conexão aberta à nossa variável global
 	DB = database

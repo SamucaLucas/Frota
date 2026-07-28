@@ -10,6 +10,9 @@ func ConfigurarRotas() *http.ServeMux {
 
 	r := http.NewServeMux()
 
+	// Rota pública para Health Check / UptimeRobot
+	r.HandleFunc("/api/ping", controller.Ping)
+
 	// Rotas de API - Usuario
 	r.HandleFunc("/api/login", controller.LoginUsuario)
 	r.HandleFunc("/api/cadastrar", controller.CadastrarUsuario)
@@ -27,11 +30,14 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/api/admin/home", controller.HomeAdmin)
 	r.HandleFunc("/api/admin/despachar/", controller.ApiGetDespachar) // GET com o ID no final
 	r.HandleFunc("/api/admin/atribuir", controller.ApiPostAtribuir)   // POST salvando os dados
-
+	r.HandleFunc("/api/admin/motoristas/localizacao", controller.BuscarLocalizacoesAdmin)
+	
 	// Rotas de API - Motorista
 	r.HandleFunc("/api/motorista/home", controller.ApiHomeMotorista)
 	r.HandleFunc("/api/motorista/concluir", controller.ApiPostConcluirCorrida)
-
+	r.HandleFunc("/api/motorista/localizacao", controller.AtualizarLocalizacao)
+	r.HandleFunc("/api/motorista/corrida-livre", controller.SalvarCorridaLivre)
+	r.HandleFunc("/api/motorista/buscar-passageiro", controller.BuscarPassageiroAvulso)
 	// Rotas do Google
 	r.HandleFunc("/auth/google/login", controller.GoogleLogin)
 	r.HandleFunc("/auth/google/callback", controller.GoogleCallback)

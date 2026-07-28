@@ -263,7 +263,7 @@
             </svg>
             Configurações
         </button>
-        <button class="sb-link" onclick="window.location.href='/logout'"
+        <button class="sb-link" onclick="fazerLogout()"
             style="margin-top: auto; color: #EF4444; border-bottom: none; border-top: 1px solid var(--border);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
@@ -309,34 +309,128 @@
         const tokenURL = urlParams.get('token');
 
         if (tokenURL) {
-            // Salva o token no navegador
             localStorage.setItem("token", tokenURL);
-            // Limpa o ?token= da barra de endereço para ficar bonito
             window.history.replaceState({}, document.title, window.location.pathname);
         }
+
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('open');
         }
 
-        // Inicialização do Leaflet em Parauapebas-PA [-6.0673, -49.9036]
-        var map = L.map('mapa-frota-central').setView([-6.0673, -49.9036], 13);
+        // ==========================================
+        // 1. INICIALIZA O MAPA (Com Posição Inicial Padrão)
+        // ==========================================
+        const centroPadrao = [-6.0673, -49.9036]; // Parauapebas-PA como fallback
+        var map = L.map('mapa-frota-central').setView(centroPadrao, 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Ícone customizado de carrinho para marcar os motoristas no mapa
+        // ==========================================
+        // 2. CAPTURA A LOCALIZAÇÃO REAL DO ADMIN LOGADO
+        // ==========================================
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const adminLat = position.coords.latitude;
+                    const adminLng = position.coords.longitude;
+
+                    // Centraliza o mapa na posição real do Admin
+                    map.setView([adminLat, adminLng], 14);
+
+                    // Adiciona um marcador azul discreto mostrando onde o Admin está
+                    L.circleMarker([adminLat, adminLng], {
+                        radius: 8,
+                        fillColor: '#3B82F6', // Azul
+                        color: '#FFFFFF',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(map).bindPopup('<b style="font-family:Sora; font-size:12px;">📍 Você (Admin)</b>');
+                },
+                (error) => {
+                    console.warn("GPS do Admin não ativado ou permissão negada. Usando posição padrão.", error);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        // ==========================================
+        // 3. LÓGICA DE TEMPO REAL DOS MOTORISTAS (API REST)
+        // ==========================================
+        let marcadoresMotoristas = {};
+
+        // Ícone do carrinho para os motoristas
         var iconeCarro = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3204/3204121.png',
+            iconUrl: 'https://cdn-icons-png.flaticon.com/128/13210/13210672.png',
             iconSize: [32, 32],
             iconAnchor: [16, 32],
             popupAnchor: [0, -32]
         });
 
-        // Simulação de motorista ativo no mapa
-        L.marker([-6.0673, -49.9036], { icon: iconeCarro }).addTo(map)
-            .bindPopup('<div style="font-family:Sora; font-size:12px;"><b>🚙 Motorista Dudu</b><br><span style="color:#2ecc71;">Disponível</span></div>');
+        // Função que bate na API do Go e atualiza os motoristas no mapa
+        // Função que bate na API do Go (na porta correta 8082) e atualiza o mapa
+        async function atualizarMapaTempoReal() {
+            try {
+                // Mude aqui para a porta exata onde o seu Go está rodando (8082)
+                const response = await fetch('http://localhost:8082/api/admin/motoristas/localizacao');
+                if (!response.ok) throw new Error('Erro na rede: ' + response.status);
+
+                const motoristas = await response.json();
+                console.log("Dados recebidos da API:", motoristas);
+
+                if (!Array.isArray(motoristas)) return;
+
+                motoristas.forEach(mot => {
+                    const id = mot.motorista_id || mot.MotoristaID;
+                    const lat = mot.latitude || mot.Latitude;
+                    const lng = mot.longitude || mot.Longitude;
+                    const status = mot.status || mot.Status || 'Disponível';
+
+                    if (!id || !lat || !lng) return;
+
+                    if (marcadoresMotoristas[id]) {
+                        marcadoresMotoristas[id].setLatLng([lat, lng]);
+                        marcadoresMotoristas[id].getPopup().setContent(`
+                            <div style="font-family:Sora; font-size:12px;">
+                                <b>🚙 Motorista #${id}</b><br>
+                                <span style="color:#2ecc71;">${status}</span>
+                            </div>
+                        `);
+                    } else {
+                        let novoMarcador = L.marker([lat, lng], { icon: iconeCarro })
+                            .bindPopup(`
+                                <div style="font-family:Sora; font-size:12px;">
+                                    <b>🚙 Motorista #${id}</b><br>
+                                    <span style="color:#2ecc71;">${status}</span>
+                                </div>
+                            `);
+
+                        novoMarcador.addTo(map);
+                        marcadoresMotoristas[id] = novoMarcador;
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao buscar localizações dos motoristas:", error);
+            }
+        }
+
+        // Executa imediatamente ao carregar a página
+        atualizarMapaTempoReal();
+
+        // Atualiza a posição dos motoristas a cada 5 segundos
+        setInterval(atualizarMapaTempoReal, 5000);
+
+        function fazerLogout(avisarApi = true) {
+            if (avisarApi) {
+                fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
+            }
+            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
+            window.location.href = "../Usuario/login.html";
+        }
     </script>
 </body>
 
