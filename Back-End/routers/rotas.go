@@ -21,6 +21,8 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/api/verificar-token", controller.ApiVerificarToken)
 	r.HandleFunc("/api/logout", controller.ApiLogout)
 
+	r.HandleFunc("/api/corrida/detalhes", controller.ObterDetalhesCorrida)
+
 	//Rotas de API - Passageiro
 	r.HandleFunc("/api/passageiro/home", controller.HomePassageiro)
 	r.HandleFunc("/api/passageiro/agendar", controller.AgendarViagem)

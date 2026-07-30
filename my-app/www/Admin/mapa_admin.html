@@ -329,31 +329,39 @@
         }).addTo(map);
 
         // ==========================================
-        // 2. CAPTURA A LOCALIZAÇÃO REAL DO ADMIN LOGADO
+        // 2. CAPTURA E ATUALIZA A LOCALIZAÇÃO DO ADMIN (EM MOVIMENTO)
         // ==========================================
+        let marcadorAdmin = null; // Variável para guardar a nossa bolinha azul
+
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
+            // watchPosition fica "assistindo" o GPS o tempo todo
+            navigator.geolocation.watchPosition(
                 (position) => {
                     const adminLat = position.coords.latitude;
                     const adminLng = position.coords.longitude;
 
-                    // Centraliza o mapa na posição real do Admin
-                    map.setView([adminLat, adminLng], 14);
+                    if (!marcadorAdmin) {
+                        // Primeira vez: Centraliza o mapa e cria a bolinha
+                        map.setView([adminLat, adminLng], 14);
 
-                    // Adiciona um marcador azul discreto mostrando onde o Admin está
-                    L.circleMarker([adminLat, adminLng], {
-                        radius: 8,
-                        fillColor: '#3B82F6', // Azul
-                        color: '#FFFFFF',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    }).addTo(map).bindPopup('<b style="font-family:Sora; font-size:12px;">📍 Você (Admin)</b>');
+                        marcadorAdmin = L.circleMarker([adminLat, adminLng], {
+                            radius: 8,
+                            fillColor: '#3B82F6', // Azul
+                            color: '#FFFFFF',
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.9
+                        }).addTo(map).bindPopup('<b style="font-family:Sora; font-size:12px;">📍 Você (Admin)</b>');
+                    } else {
+                        // As próximas vezes: Apenas faz a bolinha deslizar para a nova coordenada
+                        marcadorAdmin.setLatLng([adminLat, adminLng]);
+                    }
                 },
                 (error) => {
                     console.warn("GPS do Admin não ativado ou permissão negada. Usando posição padrão.", error);
                 },
-                { enableHighAccuracy: true, timeout: 10000 }
+                // enableHighAccuracy liga o sensor máximo do GPS
+                { enableHighAccuracy: true, maximumAge: 0 }
             );
         }
 

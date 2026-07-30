@@ -8,6 +8,7 @@ window.GPSGlobal = {
     ultimaLat: null,
     ultimaLng: null,
     callbackTela: null,
+    alertaExibido: false, // Trava anti-spam para não travar o celular com milhares de alertas
 
     obterIdToken: function () {
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -22,6 +23,17 @@ window.GPSGlobal = {
 
     obterToken: function() {
         return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+    },
+
+    // Central de tratamento de erros de GPS com aviso visual para o motorista
+    tratarErroGPS: function(erroMsg) {
+        if (!this.alertaExibido) {
+            this.alertaExibido = true;
+            alert(`⚠️ ATENÇÃO: ${erroMsg}\n\nPor favor, ative o GPS e dê permissão 'O tempo todo' nas configurações para poder trabalhar.`);
+            
+            // Libera o alerta novamente após 1 minuto, caso ele continue com o GPS desligado
+            setTimeout(() => { this.alertaExibido = false; }, 60000); 
+        }
     },
 
     iniciar: async function () {
@@ -49,9 +61,22 @@ window.GPSGlobal = {
                 (location, error) => {
                     if (error) {
                         console.error("Erro no GPS Nativo:", error);
+                        let msg = "Falha ao acessar o sensor de localização.";
+                        
+                        // Decifra o erro do plugin nativo
+                        if (error.code === "NOT_AUTHORIZED") {
+                            msg = "Permissão de localização negada pelo Android.";
+                        } else if (error.code === "LOCATION_SERVICES_DISABLED") {
+                            msg = "O GPS do seu celular está DESLIGADO.";
+                        }
+                        
+                        window.GPSGlobal.tratarErroGPS(msg);
                         return;
                     }
-                    this.processarCoordenada(location.latitude, location.longitude, motoristaId, baseUrl, token);
+                    
+                    // Se deu certo, reseta a trava de erro
+                    window.GPSGlobal.alertaExibido = false; 
+                    window.GPSGlobal.processarCoordenada(location.latitude, location.longitude, motoristaId, baseUrl, token);
                 }
             );
         } 
@@ -61,24 +86,37 @@ window.GPSGlobal = {
             if ("geolocation" in navigator) {
                 this.watcherId = navigator.geolocation.watchPosition(
                     (position) => {
-                        this.processarCoordenada(position.coords.latitude, position.coords.longitude, motoristaId, baseUrl, token);
+                        window.GPSGlobal.alertaExibido = false; // Sucesso
+                        window.GPSGlobal.processarCoordenada(position.coords.latitude, position.coords.longitude, motoristaId, baseUrl, token);
                     },
                     (error) => {
                         console.error("Erro no GPS Web:", error);
+                        let msg = "Falha ao obter localização.";
+                        
+                        // Decifra o erro do navegador
+                        if (error.code === 1) msg = "Você negou o acesso ao GPS no navegador.";
+                        if (error.code === 2) msg = "Sinal de GPS indisponível ou desligado no aparelho.";
+                        
+                        window.GPSGlobal.tratarErroGPS(msg);
                     },
                     { enableHighAccuracy: true, maximumAge: 0 }
                 );
             } else {
-                console.error("Geolocalização não é suportada neste navegador.");
+                alert("O seu navegador não suporta recursos de localização.");
             }
         }
     },
 
     processarCoordenada: function(lat, lng, motoristaId, baseUrl, token) {
+        // Ignora se o celular mandar 0,0 ou vazio por falta de sinal
+        if (!lat || !lng || (lat === 0 && lng === 0)) {
+            console.warn("GPS sem sinal ou retornando 0,0. Ignorando envio.");
+            return; 
+        }
+
         this.ultimaLat = lat;
         this.ultimaLng = lng;
 
-        // Envia para o Go com o Token de Autorização!
         fetch(`${baseUrl}/api/motorista/localizacao`, {
             method: 'POST',
             headers: { 
@@ -93,7 +131,6 @@ window.GPSGlobal = {
             })
         }).catch(() => { });
 
-        // Manda os dados para o Taxímetro, se ele estiver aberto
         if (typeof this.callbackTela === 'function') {
             this.callbackTela(lat, lng);
         }
@@ -103,7 +140,6 @@ window.GPSGlobal = {
         this.forcarEnvioStatus("Indisponível");
 
         if (this.watcherId !== null) {
-            // Desliga o motor correto dependendo de onde o app está rodando
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
                 window.Capacitor.Plugins.BackgroundGeolocation.removeWatcher({ id: this.watcherId });
             } else if ("geolocation" in navigator) {

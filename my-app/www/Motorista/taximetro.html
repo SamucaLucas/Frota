@@ -290,13 +290,17 @@
         const URL_API = window.API_URL;
 
         function calcularPreco(km) {
-            let valor = 0;
+            let valorCalculado = 0;
+
+            // Calcula apenas o valor da distância rodada
             if (km <= LIMITE_URBANO) {
-                valor = km * KM_URBANO;
+                valorCalculado = km * KM_URBANO;
             } else {
-                valor = (LIMITE_URBANO * KM_URBANO) + ((km - LIMITE_URBANO) * KM_INTER);
+                valorCalculado = (LIMITE_URBANO * KM_URBANO) + ((km - LIMITE_URBANO) * KM_INTER);
             }
-            return valor < BASE_URBANO ? BASE_URBANO : valor;
+
+            // O valor final é a Bandeirada (10.00) + o valor da distância
+            return BASE_URBANO + valorCalculado;
         }
 
         function atualizarTela() {
