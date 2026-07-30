@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo de Corrida</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Sora', sans-serif;
+            background: #f4f4f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* O "Papel" do recibo */
+        #recibo-box {
+            background: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            padding: 30px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            color: #1f2937;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed #e5e7eb;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header img {
+            width: 80px;
+            margin-bottom: 10px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #111827;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .info-row span:first-child {
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .info-row span:last-child {
+            font-weight: 700;
+            text-align: right;
+            max-width: 60%;
+        }
+
+        .divisor {
+            border-top: 1px solid #e5e7eb;
+            margin: 20px 0;
+        }
+
+        .valor-total {
+            font-size: 22px;
+            font-weight: 800;
+            color: #10B981;
+            /* Verde */
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* Botão para baixar */
+        .btn-baixar {
+            background: #2563eb;
+            color: white;
+            border: none;
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Esconde o botão na hora de imprimir o PDF */
+        .esconder-no-pdf {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="recibo-box">
+        <div class="header">
+            <img src="../static/img/Logo-icon.png" alt="Logo">
+            <h2>Recibo de Corrida</h2>
+            <p id="txt-datahora">Carregando...</p>
+        </div>
+
+        <div class="info-row">
+            <span>ID da Corrida:</span>
+            <span id="txt-id">#--</span>
+        </div>
+        <div class="info-row">
+            <span>Motorista:</span>
+            <span id="txt-motorista">--</span>
+        </div>
+        <div class="info-row">
+            <span>Passageiro:</span>
+            <span id="txt-passageiro">--</span>
+        </div>
+
+        <div class="divisor"></div>
+
+        <div class="info-row">
+            <span>Origem:</span>
+            <span id="txt-origem" style="font-weight: 400;">--</span>
+        </div>
+        <div class="info-row">
+            <span>Destino:</span>
+            <span id="txt-destino" style="font-weight: 400;">--</span>
+        </div>
+        <div class="info-row">
+            <span>Distância:</span>
+            <span id="txt-km">-- KM</span>
+        </div>
+
+        <div class="divisor"></div>
+
+        <div class="info-row" style="align-items: center;">
+            <span>Valor Pago:</span>
+            <div class="valor-total" id="txt-valor">R$ 0,00</div>
+        </div>
+
+        <div style="text-align: center; font-size: 11px; color: #9ca3af; margin-top: 20px;">
+            Este recibo serve como comprovante de serviço prestado.<br>
+            Obrigado por viajar com a Frota Dudu!
+        </div>
+    </div>
+
+    <button class="btn-baixar esconder-no-pdf" id="btn-gerar-pdf" onclick="gerarPDF()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Baixar Recibo em PDF
+    </button>
+
+    <script src="../static/app.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const corridaID = urlParams.get('id');
+
+        // Carrega os dados assim que abre a tela
+        window.onload = async function () {
+            if (!corridaID) {
+                alert("Nenhuma corrida selecionada.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${window.API_URL}/api/corrida/detalhes?id=${corridaID}`);
+                const dados = await response.json();
+
+                if (response.ok) {
+                    // Formata a data para padrão BR
+                    const dataObj = new Date(dados.data_inicio || dados.created_at);
+                    const dataFormatada = dataObj.toLocaleString('pt-BR');
+
+                    // Preenche os campos do HTML
+                    document.getElementById('txt-id').innerText = `#${dados.id}`;
+                    document.getElementById('txt-datahora').innerText = dataFormatada;
+                    document.getElementById('txt-motorista').innerText = dados.Motorista ? dados.Motorista.Nome : "Motorista";
+                    document.getElementById('txt-passageiro').innerText = dados.Usuario ? dados.Usuario.Nome : "Passageiro Avulso";
+
+                    // Se for corrida livre do Taxímetro, não tem texto de origem, usa a coordenada ou "Corrida Livre"
+                    document.getElementById('txt-origem').innerText = dados.origem_texto || "Embarque Livre";
+                    document.getElementById('txt-destino').innerText = dados.destino_texto || "Desembarque Livre";
+
+                    document.getElementById('txt-km').innerText = parseFloat(dados.km_rodado).toFixed(2) + " KM";
+                    document.getElementById('txt-valor').innerText = "R$ " + parseFloat(dados.valor_final).toFixed(2).replace('.', ',');
+                }
+            } catch (err) {
+                console.error("Erro ao buscar recibo:", err);
+            }
+        };
+
+        // Função que converte a Div em PDF e faz o download
+        function gerarPDF() {
+            const elemento = document.getElementById('recibo-box');
+
+            // Esconde momentaneamente botões ou coisas que não devem sair na impressão (se houver)
+            const opt = {
+                margin: [0.5, 0.5],
+                filename: `Recibo_Corrida_${corridaID}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // Gera e baixa o PDF
+            html2pdf().set(opt).from(elemento).save();
+        }
+    </script>
+</body>
+
+</html>
