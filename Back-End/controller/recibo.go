@@ -14,7 +14,7 @@ func ObterDetalhesCorrida(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var corrida structs.LocalizacaoMotorista // Substitua pela sua struct real de Corrida Fechada/Histórico
+	var corrida structs.Corrida 
 	// Fazemos os Joins para pegar o nome do motorista e do passageiro
 	err := db.DB.Preload("Usuario").Preload("Motorista").First(&corrida, "id = ?", corridaID).Error
 

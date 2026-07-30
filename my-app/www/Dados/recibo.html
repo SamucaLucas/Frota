@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recibo de Corrida</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="manifest" href="../manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -39,8 +41,10 @@
         }
 
         .header img {
-            width: 80px;
-            margin-bottom: 10px;
+            width: 290px;
+            height: auto;
+            margin-bottom: -30px;
+            margin-top: -30px;
         }
 
         .header h2 {
@@ -119,8 +123,9 @@
 
     <div id="recibo-box">
         <div class="header">
-            <img src="../static/img/Logo-icon.png" alt="Logo">
+            <img src="../static/img/logo.png" alt="Logo">
             <h2>Recibo de Corrida</h2>
+            <p>CNPJ: 39.573.440/0001-73</p>
             <p id="txt-datahora">Carregando...</p>
         </div>
 
@@ -147,10 +152,7 @@
             <span>Destino:</span>
             <span id="txt-destino" style="font-weight: 400;">--</span>
         </div>
-        <div class="info-row">
-            <span>Distância:</span>
-            <span id="txt-km">-- KM</span>
-        </div>
+
 
         <div class="divisor"></div>
 
@@ -161,7 +163,7 @@
 
         <div style="text-align: center; font-size: 11px; color: #9ca3af; margin-top: 20px;">
             Este recibo serve como comprovante de serviço prestado.<br>
-            Obrigado por viajar com a Frota Dudu!
+            Obrigado por viajar com a Sousa Locações e Transportes!
         </div>
     </div>
 
@@ -193,21 +195,20 @@
 
                 if (response.ok) {
                     // Formata a data para padrão BR
-                    const dataObj = new Date(dados.data_inicio || dados.created_at);
+                    const dataObj = new Date(dados.DataHoraAgendada);
                     const dataFormatada = dataObj.toLocaleString('pt-BR');
 
                     // Preenche os campos do HTML
-                    document.getElementById('txt-id').innerText = `#${dados.id}`;
+                    document.getElementById('txt-id').innerText = `#${dados.ID}`;
                     document.getElementById('txt-datahora').innerText = dataFormatada;
                     document.getElementById('txt-motorista').innerText = dados.Motorista ? dados.Motorista.Nome : "Motorista";
                     document.getElementById('txt-passageiro').innerText = dados.Usuario ? dados.Usuario.Nome : "Passageiro Avulso";
 
                     // Se for corrida livre do Taxímetro, não tem texto de origem, usa a coordenada ou "Corrida Livre"
-                    document.getElementById('txt-origem').innerText = dados.origem_texto || "Embarque Livre";
-                    document.getElementById('txt-destino').innerText = dados.destino_texto || "Desembarque Livre";
+                    document.getElementById('txt-origem').innerText = dados.OrigemTexto || "Embarque Livre";
+                    document.getElementById('txt-destino').innerText = dados.DestinoTexto || "Desembarque Livre";
 
-                    document.getElementById('txt-km').innerText = parseFloat(dados.km_rodado).toFixed(2) + " KM";
-                    document.getElementById('txt-valor').innerText = "R$ " + parseFloat(dados.valor_final).toFixed(2).replace('.', ',');
+                    document.getElementById('txt-valor').innerText = "R$ " + parseFloat(dados.ValorFinal).toFixed(2).replace('.', ',');
                 }
             } catch (err) {
                 console.error("Erro ao buscar recibo:", err);

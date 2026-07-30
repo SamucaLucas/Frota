@@ -1,8 +1,8 @@
 // ==========================================
 // CONFIGURAÇÃO GLOBAL DO SISTEMA
 // ==========================================
-//const API_URL = "http://192.168.3.38:8082";
-const API_URL = "https://sousa-frota-api.onrender.com";
+const API_URL = "http://192.168.3.38:8082";
+//const API_URL = "https://sousa-frota-api.onrender.com";
 window.API_URL = API_URL;
 
 // ==========================================
