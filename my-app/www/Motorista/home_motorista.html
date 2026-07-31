@@ -319,7 +319,7 @@
                 </div>
             </div>
 
-            <div class="sec-lbl">Corridas Concluídas ✅</div>
+            <div class="sec-lbl">Corridas Concluídas hoje ✅</div>
             <div id="lista-concluidas">
                 <div class="card list-card" style="text-align: center; padding: 20px 10px;">
                     <div style="font-size: 12px; color: var(--t3);">Carregando histórico...</div>
@@ -408,22 +408,41 @@
 
         function renderizarConcluidas(corridas) {
             const container = document.getElementById('lista-concluidas');
-            if (!corridas || corridas.length === 0) {
-                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Sem histórico recente.</div></div>';
+
+            // 1. Pega a data de HOJE no formato local (DD/MM/AAAA)
+            const dataDeHoje = new Date().toLocaleDateString('pt-BR');
+
+            // 2. Filtra a lista para manter apenas as corridas que aconteceram hoje
+            const corridasDeHoje = (corridas || []).filter(c => {
+                // Tenta pegar a data agendada ou a data de criação no banco
+                const dataCorrida = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt || new Date()).toLocaleDateString('pt-BR');
+                return dataCorrida === dataDeHoje;
+            });
+
+            // 3. Verifica se a lista DE HOJE está vazia
+            if (corridasDeHoje.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida concluída hoje.</div></div>';
                 return;
             }
 
+            // 4. Renderiza apenas as corridas filtradas
             let html = "";
-            corridas.forEach(c => {
-                let dataFmt = new Date(c.DataHoraAgendada).toLocaleDateString('pt-BR');
+            corridasDeHoje.forEach(c => {
+                // Como já sabemos que é hoje, vamos formatar para mostrar a HORA em vez da data
+                let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                // Proteção caso o usuário seja nulo (Passageiro Avulso do taxímetro)
+                let nomePassageiro = c.Usuario ? c.Usuario.Nome : "Avulso";
+
                 html += `
-                <div class="card list-card" style="border-left: 3px solid var(--t4);">
+                <div class="card list-card" style="border-left: 3px solid var(--t4); cursor: pointer;" onclick="window.location.href='../Dados/recibo.html?id=${c.ID}'">
                     <div class="row" style="margin-bottom: 7px;">
                         <div style="font-size: 12px; font-weight: 600; color: var(--t1);">${c.OrigemTexto} → ${c.DestinoTexto}</div>
                         <span class="badge-blue">Concluída</span>
                     </div>
                     <div style="font-size: 11px; color: var(--t3);">
-                        ${dataFmt} · Passageiro: ${c.Usuario.Nome}
+                        Hoje às ${horaFmt} · Passageiro: ${nomePassageiro}
                     </div>
                 </div>`;
             });

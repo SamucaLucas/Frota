@@ -69,7 +69,6 @@
         /* ===== O "Papel" do recibo ===== */
         #recibo-box {
             background: #ffffff;
-            /* DE VOLTA AO TAMANHO FIXO PARA CABER NO PDF E NA TELA */
             width: 100%;
             max-width: 590px;
             border-radius: 24px;
@@ -180,7 +179,6 @@
 
         .info-line {
             display: flex;
-            /* Centraliza quando tem uma linha, mas se quebrar mantém a harmonia */
             align-items: center;
             justify-content: space-between;
             gap: 16px;
@@ -197,7 +195,6 @@
             text-transform: uppercase;
             color: #4b5563;
             white-space: nowrap;
-            /* Mantém os rótulos numa linha só */
             flex: none;
         }
 
@@ -213,11 +210,9 @@
             font-weight: 700;
             color: var(--brand-dark);
             text-align: right;
-            /* PERMITE QUEBRAR LINHAS LONGAS SEM VAZAR */
             word-wrap: break-word;
             word-break: break-word;
             flex: 1;
-            /* Ocupa o espaço restante */
             margin-left: 10px;
         }
 
@@ -257,7 +252,6 @@
             font-size: 14.5px;
             font-weight: 500;
             color: var(--brand-dark);
-            /* PERMITE QUEBRAR LINHAS LONGAS NOS ENDEREÇOS */
             word-wrap: break-word;
             word-break: break-word;
         }
@@ -308,7 +302,6 @@
             font-size: 26px;
             font-weight: 800;
             white-space: nowrap;
-            /* O valor não deve quebrar */
         }
 
         /* ===== Selo / aviso ===== */
@@ -319,7 +312,6 @@
             padding: 14px 16px;
             display: flex;
             align-items: flex-start;
-            /* Alinhamento topo para textos de mais de uma linha */
             gap: 12px;
         }
 
@@ -380,7 +372,6 @@
             font-weight: 700;
             color: #ffffff;
             word-wrap: break-word;
-            /* Permite quebrar se ficar apertado */
         }
 
         .footer-value.company {
@@ -437,7 +428,7 @@
 <body>
 
     <div class="top-bar esconder-no-pdf">
-        <button class="btn-voltar" onclick="window.history.back()">
+        <button class="btn-voltar" onclick="voltarSeguro()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -651,6 +642,24 @@
                 console.error("Erro ao buscar recibo:", err);
             }
         };
+
+        // ==========================================
+        // LÓGICA DE RETORNO SEGURO
+        // ==========================================
+        function voltarSeguro() {
+            const paginaAnterior = document.referrer || "";
+
+            // Se o usuário veio de uma corrida recém finalizada, joga para a Home usando replace para limpar a stack do histórico
+            if (paginaAnterior.includes("corrida_agendada.html") || paginaAnterior.includes("taximetro.html")) {
+                window.location.replace("home_motorista.html");
+            } else if (paginaAnterior !== "") {
+                // Se acessou pelo histórico normal (Admin, Extrato, etc), volta uma página naturalmente
+                window.history.back();
+            } else {
+                // Fallback de segurança se abrir em aba anônima/direto
+                window.location.replace("home_motorista.html");
+            }
+        }
 
         async function gerarPDF() {
             const elemento = document.getElementById('recibo-box');

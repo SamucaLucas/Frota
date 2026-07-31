@@ -262,6 +262,42 @@
             color: var(--t1);
             border: none;
         }
+
+        /* --- CAIXA SUSPENSA MODERNA (SELECT) --- */
+        .styled-select-wrapper {
+            margin: 16px 18px 10px;
+            position: relative;
+        }
+
+        .styled-select {
+            width: 100%;
+            background-color: var(--card);
+            border: 1.5px solid var(--border);
+            color: var(--t1);
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 13.5px;
+            font-weight: 700;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            /* Ícone de seta personalizado e elegante */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .styled-select:focus {
+            border-color: var(--acc);
+            box-shadow: 0 0 0 3px var(--acc-bg);
+        }
     </style>
 </head>
 
@@ -368,18 +404,21 @@
                 <div class="hero-accent"></div>
             </div>
 
-            <div class="filter-container">
-                <div class="filter-pill active" onclick="filtrarListas('todos')" id="btn-todos">
-                    Todos
+            <!-- CAIXA SUSPENSA (SELECT) PARA FILTRAR AS SEÇÕES -->
+            <div class="styled-select-wrapper">
+                <div
+                    style="font-size: 11px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px;">
+                    Filtrar Visão 🔍
                 </div>
-                <div class="filter-pill" onclick="filtrarListas('pendentes')" id="btn-pendentes">
-                    Pendentes <span class="badge-count" id="total-pendentes">0</span>
-                </div>
-                <div class="filter-pill" onclick="filtrarListas('aprovadas')" id="btn-aprovadas">
-                    Aprovadas <span class="badge-count" id="total-aprovadas">0</span>
-                </div>
+                <select id="filtro-select" class="styled-select" onchange="filtrarListas(this.value)">
+                    <option value="todos">📋 Exibir Todas as Seções</option>
+                    <option value="pendentes">🚨 Novas Solicitações (<span id="total-pendentes-opt">0</span>)</option>
+                    <option value="aprovadas">📅 Confirmadas Hoje (<span id="total-aprovadas-opt">0</span>)</option>
+                    <option value="realizadas">🏁 Realizadas Hoje (<span id="total-realizadas-opt">0</span>)</option>
+                </select>
             </div>
 
+            <!-- SEÇÃO 1: PENDENTES -->
             <div id="secao-pendentes">
                 <div class="sec-lbl">Novas Solicitações 🔥</div>
                 <div id="lista-pendentes-api">
@@ -389,11 +428,22 @@
                 </div>
             </div>
 
+            <!-- SEÇÃO 2: APROVADAS / CONFIRMADAS -->
             <div id="secao-aprovadas">
-                <div class="sec-lbl">Agenda da Frota 📅</div>
+                <div class="sec-lbl">Agenda da Frota de hoje 📅</div>
                 <div id="lista-aprovadas-api">
                     <div style="text-align: center; padding: 20px; font-size: 12px; color: var(--t3);">
                         Carregando agenda...
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 3: REALIZADAS (CORRETAMENTE ADICIONADA) -->
+            <div id="secao-realizadas">
+                <div class="sec-lbl">Realizadas Hoje 🏁</div>
+                <div id="lista-realizadas-api">
+                    <div style="text-align: center; padding: 20px; font-size: 12px; color: var(--t3);">
+                        Carregando histórico...
                     </div>
                 </div>
             </div>
@@ -408,22 +458,20 @@
             document.getElementById('overlay').classList.toggle('open');
         }
 
+        // Lógica correta para gerenciar as seções via Caixa Suspensa (<select>)
         function filtrarListas(tipo) {
-            document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-' + tipo).classList.add('active');
-
             const secaoPendentes = document.getElementById('secao-pendentes');
             const secaoAprovadas = document.getElementById('secao-aprovadas');
+            const secaoRealizadas = document.getElementById('secao-realizadas');
 
             if (tipo === 'todos') {
-                secaoPendentes.style.display = 'block';
-                secaoAprovadas.style.display = 'block';
-            } else if (tipo === 'pendentes') {
-                secaoPendentes.style.display = 'block';
-                secaoAprovadas.style.display = 'none';
-            } else if (tipo === 'aprovadas') {
-                secaoPendentes.style.display = 'none';
-                secaoAprovadas.style.display = 'block';
+                if (secaoPendentes) secaoPendentes.style.display = 'block';
+                if (secaoAprovadas) secaoAprovadas.style.display = 'block';
+                if (secaoRealizadas) secaoRealizadas.style.display = 'block';
+            } else {
+                if (secaoPendentes) secaoPendentes.style.display = tipo === 'pendentes' ? 'block' : 'none';
+                if (secaoAprovadas) secaoAprovadas.style.display = tipo === 'aprovadas' ? 'block' : 'none';
+                if (secaoRealizadas) secaoRealizadas.style.display = tipo === 'realizadas' ? 'block' : 'none';
             }
         }
 
@@ -451,14 +499,37 @@
                 })
                 .then(dados => {
                     if (dados.sucesso) {
-                        // Preenche Cabeçalho e Contadores
                         document.getElementById('admin-nome').textContent = dados.usuario.Nome;
-                        document.getElementById('total-pendentes').textContent = dados.pendentes ? dados.pendentes.length : 0;
-                        document.getElementById('total-aprovadas').textContent = dados.aprovadas ? dados.aprovadas.length : 0;
 
-                        // Renderiza as Listas
+                        // 1. Pega a data de HOJE no formato local (DD/MM/AAAA)
+                        const dataDeHoje = new Date().toLocaleDateString('pt-BR');
+
+                        // 2. Filtra as listas para o dia de hoje com precisão
+                        const aprovadasDeHoje = (dados.aprovadas || []).filter(c => {
+                            const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
+                            return d === dataDeHoje;
+                        });
+
+                        const realizadasDeHoje = (dados.concluidas || []).filter(c => {
+                            const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
+                            return d === dataDeHoje;
+                        });
+
+                        // 3. Atualiza os contadores dentro do <select> (Caixa Suspensa)
+                        if (document.getElementById('total-pendentes-opt')) {
+                            document.getElementById('total-pendentes-opt').textContent = dados.pendentes ? dados.pendentes.length : 0;
+                        }
+                        if (document.getElementById('total-aprovadas-opt')) {
+                            document.getElementById('total-aprovadas-opt').textContent = aprovadasDeHoje.length;
+                        }
+                        if (document.getElementById('total-realizadas-opt')) {
+                            document.getElementById('total-realizadas-opt').textContent = realizadasDeHoje.length;
+                        }
+
+                        // 4. Renderiza as Listas passando os dados corretos
                         renderizarPendentes(dados.pendentes);
-                        renderizarAprovadas(dados.aprovadas);
+                        renderizarAprovadas(aprovadasDeHoje);
+                        renderizarRealizadas(realizadasDeHoje);
                     } else {
                         alert("Erro ao carregar painel: " + dados.erro);
                     }
@@ -473,6 +544,8 @@
 
         function renderizarPendentes(pendentes) {
             const container = document.getElementById('lista-pendentes-api');
+            if (!container) return;
+
             if (!pendentes || pendentes.length === 0) {
                 container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div></div>';
                 return;
@@ -482,58 +555,106 @@
             pendentes.forEach(corrida => {
                 let dataFormatada = new Date(corrida.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
                 html += `
-                <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;" onclick="window.location.href='despachar.html?id=${corrida.ID}'">
-                    <div class="row" style="margin-bottom:8px; align-items: flex-start;">
-                        <div style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
-                            ${corrida.OrigemTexto} → ${corrida.DestinoTexto}
-                        </div>
-                        <span class="badge-red" style="margin-top: 2px;">Pendente</span>
+            <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;" onclick="window.location.href='despachar.html?id=${corrida.ID}'">
+                <div class="row" style="margin-bottom:8px; align-items: flex-start;">
+                    <div style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
+                        ${corrida.OrigemTexto} → ${corrida.DestinoTexto}
                     </div>
-                    <div style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-                        <span>📅 ${dataFormatada}</span>
-                        <span>·</span>
-                        <span>👤 ${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</span>
-                    </div>
-                    <button class="btn" style="font-size:12px; padding:12px; width:100%; box-sizing: border-box; margin-top: 12px;" onclick="event.stopPropagation(); window.location.href='despachar.html?id=${corrida.ID}'">
-                        Revisar e Despachar →
-                    </button>
-                </div>`;
+                    <span class="badge-red" style="margin-top: 2px;">Pendente</span>
+                </div>
+                <div style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                    <span>📅 ${dataFormatada}</span>
+                    <span>·</span>
+                    <span>👤 ${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</span>
+                </div>
+                <button class="btn" style="font-size:12px; padding:12px; width:100%; box-sizing: border-box; margin-top: 12px;" onclick="event.stopPropagation(); window.location.href='despachar.html?id=${corrida.ID}'">
+                    Revisar e Despachar →
+                </button>
+            </div>`;
             });
             container.innerHTML = html;
         }
 
-        function renderizarAprovadas(aprovadas) {
+        function renderizarAprovadas(aprovadasDeHoje) {
             const container = document.getElementById('lista-aprovadas-api');
-            if (!aprovadas || aprovadas.length === 0) {
-                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">A agenda está vazia.</div></div>';
+            if (!container) return;
+
+            if (aprovadasDeHoje.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida confirmada para hoje.</div></div>';
                 return;
             }
 
             let html = '';
-            aprovadas.forEach(corrida => {
-                let dataFormatada = new Date(corrida.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            aprovadasDeHoje.forEach(corrida => {
+                let dataObj = new Date(corrida.DataHoraAgendada || corrida.created_at || corrida.UpdatedAt);
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
                 let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
                 let valor = corrida.ValorEstimado ? corrida.ValorEstimado.toFixed(2) : "0.00";
 
                 html += `
-                <div class="card list-card" style="border-left: 3px solid #2ecc71;">
-                    <div class="row" style="margin-bottom: 8px;">
-                        <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</div>
-                        <span class="badge-green">Confirmada</span>
+            <div class="card list-card" style="border-left: 3px solid #2ecc71;">
+                <div class="row" style="margin-bottom: 8px;">
+                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</div>
+                    <span class="badge-green">Confirmada</span>
+                </div>
+                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                    ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
+                </div>
+                <div class="divl" style="margin: 10px 0;"></div>
+                <div class="row" style="align-items: flex-end;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 Hoje às ${horaFmt}</div>
+                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
                     </div>
-                    <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
-                        ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
-                    </div>
-                    <div class="divl" style="margin: 10px 0;"></div>
-                    <div class="row" style="align-items: flex-end;">
-                        <div>
-                            <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 ${dataFormatada}</div>
-                            <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
-                        </div>
-                        <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ ${valor}</div>
-                    </div>
-                </div>`;
+                    <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ ${valor}</div>
+                </div>
+            </div>`;
             });
+
+            container.innerHTML = html;
+        }
+
+        function renderizarRealizadas(realizadasDeHoje) {
+            const container = document.getElementById('lista-realizadas-api');
+            if (!container) return;
+
+            if (realizadasDeHoje.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida finalizada hoje.</div></div>';
+                return;
+            }
+
+            let html = '';
+            realizadasDeHoje.forEach(corrida => {
+                let dataObj = new Date(corrida.DataHoraAgendada || corrida.created_at || corrida.UpdatedAt);
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
+                let valor = corrida.ValorFinal ? corrida.ValorFinal.toFixed(2) : (corrida.ValorEstimado ? corrida.ValorEstimado.toFixed(2) : "0.00");
+
+                html += `
+            <div class="card list-card" style="border-left: 3px solid var(--t4); cursor: pointer;" onclick="window.location.href='../Dados/recibo.html?id=${corrida.ID}'">
+                <div class="row" style="margin-bottom: 8px;">
+                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'Avulso'}</div>
+                    <span class="badge-blue">Realizada</span>
+                </div>
+                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                    ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
+                </div>
+                <div class="divl" style="margin: 10px 0;"></div>
+                <div class="row" style="align-items: flex-end;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 Hoje às ${horaFmt}</div>
+                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
+                    </div>
+                    <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ ${valor}</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; color: var(--t3); text-align: right;">
+                    🧾 Toque para ver recibo
+                </div>
+            </div>`;
+            });
+
             container.innerHTML = html;
         }
 
