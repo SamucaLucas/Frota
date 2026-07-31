@@ -148,16 +148,4 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ApiConfigPrecos devolve as taxas atuais do sistema para o App calcular viagens
-func ApiConfigPrecos(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 
-	// Aqui no futuro você fará: db.DB.First(&configPrecos)
-	// Por enquanto, enviamos os valores "dinâmicos" direto da API
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"base_urbano":   10.00,
-		"km_urbano":     2.50,
-		"km_inter":      4.00, // Ajustei para 4.00 baseado na sua struct DadosAgendamento
-		"limite_urbano": 20.0,
-	})
-}

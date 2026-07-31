@@ -7,112 +7,427 @@
     <title>Recibo de Corrida</title>
     <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
     <link rel="manifest" href="../manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
+        :root {
+            --brand-dark: #111827;
+            --brand-darker: #030712;
+            --brand-red: #E30613;
+            --brand-green: #10B981;
+
+            --text-gray: #6b7280;
+            --text-gray-light: #9ca3af;
+            --border-light: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Sora', sans-serif;
             background: #f4f4f5;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 30px 16px;
             margin: 0;
+            min-height: 100vh;
         }
 
-        /* O "Papel" do recibo */
+        /* ===== Botão de Voltar ===== */
+        .top-bar {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .btn-voltar {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            color: var(--brand-dark);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: 0.2s;
+        }
+
+        .btn-voltar:active {
+            background: #e5e7eb;
+        }
+
+        /* ===== O "Papel" do recibo ===== */
         #recibo-box {
             background: #ffffff;
+            /* DE VOLTA AO TAMANHO FIXO PARA CABER NO PDF E NA TELA */
             width: 100%;
-            max-width: 400px;
-            padding: 30px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            color: #1f2937;
+            max-width: 590px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(17, 24, 39, 0.14);
+            color: var(--brand-dark);
         }
 
-        .header {
-            text-align: center;
-            border-bottom: 2px dashed #e5e7eb;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+        /* ===== Cabeçalho ===== */
+        .header-wrap {
+            position: relative;
         }
 
-        .header img {
-            width: 290px;
-            height: auto;
-            margin-bottom: -30px;
-            margin-top: -30px;
+        .header-banner {
+            height: 165px;
+            background: linear-gradient(135deg, var(--brand-dark) 35%, var(--brand-red) 100%);
+            border-radius: 24px 24px 0 0;
+            position: relative;
         }
 
-        .header h2 {
-            margin: 0;
-            font-size: 18px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #111827;
-        }
-
-        .header p {
-            margin: 5px 0 0;
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .info-row {
+        .logo-circle {
+            position: absolute;
+            left: 50%;
+            top: 165px;
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 5px solid #eef1f6;
+            transform: translate(-50%, -62%);
+            box-shadow: 0 8px 20px rgba(17, 24, 39, 0.20);
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 13px;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            z-index: 2;
         }
 
-        .info-row span:first-child {
-            color: #6b7280;
-            font-weight: 600;
+        .logo-circle img {
+            width: 82%;
+            height: auto;
+            object-fit: contain;
         }
 
-        .info-row span:last-child {
-            font-weight: 700;
-            text-align: right;
-            max-width: 60%;
-        }
-
-        .divisor {
-            border-top: 1px solid #e5e7eb;
-            margin: 20px 0;
-        }
-
-        .valor-total {
-            font-size: 22px;
-            font-weight: 800;
-            color: #10B981;
-            /* Verde */
+        /* ===== Título ===== */
+        .title-block {
+            margin-top: 56px;
+            padding: 0 26px;
             text-align: center;
-            margin: 20px 0;
         }
 
-        /* Botão para baixar */
-        .btn-baixar {
-            background: #2563eb;
-            color: white;
-            border: none;
-            width: 100%;
-            max-width: 400px;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
+        .title-block h2 {
+            margin: 0;
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: .3px;
+            color: var(--brand-dark);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
         }
 
-        /* Esconde o botão na hora de imprimir o PDF */
+        .title-block h2 .dash {
+            width: 16px;
+            height: 2px;
+            background: var(--brand-red);
+            border-radius: 2px;
+            display: inline-block;
+        }
+
+        .cnpj {
+            margin: 6px 0 0;
+            font-size: 12.5px;
+            color: var(--text-gray);
+        }
+
+        .datahora-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+            margin: 12px 0 22px;
+        }
+
+        .dh-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--brand-dark);
+        }
+
+        .dh-item svg {
+            width: 15px;
+            height: 15px;
+            stroke: var(--brand-red);
+            flex: none;
+        }
+
+        /* ===== Blocos de cartão (info / origem-destino) ===== */
+        .card-block {
+            margin: 0 22px 16px;
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 4px 16px;
+        }
+
+        .info-line {
+            display: flex;
+            /* Centraliza quando tem uma linha, mas se quebrar mantém a harmonia */
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 13px 0;
+        }
+
+        .info-label {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            color: #4b5563;
+            white-space: nowrap;
+            /* Mantém os rótulos numa linha só */
+            flex: none;
+        }
+
+        .info-label svg {
+            width: 17px;
+            height: 17px;
+            stroke: var(--brand-red);
+            flex: none;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--brand-dark);
+            text-align: right;
+            /* PERMITE QUEBRAR LINHAS LONGAS SEM VAZAR */
+            word-wrap: break-word;
+            word-break: break-word;
+            flex: 1;
+            /* Ocupa o espaço restante */
+            margin-left: 10px;
+        }
+
+        .dashed-divider {
+            border-top: 1.5px dashed #e2e5ea;
+        }
+
+        /* Origem / Destino */
+        .loc-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 14px 0;
+        }
+
+        .loc-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(227, 6, 19, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+        }
+
+        .loc-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .5px;
+            color: var(--brand-red);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .loc-value {
+            font-size: 14.5px;
+            font-weight: 500;
+            color: var(--brand-dark);
+            /* PERMITE QUEBRAR LINHAS LONGAS NOS ENDEREÇOS */
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .solid-divider {
+            border-top: 1px solid var(--border-light);
+        }
+
+        /* ===== Valor pago ===== */
+        .valor-bar {
+            margin: 0 22px 16px;
+            background: linear-gradient(135deg, var(--brand-darker), var(--brand-dark));
+            border-radius: 14px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .valor-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .valor-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .14);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+        }
+
+        .valor-left span.label {
+            color: #ffffff;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+        }
+
+        .valor-right {
+            color: var(--brand-green);
+            font-size: 26px;
+            font-weight: 800;
+            white-space: nowrap;
+            /* O valor não deve quebrar */
+        }
+
+        /* ===== Selo / aviso ===== */
+        .shield-block {
+            margin: 0 22px 22px;
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            /* Alinhamento topo para textos de mais de uma linha */
+            gap: 12px;
+        }
+
+        .shield-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(227, 6, 19, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+        }
+
+        .shield-block p {
+            margin: 0;
+            font-size: 12.5px;
+            line-height: 1.55;
+            color: var(--text-gray);
+        }
+
+        .shield-block p strong {
+            display: block;
+            color: var(--brand-dark);
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        /* ===== Rodapé ===== */
+        .footer-bar {
+            background: var(--brand-darker);
+            display: flex;
+            align-items: center;
+            padding: 18px 20px;
+            border-radius: 0 0 24px 24px;
+        }
+
+        .footer-col {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .footer-col svg {
+            flex: none;
+        }
+
+        .footer-label {
+            font-size: 10.5px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .footer-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffffff;
+            word-wrap: break-word;
+            /* Permite quebrar se ficar apertado */
+        }
+
+        .footer-value.company {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .footer-sub {
+            font-size: 10.5px;
+            color: #9ca3af;
+        }
+
+        .footer-divider {
+            width: 1px;
+            align-self: stretch;
+            background: rgba(255, 255, 255, .15);
+            margin: 0 16px;
+        }
+
+        /* ===== Botão baixar PDF ===== */
+        .btn-baixar {
+            background: var(--brand-green);
+            color: white;
+            border: none;
+            width: 100%;
+            max-width: 420px;
+            padding: 15px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 18px rgba(16, 185, 129, 0.25);
+            transition: 0.2s ease-in-out;
+        }
+
+        .btn-baixar:hover {
+            filter: brightness(1.05);
+            transform: translateY(-2px);
+        }
+
         .esconder-no-pdf {
             display: flex;
         }
@@ -121,55 +436,181 @@
 
 <body>
 
+    <div class="top-bar esconder-no-pdf">
+        <button class="btn-voltar" onclick="window.history.back()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+    </div>
+
+    <!-- O Recibo em si -->
     <div id="recibo-box">
-        <div class="header">
-            <img src="../static/img/logo.png" alt="Logo">
-            <h2>Recibo de Corrida</h2>
-            <p>CNPJ: 39.573.440/0001-73</p>
-            <p id="txt-datahora">Carregando...</p>
+
+        <div class="header-wrap">
+            <div class="header-banner"></div>
+            <div class="logo-circle">
+                <img src="../static/img/Logo-icon.png" alt="Logo" onerror="this.src='../static/img/logo.png'">
+            </div>
         </div>
 
-        <div class="info-row">
-            <span>ID da Corrida:</span>
-            <span id="txt-id">#--</span>
-        </div>
-        <div class="info-row">
-            <span>Motorista:</span>
-            <span id="txt-motorista">--</span>
-        </div>
-        <div class="info-row">
-            <span>Passageiro:</span>
-            <span id="txt-passageiro">--</span>
-        </div>
-
-        <div class="divisor"></div>
-
-        <div class="info-row">
-            <span>Origem:</span>
-            <span id="txt-origem" style="font-weight: 400;">--</span>
-        </div>
-        <div class="info-row">
-            <span>Destino:</span>
-            <span id="txt-destino" style="font-weight: 400;">--</span>
-        </div>
-
-
-        <div class="divisor"></div>
-
-        <div class="info-row" style="align-items: center;">
-            <span>Valor Pago:</span>
-            <div class="valor-total" id="txt-valor">R$ 0,00</div>
+        <div class="title-block">
+            <h2><span class="dash"></span>RECIBO DE CORRIDA<span class="dash"></span></h2>
+            <p class="cnpj">CNPJ: 39.573.440/0001-73</p>
+            <div class="datahora-row">
+                <span class="dh-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                        stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span id="txt-data">--/--/----</span>
+                </span>
+                <span class="dh-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                        stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span id="txt-hora">--:--:--</span>
+                </span>
+            </div>
         </div>
 
-        <div style="text-align: center; font-size: 11px; color: #9ca3af; margin-top: 20px;">
-            Este recibo serve como comprovante de serviço prestado.<br>
-            Obrigado por viajar com a Sousa Locações e Transportes!
+        <div class="card-block">
+            <div class="info-line">
+                <span class="info-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                        stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                    ID da Corrida
+                </span>
+                <span class="info-value" id="txt-id">#--</span>
+            </div>
+            <div class="dashed-divider"></div>
+            <div class="info-line">
+                <span class="info-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                        stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path>
+                    </svg>
+                    Motorista
+                </span>
+                <span class="info-value" id="txt-motorista">--</span>
+            </div>
+            <div class="dashed-divider"></div>
+            <div class="info-line">
+                <span class="info-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                        stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="8" r="4"></circle>
+                        <path d="M2 21c0-4 3-6 7-6"></path>
+                        <polyline points="15 12 17.5 14.5 22 10"></polyline>
+                    </svg>
+                    Passageiro
+                </span>
+                <span class="info-value" id="txt-passageiro">--</span>
+            </div>
         </div>
+
+        <div class="card-block">
+            <div class="loc-line">
+                <span class="loc-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"></path>
+                        <circle cx="12" cy="10" r="2.5"></circle>
+                    </svg>
+                </span>
+                <div>
+                    <div class="loc-label">Origem</div>
+                    <div class="loc-value" id="txt-origem">--</div>
+                </div>
+            </div>
+            <div class="solid-divider"></div>
+            <div class="loc-line">
+                <span class="loc-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"></path>
+                        <circle cx="12" cy="10" r="2.5"></circle>
+                    </svg>
+                </span>
+                <div>
+                    <div class="loc-label">Destino</div>
+                    <div class="loc-value" id="txt-destino">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="valor-bar">
+            <div class="valor-left">
+                <span class="valor-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                        stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </span>
+                <span class="label">Valor Pago</span>
+            </div>
+            <div class="valor-right" id="txt-valor">R$ 0,00</div>
+        </div>
+
+        <div class="shield-block">
+            <span class="shield-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+            </span>
+            <p>
+                Este recibo serve como comprovante de serviço prestado.
+                <strong>Obrigado por viajar com a Sousa Locações e Transportes!</strong>
+            </p>
+        </div>
+
+        <div class="footer-bar">
+            <div class="footer-col">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 14v-2a9 9 0 0 1 18 0v2"></path>
+                    <rect x="17" y="14" width="4" height="6" rx="1.5"></rect>
+                    <rect x="3" y="14" width="4" height="6" rx="1.5"></rect>
+                </svg>
+                <div>
+                    <div class="footer-label">Dúvidas ou sugestões?</div>
+                    <div class="footer-value">(94) 99209-4603</div>
+                </div>
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-col">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"></path>
+                </svg>
+                <div>
+                    <div class="footer-value company">Sousa Locações e Transportes</div>
+                    <div class="footer-sub">Conforto, segurança e confiança sempre.</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <button class="btn-baixar esconder-no-pdf" id="btn-gerar-pdf" onclick="gerarPDF()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -182,7 +623,6 @@
         const urlParams = new URLSearchParams(window.location.search);
         const corridaID = urlParams.get('id');
 
-        // Carrega os dados assim que abre a tela
         window.onload = async function () {
             if (!corridaID) {
                 alert("Nenhuma corrida selecionada.");
@@ -194,42 +634,74 @@
                 const dados = await response.json();
 
                 if (response.ok) {
-                    // Formata a data para padrão BR
-                    const dataObj = new Date(dados.DataHoraAgendada);
-                    const dataFormatada = dataObj.toLocaleString('pt-BR');
+                    const dataObj = new Date(dados.DataHoraAgendada || dados.created_at);
+                    const dataFormatada = dataObj.toLocaleDateString('pt-BR');
+                    const horaFormatada = dataObj.toLocaleTimeString('pt-BR');
 
-                    // Preenche os campos do HTML
                     document.getElementById('txt-id').innerText = `#${dados.ID}`;
-                    document.getElementById('txt-datahora').innerText = dataFormatada;
+                    document.getElementById('txt-data').innerText = dataFormatada;
+                    document.getElementById('txt-hora').innerText = horaFormatada;
                     document.getElementById('txt-motorista').innerText = dados.Motorista ? dados.Motorista.Nome : "Motorista";
                     document.getElementById('txt-passageiro').innerText = dados.Usuario ? dados.Usuario.Nome : "Passageiro Avulso";
-
-                    // Se for corrida livre do Taxímetro, não tem texto de origem, usa a coordenada ou "Corrida Livre"
                     document.getElementById('txt-origem').innerText = dados.OrigemTexto || "Embarque Livre";
                     document.getElementById('txt-destino').innerText = dados.DestinoTexto || "Desembarque Livre";
-
-                    document.getElementById('txt-valor').innerText = "R$ " + parseFloat(dados.ValorFinal).toFixed(2).replace('.', ',');
+                    document.getElementById('txt-valor').innerText = "R$ " + parseFloat(dados.ValorFinal || 0).toFixed(2).replace('.', ',');
                 }
             } catch (err) {
                 console.error("Erro ao buscar recibo:", err);
             }
         };
 
-        // Função que converte a Div em PDF e faz o download
-        function gerarPDF() {
+        async function gerarPDF() {
             const elemento = document.getElementById('recibo-box');
 
-            // Esconde momentaneamente botões ou coisas que não devem sair na impressão (se houver)
             const opt = {
-                margin: [0.5, 0.5],
+                margin: [0.5, 1], // Centralizado
                 filename: `Recibo_Corrida_${corridaID}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    scrollY: 0
+                },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                // ISSO IMPEDE O CORTE E MANTÉM EM UMA ÚNICA PÁGINA
+                pagebreak: { mode: 'avoid-all' }
             };
 
-            // Gera e baixa o PDF
-            html2pdf().set(opt).from(elemento).save();
+            if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                try {
+                    const btn = document.getElementById('btn-gerar-pdf');
+                    const txtOriginal = btn.innerHTML;
+                    btn.innerText = "Gerando PDF...";
+
+                    const pdfBase64 = await html2pdf().set(opt).from(elemento).outputPdf('datauristring');
+                    const base64Data = pdfBase64.split(',')[1];
+                    const { Filesystem, Share } = window.Capacitor.Plugins;
+
+                    const result = await Filesystem.writeFile({
+                        path: opt.filename,
+                        data: base64Data,
+                        directory: 'CACHE',
+                    });
+
+                    await Share.share({
+                        title: 'Recibo da Corrida',
+                        text: 'Aqui está o recibo da sua corrida.',
+                        url: result.uri,
+                        dialogTitle: 'Compartilhar ou Salvar Recibo',
+                    });
+
+                    btn.innerHTML = txtOriginal;
+
+                } catch (error) {
+                    console.error("Erro ao salvar o PDF no celular:", error);
+                    alert("Falha ao tentar gerar e compartilhar o arquivo no celular.");
+                }
+            }
+            else {
+                html2pdf().set(opt).from(elemento).save();
+            }
         }
     </script>
 </body>

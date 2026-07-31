@@ -281,35 +281,82 @@
         let coordenadaOrigem = { lat: 0, lng: 0 };
         let ultimaLatCorrida = null;
         let ultimaLngCorrida = null;
-
-        // Regras de Negócio
-        const BASE_URBANO = 10.00;
-        const KM_URBANO = 2.50;
-        const KM_INTER = 4.00;
-        const LIMITE_URBANO = 20.0;
         const URL_API = window.API_URL;
 
+        // ==========================================
+        // REGRAS DE NEGÓCIO E PRECIFICAÇÃO DINÂMICA
+        // ==========================================
+        // Inicia nulo para obrigar a consulta e não permitir cálculos fantasmas
+        let taxasAtuais = null;
+
+        // Busca os dados oficiais do Admin antes da corrida começar
+        async function carregarTabelaDePrecos() {
+            try {
+                const response = await fetch(`${URL_API}/api/configuracoes`);
+
+                if (!response.ok) {
+                    throw new Error(`Erro na comunicação com o servidor: ${response.status}`);
+                }
+
+                taxasAtuais = await response.json();
+                console.log("Tabela de preços atualizada com sucesso pelo servidor:", taxasAtuais);
+
+                // Força a atualização da tela (ex: preencher a bandeirada inicial na tela R$ 10,00)
+                atualizarTela();
+
+            } catch (error) {
+                console.error("Falha ao buscar as tarifas oficiais:", error);
+                alert("Atenção: Não foi possível carregar as tarifas atuais. Verifique sua conexão com a internet. O Taxímetro está bloqueado até sincronizar.");
+            }
+        }
+
+        // Chama a função logo que a página carregar
+        document.addEventListener("DOMContentLoaded", () => {
+            carregarTabelaDePrecos();
+        });
+
+
         function calcularPreco(km) {
+            // TRAVA: Se não baixou as taxas, retorna 0 para evitar bugs matemáticos
+            if (!taxasAtuais) return 0.00;
+
             let valorCalculado = 0;
+            const base = taxasAtuais.base_urbana;
+            const limite = taxasAtuais.limite_urbano;
+            const precoUrbano = taxasAtuais.km_urbano;
+            const precoInter = taxasAtuais.km_inter;
 
             // Calcula apenas o valor da distância rodada
-            if (km <= LIMITE_URBANO) {
-                valorCalculado = km * KM_URBANO;
+            if (km <= limite) {
+                valorCalculado = km * precoUrbano;
             } else {
-                valorCalculado = (LIMITE_URBANO * KM_URBANO) + ((km - LIMITE_URBANO) * KM_INTER);
+                valorCalculado = (limite * precoUrbano) + ((km - limite) * precoInter);
             }
 
-            // O valor final é a Bandeirada (10.00) + o valor da distância
-            return BASE_URBANO + valorCalculado;
+            // O valor final é a Bandeirada + o valor da distância
+            return base + valorCalculado;
         }
 
         function atualizarTela() {
             document.getElementById("km-atual").innerText = kmTotal.toFixed(2) + " KM";
             const preco = calcularPreco(kmTotal);
-            document.getElementById("valor-atual").innerText = "R$ " + preco.toFixed(2).replace('.', ',');
+
+            // Tratamento visual para não aparecer "R$ NaN" caso as taxas estejam carregando
+            if (!taxasAtuais && preco === 0) {
+                document.getElementById("valor-atual").innerText = "R$ 0,00";
+            } else {
+                document.getElementById("valor-atual").innerText = "R$ " + preco.toFixed(2).replace('.', ',');
+            }
         }
 
         function iniciarTaximetro() {
+            // TRAVA 1: Impede iniciar a corrida sem o preço atualizado
+            if (!taxasAtuais) {
+                alert("Aguarde as tarifas serem carregadas do servidor ou verifique sua internet para iniciar a viagem.");
+                return;
+            }
+
+            // TRAVA 2: GPS não carregado
             if (!window.GPSGlobal) {
                 alert("O motor de GPS não foi carregado. Verifique sua conexão.");
                 return;
@@ -445,6 +492,12 @@
 
         // Salva a corrida definitiva no banco de dados e gera o Recibo
         async function salvarCorridaBanco() {
+            // TRAVA 3: Bloqueia fechamento fraudulento
+            if (!taxasAtuais) {
+                alert("Falha na tabela de preços. Verifique a conexão antes de salvar.");
+                return;
+            }
+
             // Lê o ID de forma segura puxando da função global
             const motoristaId = window.GPSGlobal ? window.GPSGlobal.obterIdToken() : 1;
             const radioSelecionado = document.querySelector('input[name="passageiro_selecionado"]:checked');
@@ -453,9 +506,9 @@
             const valorSugerido = calcularPreco(kmTotal);
             let valorRecebido = parseFloat(document.getElementById("input-valor-recebido").value);
 
-            // VALIDAÇÃO DE SEGURANÇA NO FRONTEND
-            if (isNaN(valorRecebido) || valorRecebido < BASE_URBANO) {
-                alert(`O valor recebido não pode ser menor que a base de R$ ${BASE_URBANO.toFixed(2).replace('.', ',')}.`);
+            // VALIDAÇÃO DE SEGURANÇA NO FRONTEND (Puxando a base oficial da nuvem)
+            if (isNaN(valorRecebido) || valorRecebido < taxasAtuais.base_urbana) {
+                alert(`O valor recebido não pode ser menor que a bandeirada de R$ ${taxasAtuais.base_urbana.toFixed(2).replace('.', ',')}.`);
                 return; // Trava o envio
             }
 
@@ -483,7 +536,7 @@
 
                 if (response.ok) {
                     fecharModal();
-                    alert(`✅ Corrida Salva com Sucesso!\nTokens ativados!\nID da Corrida: ${dados.corrida_id}`);
+                    alert(`✅ Corrida Salva com Sucesso!\nTokens ativados!\nGerando Recibo...`);
 
                     // Reset total da tela
                     kmTotal = 0.0;
@@ -498,7 +551,8 @@
                     document.getElementById("status-texto").style.color = "var(--t2)";
                     document.getElementById("status-texto").style.background = "var(--bg3)";
 
-                    // FUTURO: Aqui chamaremos a função gerarReciboPDF(dados.corrida_id)
+                    // REDIRECIONAMENTO DIRETO PARA O RECIBO!
+                    window.location.href = `recibo.html?id=${dados.corrida_id}`;
                 } else {
                     alert("Erro ao salvar: " + dados.erro);
                 }

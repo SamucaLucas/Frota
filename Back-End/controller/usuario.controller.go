@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"Frota/db"
 	"Frota/models"
 	"Frota/services"
 	"Frota/structs"
@@ -247,4 +248,67 @@ func ApiLogout(w http.ResponseWriter, r *http.Request) {
 		"sucesso":  true,
 		"mensagem": "Logout realizado com sucesso",
 	})
+}
+
+func ObterConfiguracoes(w http.ResponseWriter, r *http.Request) {
+	var config structs.ConfiguracaoApp
+
+	// Busca sempre a configuração de ID 1
+	err := db.DB.First(&config, 1).Error
+	if err != nil {
+		// Se não existir (primeira vez rodando), cria com os valores padrão
+		config = structs.ConfiguracaoApp{ID: 1, BaseUrbana: 10.00, KmUrbano: 2.50, LimiteUrbano: 20.00, KmInter: 4.00}
+		db.DB.Create(&config)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(config)
+}
+
+// DeletarUsuario remove um usuário do sistema, com proteção para o ID 1
+func DeletarUsuario(w http.ResponseWriter, r *http.Request) {
+	
+	
+	// Se estiver usando rotas padrões do Go com Query Param (ex: /api/usuario?id=1):
+	usuarioID := r.URL.Query().Get("id")
+
+	if usuarioID == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"erro": "ID do usuário não informado"}`))
+		return
+	}
+
+	// 2. A BLINDAGEM: Protege o Passageiro Avulso
+	if usuarioID == "1" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden) // Erro 403 - Proibido
+		w.Write([]byte(`{"erro": "Acesso Negado: O Passageiro Avulso é estrutural e não pode ser excluído."}`))
+		return
+	}
+
+	// 3. Executa a exclusão com GORM
+	// Passamos o ponteiro vazio da Struct de Usuário e o ID
+	resultado := db.DB.Delete(&structs.Usuario{}, usuarioID)
+
+	// Verifica se ocorreu algum erro na conexão ou sintaxe do banco
+	if resultado.Error != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"erro": "Falha ao processar exclusão no banco de dados"}`))
+		return
+	}
+
+	// Verifica se realmente achou e apagou a linha (evita dar sucesso se o ID não existia)
+	if resultado.RowsAffected == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"erro": "Usuário não encontrado"}`))
+		return
+	}
+
+	// 4. Retorna sucesso para o Front-End
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"mensagem": "Usuário excluído com sucesso"}`))
 }

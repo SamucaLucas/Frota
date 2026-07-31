@@ -316,22 +316,32 @@
             window.location.href = "../Usuario/login.html";
         }
 
-        // Valores de segurança (fallback) caso o celular esteja sem internet
-        let taxasAtuais = {
-            base_urbano: 10.00,
-            km_urbano: 2.50,
-            km_inter: 4.00,
-            limite_urbano: 20.0
-        };
+        // Variável inicia vazia, obrigando a consulta ao servidor
+        let taxasAtuais = null;
 
-        // Assim que a tela carrega, ele puxa do Go os preços oficiais de hoje!
-        fetch(`${window.API_URL}/api/config-precos`)
-            .then(res => res.json())
-            .then(dados => {
-                taxasAtuais = dados; // Sobrescreve com os valores do servidor!
-                console.log("Taxas atualizadas:", taxasAtuais);
-            })
-            .catch(err => console.log("Usando taxas offline padrão", err));
+        // Função para buscar os preços oficiais sempre que a tela abrir
+        async function carregarTaxas() {
+            try {
+                const response = await fetch(`${window.API_URL}/api/configuracoes`);
+
+                if (!response.ok) {
+                    throw new Error(`Erro na comunicação com o servidor: ${response.status}`);
+                }
+
+                taxasAtuais = await response.json();
+                console.log("Taxas atualizadas com sucesso pelo servidor:", taxasAtuais);
+
+                // Tenta calcular a estimativa novamente caso os pontos do mapa já estejam preenchidos
+                calcularEstimativa();
+
+            } catch (err) {
+                console.error("Falha ao buscar as tarifas oficiais:", err);
+                alert("Atenção: Não foi possível carregar as tarifas atuais. Verifique sua conexão com a internet.");
+            }
+        }
+
+        // Executa a busca assim que o script é carregado
+        carregarTaxas();
 
         // ==========================================
         // ENVIO DO FORMULÁRIO PARA A API (REST)
@@ -341,6 +351,14 @@
 
             const msgErro = document.getElementById('mensagem-erro');
             msgErro.style.display = 'none';
+
+            // TRAVA 1: Impede de agendar se as taxas não tiverem carregado do servidor
+            if (!taxasAtuais) {
+                msgErro.textContent = "Aguarde o carregamento das tarifas ou verifique sua conexão com a internet.";
+                msgErro.style.display = 'block';
+                window.scrollTo(0, 0);
+                return;
+            }
 
             // Valida se os pontos do mapa foram realmente selecionados
             if (!document.getElementById('origem_lat').value || !document.getElementById('destino_lat').value) {
@@ -558,7 +576,6 @@
                 // MÁGICA HÍBRIDA DO GPS
                 // ==========================================
                 if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-                    // Fluxo CELULAR (App Nativo Android/iOS)
                     const permission = await Capacitor.Plugins.Geolocation.checkPermissions();
                     if (permission.location !== 'granted') {
                         await Capacitor.Plugins.Geolocation.requestPermissions();
@@ -570,12 +587,10 @@
                     lng = coordinates.coords.longitude;
 
                 } else {
-                    // Fluxo WEB (Navegador normal / Live Server)
                     if (!navigator.geolocation) {
                         throw new Error("Seu navegador não suporta GPS.");
                     }
 
-                    // Envolvemos em uma Promise para funcionar com o await igual ao Nativo
                     const position = await new Promise((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
                     });
@@ -585,12 +600,11 @@
                 }
 
                 // ==========================================
-                // PREENCHE A TELA (Igual para os dois fluxos)
+                // PREENCHE A TELA
                 // ==========================================
                 document.getElementById('origem_lat').value = lat;
                 document.getElementById('origem_lng').value = lng;
 
-                // Converte a coordenada em nome de rua
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                     .then(res => res.json())
                     .then(data => {
@@ -611,6 +625,12 @@
         }
 
         function calcularEstimativa() {
+            // TRAVA 2: Se as taxas ainda não chegaram do banco de dados, interrompe o cálculo silenciosamente
+            if (!taxasAtuais) {
+                console.warn("Aguardando carregamento das taxas...");
+                return;
+            }
+
             const lat1 = document.getElementById('origem_lat').value;
             const lng1 = document.getElementById('origem_lng').value;
             const lat2 = document.getElementById('destino_lat').value;
@@ -625,8 +645,8 @@
                         if (data.routes && data.routes.length > 0) {
                             const distanciaKm = parseFloat((data.routes[0].distance / 1000).toFixed(1));
 
-                            // AQUI ESTÁ A MÁGICA: Puxando da variável dinâmica em vez de número fixo
-                            const precoBaseUrbano = taxasAtuais.base_urbano;
+                            // ALINHAMENTO COM A STRUCT DO GOLANG (base_urbana com 'a')
+                            const precoBaseUrbano = taxasAtuais.base_urbana;
                             const precoKmUrbano = taxasAtuais.km_urbano;
                             const precoKmInter = taxasAtuais.km_inter;
                             const limiteKmUrbano = taxasAtuais.limite_urbano;
@@ -666,7 +686,6 @@
             sessionStorage.removeItem("token");
             window.location.href = "../Usuario/login.html";
         }
-
     </script>
 </body>
 

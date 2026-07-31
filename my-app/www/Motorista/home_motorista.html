@@ -64,13 +64,13 @@
             text-transform: uppercase;
         }
 
-        .btn-concluir {
-            background: transparent;
-            color: var(--acc);
-            border: 1px solid var(--acc-border);
-            padding: 12px;
+        .btn-iniciar-rota {
+            background: #10B981;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
             border-radius: 12px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 800;
             font-family: 'Sora';
             cursor: pointer;
@@ -79,49 +79,13 @@
             justify-content: center;
             width: 100%;
             transition: opacity 0.2s;
-            margin-top: 10px;
+            margin-top: 14px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-        .btn-concluir:active {
+        .btn-iniciar-rota:active {
             transform: scale(0.98);
-            background: var(--acc-bg);
-        }
-
-        .btn-gps-origem {
-            background: var(--bg3);
-            color: var(--t1);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: 'Sora';
-            cursor: pointer;
-            flex: 1;
-            transition: background 0.2s;
-        }
-
-        .btn-gps-origem:active {
-            background: var(--border);
-        }
-
-        .btn-gps-destino {
-            background: var(--acc);
-            color: #fff;
-            border: none;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: 'Sora';
-            cursor: pointer;
-            flex: 1;
-            transition: opacity 0.2s;
-        }
-
-        .btn-gps-destino:active {
-            opacity: 0.8;
-            transform: scale(0.98);
+            opacity: 0.9;
         }
 
         /* SIDEBAR */
@@ -380,17 +344,12 @@
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // ==========================================
-        // FLUXO DE CARREGAMENTO (API REST)
-        // ==========================================
         const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
         if (!token) {
             window.location.href = "../Usuario/login.html";
         } else {
             carregarDadosMotorista();
-            // OBS: O GPS é ativado automaticamente pelo arquivo gps_tracker.js 
-            // logo após a página carregar, sem precisarmos chamar aqui!
         }
 
         function carregarDadosMotorista() {
@@ -427,12 +386,9 @@
             let html = "";
             corridas.forEach(c => {
                 let dataFmt = new Date(c.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-                // Formato Universal de Rota do Google Maps
-                let linkOrigem = `https://maps.google.com/?q=${c.OrigemLat},${c.OrigemLng}`;
-                let linkDestino = `https://maps.google.com/?q=${c.DestinoLat},${c.DestinoLng}`;
 
                 html += `
-                <div class="card list-card" style="border-left: 3px solid #2ecc71;">
+                <div class="card list-card" style="border-left: 3px solid #10B981;">
                     <div class="row" style="margin-bottom: 8px;">
                         <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${c.OrigemTexto} → ${c.DestinoTexto}</div>
                         <span class="badge-green">Aprovada</span>
@@ -441,17 +397,10 @@
                     <div style="font-size: 11px; color: var(--t2);">
                         👤 Passageiro: <span style="color: var(--t1); font-weight: bold;">${c.Usuario.Nome}</span>
                     </div>
-
-                    <div style="display: flex; gap: 8px; margin-top: 14px;">
-                        <button class="btn-gps-origem" onclick="window.open('${linkOrigem}', '_blank')">
-                            📍 Buscar Cliente
-                        </button>
-                        <button class="btn-gps-destino" onclick="window.open('${linkDestino}', '_blank')">
-                            🏁 Ir p/ Destino
-                        </button>
-                    </div>
                     
-                    <button type="button" class="btn-concluir" onclick="concluirCorrida(${c.ID}, this)">✓ Finalizar Corrida</button>
+                    <button type="button" class="btn-iniciar-rota" onclick="abrirCorridaAgendada(${c.ID})">
+                        ▶ Iniciar Corrida
+                    </button>
                 </div>`;
             });
             container.innerHTML = html;
@@ -481,42 +430,12 @@
             container.innerHTML = html;
         }
 
-        // ==========================================
-        // FINALIZAR CORRIDA (POST)
-        // ==========================================
-        function concluirCorrida(id, btnElement) {
-            if (!confirm("Tem certeza que deseja finalizar esta corrida? O passageiro será notificado.")) return;
-
-            btnElement.innerHTML = "Finalizando...";
-            btnElement.disabled = true;
-
-            fetch(`${window.API_URL}/api/motorista/concluir`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ corrida_id: id })
-            })
-                .then(res => res.json())
-                .then(dados => {
-                    if (dados.sucesso) {
-                        carregarDadosMotorista(); // Recarrega a tela para a corrida descer pro histórico
-                    } else {
-                        alert("Erro ao finalizar: " + dados.erro);
-                        btnElement.innerHTML = "✓ Finalizar Corrida";
-                        btnElement.disabled = false;
-                    }
-                })
-                .catch(err => {
-                    alert("Erro de conexão.");
-                    btnElement.innerHTML = "✓ Finalizar Corrida";
-                    btnElement.disabled = false;
-                });
+        // Redireciona para a nova tela isolada da corrida
+        function abrirCorridaAgendada(id) {
+            window.location.href = `corrida_agendada.html?id=${id}`;
         }
 
         function fazerLogout(avisarApi = true) {
-            // Desliga o rastreador de GPS nativo quando o motorista deslogar
             if (window.GPSGlobal) {
                 window.GPSGlobal.parar();
             }
@@ -524,7 +443,7 @@
             if (avisarApi) {
                 fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
             }
-            
+
             localStorage.removeItem("token");
             sessionStorage.removeItem("token");
             window.location.href = "../Usuario/login.html";

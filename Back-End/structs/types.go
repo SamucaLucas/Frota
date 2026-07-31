@@ -184,3 +184,15 @@ type LocalizacaoMotorista struct {
 func (LocalizacaoMotorista) TableName() string {
 	return "localizacao_motoristas"
 }
+
+type ConfiguracaoApp struct {
+	ID           uint    `gorm:"primaryKey" json:"id"`
+	BaseUrbana   float64 `gorm:"type:numeric(10,2);default:10.00" json:"base_urbana"`
+	KmUrbano     float64 `gorm:"type:numeric(10,2);default:2.50" json:"km_urbano"`
+	LimiteUrbano float64 `gorm:"type:numeric(10,2);default:20.00" json:"limite_urbano"`
+	KmInter      float64 `gorm:"type:numeric(10,2);default:4.00" json:"km_inter"`
+}
+
+func (ConfiguracaoApp) TableName() string {
+	return "configuracoes_app"
+}

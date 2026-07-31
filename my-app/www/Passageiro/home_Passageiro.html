@@ -459,7 +459,7 @@
             viagens.forEach(v => {
                 const dataFormatada = formatarData(v.DataHoraAgendada);
                 html += `
-                <div class="card list-card" onclick="window.location.href='../Em dev/contrucao.html'">
+                <div class="card list-card" onclick="window.location.href='../Dados/recibo.html?id=${v.ID}'">
                     <div class="row" style="margin-bottom: 6px;">
                         <div style="font-size: 13px; font-weight: 700; color: var(--t1);">${v.OrigemTexto} → ${v.DestinoTexto}</div>
                         <span class="badge badge-muted">${v.Status}</span>
@@ -467,9 +467,8 @@
                     <div class="row">
                         <div style="font-size: 11px; color: var(--t3);">${dataFormatada}</div>
                         <div class="tok-badge" style="font-size: 10px; padding: 3px 8px; background: transparent; border-color: var(--border); color: var(--t2);">
-                            🪙 Ver corrida
+                            🪙 Ver Recibo
                         </div>
-                        <a href="../Dados/recibo.html?id=125" class="btn-ver-recibo">Visualizar Recibo</a>
                     </div>
                 </div>`;
             });

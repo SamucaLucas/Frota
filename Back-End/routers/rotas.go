@@ -26,7 +26,6 @@ func ConfigurarRotas() *http.ServeMux {
 	//Rotas de API - Passageiro
 	r.HandleFunc("/api/passageiro/home", controller.HomePassageiro)
 	r.HandleFunc("/api/passageiro/agendar", controller.AgendarViagem)
-	r.HandleFunc("/api/config-precos", controller.ApiConfigPrecos)
 
 	// Rotas de API - Admin
 	r.HandleFunc("/api/admin/home", controller.HomeAdmin)

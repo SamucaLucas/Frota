@@ -71,7 +71,8 @@ func ApiHomeMotorista(w http.ResponseWriter, r *http.Request) {
 
 // ReqConcluir mapeia o JSON enviado pelo celular
 type ReqConcluir struct {
-	CorridaID int `json:"corrida_id"`
+	CorridaID  int     `json:"corrida_id"`
+	ValorFinal float64 `json:"valor_final"`
 }
 
 // ApiPostConcluirCorrida (POST) acionada quando o motorista finaliza a viagem
@@ -90,7 +91,7 @@ func ApiPostConcluirCorrida(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Lê o JSON enviado pelo App {"corrida_id": X}
+	// Lê o JSON enviado pelo App {"corrida_id": X, "valor_final": Y}
 	var req ReqConcluir
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -119,8 +120,18 @@ func ApiPostConcluirCorrida(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Atualiza o status da corrida para "Concluida"
-	errDb := db.DB.Model(&structs.Corrida{}).Where("id = ?", req.CorridaID).Update("status", "Concluida").Error
+	// Define qual valor salvar (Fallback: se o front mandar 0, salva o estimado)
+	valorParaSalvar := req.ValorFinal
+	if valorParaSalvar <= 0 {
+		valorParaSalvar = corrida.ValorEstimado
+	}
+
+	// 2. A MÁGICA AQUI: Usamos Updates (plural) com um map para salvar os dois campos!
+	errDb := db.DB.Model(&structs.Corrida{}).Where("id = ?", req.CorridaID).Updates(map[string]interface{}{
+		"status":      "Concluida",
+		"valor_final": valorParaSalvar,
+	}).Error
+
 	if errDb != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Erro ao salvar no banco."})
@@ -149,7 +160,6 @@ func ApiPostConcluirCorrida(w http.ResponseWriter, r *http.Request) {
 		"sucesso":  true,
 		"mensagem": "Corrida finalizada com sucesso!",
 	})
-
 }
 
 // Estrutura temporária para ler o JSON que vem do celular
