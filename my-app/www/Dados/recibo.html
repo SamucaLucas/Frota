@@ -651,13 +651,13 @@
 
             // Se o usuário veio de uma corrida recém finalizada, joga para a Home usando replace para limpar a stack do histórico
             if (paginaAnterior.includes("corrida_agendada.html") || paginaAnterior.includes("taximetro.html")) {
-                window.location.replace("home_motorista.html");
+                window.location.replace("../Motorista/home_motorista.html");
             } else if (paginaAnterior !== "") {
                 // Se acessou pelo histórico normal (Admin, Extrato, etc), volta uma página naturalmente
                 window.history.back();
             } else {
                 // Fallback de segurança se abrir em aba anônima/direto
-                window.location.replace("home_motorista.html");
+                window.location.replace("../Motorista/home_motorista.html");
             }
         }
 
