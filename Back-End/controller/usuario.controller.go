@@ -251,6 +251,11 @@ func ApiLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func ObterConfiguracoes(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	
 	var config structs.ConfiguracaoApp
 
 	// Busca sempre a configuração de ID 1
@@ -267,8 +272,7 @@ func ObterConfiguracoes(w http.ResponseWriter, r *http.Request) {
 
 // DeletarUsuario remove um usuário do sistema, com proteção para o ID 1
 func DeletarUsuario(w http.ResponseWriter, r *http.Request) {
-	
-	
+
 	// Se estiver usando rotas padrões do Go com Query Param (ex: /api/usuario?id=1):
 	usuarioID := r.URL.Query().Get("id")
 
