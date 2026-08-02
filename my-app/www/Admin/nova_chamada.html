@@ -10,8 +10,7 @@
     <link rel="stylesheet" href="../static/style.css">
 
     <!-- LEAFLET CSS PARA O MAPA -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 
     <style>
         html,
@@ -186,7 +185,7 @@
 
         #mapa {
             width: 100%;
-            height: 240px;
+            height: 260px;
             z-index: 1;
         }
 
@@ -323,8 +322,8 @@
 
                 <!-- MAPA E ROTAS -->
                 <div class="card-secao">
-                    <div style="font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 12px;">📍 Trajeto
-                        Inteligente</div>
+                    <div style="font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 12px;">📍 Trajeto e
+                        Mapa</div>
 
                     <div class="form-group">
                         <label class="form-label">Origem</label>
@@ -393,7 +392,7 @@
                         um Motorista</div>
                     <div id="lista-motoristas">
                         <div style="text-align: center; font-size: 12px; color: var(--t3); padding: 10px;">Buscando
-                            frota disponível...</div>
+                            frota na base de dados...</div>
                     </div>
                 </div>
 
@@ -405,6 +404,9 @@
     </div>
 
     <script src="../static/app.js"></script>
+
+    <!-- LEAFLET JS PARA O MAPA -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         const token = sessionStorage.getItem("token") || localStorage.getItem("token");
         if (!token) window.location.href = "../Usuario/login.html";
@@ -418,6 +420,7 @@
         let timeoutBusca;
         let taxasAtuais = null;
         let meuAdminId = null;
+        let listaRenderizada = false; // Controle para criar os botões da lista apenas uma vez
 
         const iconeOrigem = L.divIcon({ className: 'custom-icon', html: '<div class="pin-origem-visual"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
         const iconeDestino = L.divIcon({ className: 'custom-icon', html: '<div class="pin-destino-visual"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
@@ -444,11 +447,11 @@
 
             carregarTaxas();
             carregarFrotaAdmin();
-            setInterval(atualizarMapaTempoReal, 5000); // Atualiza os carrinhos no mapa
+            setInterval(atualizarMapaTempoReal, 5000);
         });
 
         // ==========================================
-        // LÓGICA DE ROTAS E OSRM (MESMA DO PASSAGEIRO)
+        // LÓGICA DE ROTAS E OSRM (PASSAGEIRO)
         // ==========================================
         async function carregarTaxas() {
             try {
@@ -491,7 +494,6 @@
                     inputTexto.value = endereco;
                     ativarInsercaoMapa(tipo);
                     calcularEstimativa();
-                    renderizarMotoristas(window.motoristasSalvos); // Atualiza as distâncias na lista
                 }).catch(() => {
                     inputTexto.value = `Ponto (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
                     ativarInsercaoMapa(tipo);
@@ -543,7 +545,6 @@
                                     list.style.display = 'none';
                                     atualizarMarcadorNoMapa(tipo, parseFloat(local.lat), parseFloat(local.lon));
                                     calcularEstimativa();
-                                    renderizarMotoristas(window.motoristasSalvos); // Atualiza km na lista
                                 };
                                 list.appendChild(div);
                             });
@@ -574,24 +575,24 @@
                         if (data.routes && data.routes.length > 0) {
                             const distanciaKm = parseFloat((data.routes[0].distance / 1000).toFixed(1));
                             let valorFinal = 0;
+                            let tipoViagem = "Urbana";
+
                             if (distanciaKm <= taxasAtuais.limite_urbano) {
                                 valorFinal = taxasAtuais.base_urbana;
                                 if (distanciaKm > 1) valorFinal += (distanciaKm - 1) * taxasAtuais.km_urbano;
                             } else {
+                                tipoViagem = "Intermunicipal";
                                 valorFinal = distanciaKm * taxasAtuais.km_inter;
                             }
-                            // O Admin pode apagar e escrever outro valor. Nós só preenchemos automaticamente.
+
                             document.getElementById('distancia-label').innerText = `(${distanciaKm} km)`;
                             document.getElementById('km_rodado').value = distanciaKm;
-                            document.getElementById('valor_estimado').value = valorFinal.toFixed(2);
                             document.getElementById('tipo_viagem').value = tipoViagem;
+                            document.getElementById('valor_estimado').value = valorFinal.toFixed(2);
                         }
                     });
             }
         }
-
-        configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng', 'origem');
-        configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng', 'destino');
 
         // ==========================================
         // LÓGICA DE FROTAS E DESPACHO AO VIVO
@@ -614,94 +615,150 @@
 
         async function atualizarMapaTempoReal() {
             try {
-                const resMot = await fetch(`${window.API_URL}/api/admin/motoristas/localizacao`, { headers: { "Authorization": `Bearer ${token}` } });
-                const motoristas = await resMot.json();
-                if (Array.isArray(motoristas)) {
-                    window.motoristasSalvos = motoristas; // Salva para re-renderizar quando a origem mudar
-                    renderizarMotoristas(motoristas);
+                const urlBase = window.API_URL;
+                const tokenAdmin = localStorage.getItem("token") || sessionStorage.getItem("token");
 
-                    // Atualiza os carrinhos no mapa
-                    const idsAtivos = motoristas.map(m => m.motorista_id || m.MotoristaID);
-                    motoristas.forEach(mot => {
-                        const id = mot.motorista_id || mot.MotoristaID;
-                        const lat = mot.latitude || mot.Latitude, lng = mot.longitude || mot.Longitude;
-                        let statusSafe = (mot.status || mot.Status || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-                        if (statusSafe === "disponivel" && lat && lng) {
-                            if (marcadoresMotoristas[id]) marcadoresMotoristas[id].setLatLng([lat, lng]);
-                            else marcadoresMotoristas[id] = L.marker([lat, lng], { icon: iconeCarro }).addTo(mapa).bindPopup(`🚗 Motorista #${id}`);
-                        } else if (marcadoresMotoristas[id]) {
-                            mapa.removeLayer(marcadoresMotoristas[id]); delete marcadoresMotoristas[id];
-                        }
-                    });
-                    Object.keys(marcadoresMotoristas).forEach(idMap => {
-                        if (!idsAtivos.includes(parseInt(idMap))) { mapa.removeLayer(marcadoresMotoristas[idMap]); delete marcadoresMotoristas[idMap]; }
-                    });
-                }
-            } catch (e) { }
-        }
-
-        function renderizarMotoristas(motoristas) {
-            const container = document.getElementById('lista-motoristas');
-            const latOrigem = document.getElementById('origem_lat').value;
-            const lngOrigem = document.getElementById('origem_lng').value;
-            let html = "";
-
-            if (motoristas && Array.isArray(motoristas)) {
-                const motoristasDisponiveis = motoristas.filter(m => {
-                    let statusSafe = (m.status || m.Status || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                    return statusSafe === "disponivel";
+                const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, {
+                    headers: { "Authorization": `Bearer ${tokenAdmin}` }
                 });
 
-                motoristasDisponiveis.forEach(m => {
-                    const id = m.motorista_id || m.MotoristaID;
-                    const nome = m.nome || m.Nome || `Motorista #${id}`;
-                    let lat = m.latitude || m.Latitude, lng = m.longitude || m.Longitude;
+                if (!response.ok) throw new Error('Erro na rede');
 
-                    let distTexto = "";
-                    if (latOrigem && lngOrigem && lat && lng) {
-                        const dist = calcularDistanciaKmHaversine(latOrigem, lngOrigem, lat, lng);
-                        if (dist) distTexto = `· ${dist.toFixed(1)} km`;
+                const motoristas = await response.json();
+                if (!Array.isArray(motoristas)) return;
+
+                // Se a lista de rádios ainda não foi criada, cria pela primeira vez!
+                if (!listaRenderizada) {
+                    renderizarMotoristasNaLista(motoristas, meuAdminId);
+                    listaRenderizada = true;
+                }
+
+                const idsOnlineDaVez = [];
+                // Pega a origem preenchida no input para calcular a distância
+                const latOrigem = document.getElementById('origem_lat').value;
+                const lngOrigem = document.getElementById('origem_lng').value;
+
+                motoristas.forEach(mot => {
+                    const id = mot.motorista_id || mot.MotoristaID;
+                    if (!id) return;
+
+                    idsOnlineDaVez.push(id);
+
+                    const lat = mot.latitude || mot.Latitude;
+                    const lng = mot.longitude || mot.Longitude;
+                    const nome = (m.motorista && m.motorista.Nome) ? m.motorista.Nome : `Motorista #${id}`;
+                    const statusOriginal = mot.status || mot.Status || "Disponível";
+                    const statusSafe = statusOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+                    // 1. ATUALIZA O MAPA (Apenas os Disponíveis aparecem no mapa)
+                    if (statusSafe === "disponivel" && lat && lng) {
+                        if (marcadoresMotoristas[id]) {
+                            marcadoresMotoristas[id].setLatLng([lat, lng]);
+                        } else {
+                            let novoMarcador = L.marker([lat, lng], { icon: iconeCarro })
+                                .bindPopup(`<b>🚙 ${nome}</b><br><span style="color:#2ecc71;">Disponível</span>`);
+                            novoMarcador.addTo(mapa);
+                            marcadoresMotoristas[id] = novoMarcador;
+                        }
+                    } else if (marcadoresMotoristas[id]) {
+                        // Se mudou de status (ex: ficou Ocupado), tira o carrinho do mapa
+                        mapa.removeLayer(marcadoresMotoristas[id]);
+                        delete marcadoresMotoristas[id];
                     }
 
+                    // 2. ATUALIZA A LISTA EM TEMPO REAL (Atualiza status e distância da origem atual)
+                    const statusDiv = document.getElementById(`drv-status-label-${id}`);
+                    if (statusDiv) {
+                        let distTexto = "";
+                        if (statusSafe === "disponivel" && latOrigem && lngOrigem && lat && lng) {
+                            const dist = calcularDistanciaKmHaversine(latOrigem, lngOrigem, lat, lng);
+                            if (dist) distTexto = `· ${dist.toFixed(1)} km`;
+                        }
+
+                        let corStatus = "#94a3b8";
+                        if (statusSafe === "disponivel") corStatus = "#22C55E";
+                        else if (statusSafe === "em corrida" || statusSafe === "ocupado") corStatus = "#F59E0B";
+                        else if (statusSafe === "inativo" || statusSafe === "offline") corStatus = "#EF4444";
+
+                        statusDiv.style.color = corStatus;
+                        statusDiv.innerHTML = `● ${statusOriginal} <span style="color:var(--t3)">${distTexto}</span>`;
+                    }
+                });
+
+                // 3. LIMPEZA DOS OFFLINES: Quem desconectou de vez do app cai pra "Offline" na lista
+                Object.keys(marcadoresMotoristas).forEach(idMap => {
+                    if (!idsOnlineDaVez.includes(parseInt(idMap))) {
+                        mapa.removeLayer(marcadoresMotoristas[idMap]);
+                        delete marcadoresMotoristas[idMap];
+                    }
+                });
+
+                document.querySelectorAll('[id^="drv-status-label-"]').forEach(el => {
+                    const idCard = parseInt(el.id.replace('drv-status-label-', ''));
+                    if (!idsOnlineDaVez.includes(idCard)) {
+                        el.style.color = "#94a3b8";
+                        el.innerHTML = `● Offline <span style="color:var(--t3)"></span>`;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro no tempo real:", error);
+            }
+        }
+
+        function renderizarMotoristasNaLista(motoristasNaBase, adminId) {
+            const container = document.getElementById('lista-motoristas');
+            let html = "";
+
+            if (motoristasNaBase && motoristasNaBase.length > 0) {
+                // A LISTA EXIBE TODOS (SEM FILTRO DE MAPA)
+                motoristasNaBase.forEach(m => {
+                    const id = m.motorista_id || m.MotoristaID;
+                    const nome = (m.motorista && m.motorista.Nome) ? m.motorista.Nome : `Motorista #${id}`;
                     html += `
                     <label class="driver-card" onclick="selDrv(this)">
                         <input type="radio" name="motorista_id" value="${id}" required>
-                        <div style="flex: 1;">
-                            <div style="font-size:13px;font-weight:700;color:var(--t1);">${nome}</div>
-                            <div style="font-size:10px;color:#22C55E;font-weight:600">● Disponível <span style="color:var(--t3)">${distTexto}</span></div>
+                        <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                            <div style="width:40px;height:40px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🚗</div>
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:var(--t1);">${nome}</div>
+                                <div id="drv-status-label-${id}" style="font-size:10px;color:#94a3b8;font-weight:600">● Buscando status...</div>
+                            </div>
                         </div>
                         <div class="dchk"></div>
                     </label>`;
                 });
+            } else {
+                html += `<div style="text-align:center; padding:10px; font-size:12px; color:var(--t3);">Nenhum motorista cadastrado na base.</div>`;
             }
 
             html += `
             <label class="driver-card" onclick="selDrv(this)">
-                <input type="radio" name="motorista_id" value="${meuAdminId}" required>
-                <div style="flex: 1;">
-                    <div style="font-size:13px;font-weight:700;color:var(--t1);">Eu vou assumir essa corrida</div>
-                    <div style="font-size:10px;color:var(--acc);font-weight:600">Abrirá o painel do motorista</div>
+                <input type="radio" name="motorista_id" value="${adminId}" required>
+                <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                    <div style="width:40px;height:40px;background:var(--acc-bg);border-radius:12px;border:1px solid var(--acc-border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👤</div>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--t1);">Eu vou assumir essa viagem</div>
+                        <div style="font-size:10px;color:var(--acc);font-weight:700;">Abrirá no modo Motorista</div>
+                    </div>
                 </div>
                 <div class="dchk"></div>
             </label>
             
             <label class="driver-card" onclick="selDrv(this)">
                 <input type="radio" name="motorista_id" value="0" required>
-                <div style="flex: 1;">
-                    <div style="font-size:13px;font-weight:700;color:var(--t1);">Deixar Pendente na Fila</div>
-                    <div style="font-size:10px;color:var(--t3);font-weight:600">Nenhum motorista será notificado agora</div>
+                <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                    <div style="width:40px;height:40px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📋</div>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:var(--t1);">Deixar Pendente na Fila</div>
+                        <div style="font-size:10px;color:var(--t3);font-weight:600">Nenhum motorista será notificado agora</div>
+                    </div>
                 </div>
                 <div class="dchk"></div>
             </label>`;
 
-            // Para manter a seleção caso a lista atualize no fundo
-            const selecionadoAntes = document.querySelector('input[name="motorista_id"]:checked');
             container.innerHTML = html;
-            if (selecionadoAntes) {
-                const novoRadio = container.querySelector(`input[value="${selecionadoAntes.value}"]`);
-                if (novoRadio) { novoRadio.checked = true; novoRadio.closest('.driver-card').classList.add('selected'); }
-            }
+            atualizarMapaTempoReal();
         }
 
         function selDrv(element) {
@@ -739,10 +796,10 @@
                 destino_texto: document.getElementById('destino_texto').value,
                 destino_lat: parseFloat(document.getElementById('destino_lat').value),
                 destino_lng: parseFloat(document.getElementById('destino_lng').value),
-                data_hora: document.getElementById('data_hora').value, // Aceita horários futuros
+                data_hora: document.getElementById('data_hora').value,
                 km_rodado: parseFloat(document.getElementById('km_rodado').value) || 0,
                 valor_estimado: parseFloat(document.getElementById('valor_estimado').value) || 0,
-                tipo: document.getElementById('tipo_viagem').value || "padrao",
+                tipo: document.getElementById('tipo_viagem').value || "Urbana",
                 motorista_id: parseInt(motoristaRadio.value)
             };
 

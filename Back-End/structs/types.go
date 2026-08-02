@@ -174,7 +174,8 @@ func (TransacaoFinanceira) TableName() string {
 }
 
 type LocalizacaoMotorista struct {
-	MotoristaID uint      `gorm:"primaryKey" json:"motorista_id"` // Usar como Primary Key garante que o GORM vai sobrescrever!
+	MotoristaID uint      `gorm:"primaryKey" json:"motorista_id"`
+	Motorista   Usuario   `gorm:"foreignKey:MotoristaID" json:"motorista"` // O GORM agora sabe buscar o Usuário!
 	Latitude    float64   `json:"latitude"`
 	Longitude   float64   `json:"longitude"`
 	Status      string    `json:"status"` // Ex: "Disponível", "Em Corrida", "Inativo"
