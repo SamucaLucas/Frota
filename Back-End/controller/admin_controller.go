@@ -215,6 +215,7 @@ func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(localizacoes)
 }
 
+
 // Estrutura para receber o JSON do Front-End da Nova Chamada
 type NovaChamadaRequest struct {
 	NomePassageiro     string  `json:"nome_passageiro"`
@@ -229,16 +230,12 @@ type NovaChamadaRequest struct {
 	KmRodado           float64 `json:"km_rodado"`
 	ValorEstimado      float64 `json:"valor_estimado"`
 	MotoristaID        uint    `json:"motorista_id"`
+	Tipo               string  `json:"tipo"`
 }
 
 // NovaChamada cria uma viagem manualmente via Central
 func NovaChamada(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
 
 	// 1. Verifica se o Admin está logado
 	_, err := services.ExtrairUsuarioID(r)
@@ -263,19 +260,31 @@ func NovaChamada(w http.ResponseWriter, r *http.Request) {
 		if contato == "" {
 			contato = "Sem telefone"
 		}
-		origemComNome = req.OrigemTexto + " (Procurar por: " + req.NomePassageiro + " - " + contato + ")"
+		origemComNome = req.OrigemTexto + " (Cliente: " + req.NomePassageiro + " - " + contato + ")"
 	}
 
-	// 4. Monta a nova corrida usando o Usuário 1 (Avulso)
+	// 4. Tratamento da Data e Hora (Converte a string do HTML para o formato de tempo do Go)
+	dataAgendada, err := time.Parse("2006-01-02T15:04", req.DataHora)
+	if err != nil {
+		dataAgendada = time.Now() // Fallback de segurança
+	}
+
+	// 5. Monta a nova corrida incluindo TODOS os dados de GPS, Distância e Tipo
 	novaCorrida := structs.Corrida{
-		UsuarioID:        1,
+		UsuarioID:        1, 
 		OrigemTexto:      origemComNome,
+		OrigemLat:        req.OrigemLat,
+		OrigemLng:        req.OrigemLng,
 		DestinoTexto:     req.DestinoTexto,
+		DestinoLat:       req.DestinoLat,
+		DestinoLng:       req.DestinoLng,
+		KmRodado:         req.KmRodado,
 		ValorEstimado:    req.ValorEstimado,
-		DataHoraAgendada: time.Now(),
+		DataHoraAgendada: dataAgendada,
+		Tipo:             req.Tipo,
 	}
 
-	// 5. Define o status: Vai para a fila (Pendente) ou direto para um motorista (Aprovada)
+	// 6. Define o status: Vai para a fila (Pendente) ou direto para um motorista (Aprovada)
 	if req.MotoristaID == 0 {
 		novaCorrida.Status = "Pendente"
 	} else {
@@ -283,14 +292,14 @@ func NovaChamada(w http.ResponseWriter, r *http.Request) {
 		novaCorrida.MotoristaID = &req.MotoristaID
 	}
 
-	// 6. Salva no banco de dados
+	// 7. Salva no banco de dados
 	if err := db.DB.Create(&novaCorrida).Error; err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Erro ao salvar chamada no banco."})
 		return
 	}
 
-	// 7. Retorna sucesso e o ID gerado para o front-end poder redirecionar
+	// 8. Retorna sucesso e o ID gerado para o front-end poder redirecionar
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"sucesso":    true,

@@ -384,6 +384,7 @@
                         </div>
                     </div>
                     <input type="hidden" id="km_rodado">
+                    <input type="hidden" id="tipo_viagem">
                 </div>
 
                 <!-- ATRIBUIR MOTORISTA -->
@@ -583,6 +584,7 @@
                             document.getElementById('distancia-label').innerText = `(${distanciaKm} km)`;
                             document.getElementById('km_rodado').value = distanciaKm;
                             document.getElementById('valor_estimado').value = valorFinal.toFixed(2);
+                            document.getElementById('tipo_viagem').value = tipoViagem;
                         }
                     });
             }
@@ -740,6 +742,7 @@
                 data_hora: document.getElementById('data_hora').value, // Aceita horários futuros
                 km_rodado: parseFloat(document.getElementById('km_rodado').value) || 0,
                 valor_estimado: parseFloat(document.getElementById('valor_estimado').value) || 0,
+                tipo: document.getElementById('tipo_viagem').value || "padrao",
                 motorista_id: parseInt(motoristaRadio.value)
             };
 
