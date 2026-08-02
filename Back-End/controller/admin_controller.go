@@ -215,7 +215,6 @@ func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(localizacoes)
 }
 
-
 // Estrutura para receber o JSON do Front-End da Nova Chamada
 type NovaChamadaRequest struct {
 	NomePassageiro     string  `json:"nome_passageiro"`
@@ -271,14 +270,14 @@ func NovaChamada(w http.ResponseWriter, r *http.Request) {
 
 	// 5. Monta a nova corrida incluindo TODOS os dados de GPS, Distância e Tipo
 	novaCorrida := structs.Corrida{
-		UsuarioID:        1, 
+		UsuarioID:        1,
 		OrigemTexto:      origemComNome,
 		OrigemLat:        req.OrigemLat,
 		OrigemLng:        req.OrigemLng,
 		DestinoTexto:     req.DestinoTexto,
 		DestinoLat:       req.DestinoLat,
 		DestinoLng:       req.DestinoLng,
-		KmRodado:         req.KmRodado,
+		KMRodado:         req.KmRodado,
 		ValorEstimado:    req.ValorEstimado,
 		DataHoraAgendada: dataAgendada,
 		Tipo:             req.Tipo,
