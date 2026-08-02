@@ -8,6 +8,11 @@
     <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
     <link rel="manifest" href="../manifest.json">
     <link rel="stylesheet" href="../static/style.css">
+
+    <!-- LEAFLET CSS PARA O MAPA -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
     <style>
         html,
         body {
@@ -15,6 +20,7 @@
             padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
+            background: var(--bg);
         }
 
         .app-container {
@@ -24,32 +30,50 @@
             position: relative;
         }
 
+        /* --- MAPA NO TOPO --- */
+        #mapa-despacho {
+            width: 100%;
+            height: 250px;
+            background: var(--card);
+            z-index: 1;
+            /* O Leaflet as vezes sobe demais o z-index */
+        }
+
+        .header-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
         .home-content {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
             padding-bottom: 30px;
-        }
-
-        .header-top {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .back-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            color: var(--t1);
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.2s;
+            background: var(--bg);
+            border-radius: 24px 24px 0 0;
+            margin-top: -20px;
+            z-index: 2;
+            position: relative;
         }
 
         .sec-lbl {
@@ -79,6 +103,7 @@
             font-size: 13px;
             color: var(--t1);
             font-weight: 500;
+            line-height: 1.4;
         }
 
         .card-hot {
@@ -86,6 +111,7 @@
             background: var(--card);
             border-radius: 16px;
             padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
             border-left: 1px solid var(--border);
             border-right: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
@@ -121,143 +147,43 @@
             background: var(--acc);
             border-color: var(--acc);
         }
-
-        /* SIDEBAR */
-        .menu-btn {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--t1);
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            margin-left: auto;
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 260px;
-            height: 100%;
-            background: var(--bg);
-            z-index: 1000;
-            transition: left 0.3s ease;
-            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar.open {
-            left: 0;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(2px);
-            z-index: 999;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .overlay.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .sb-header {
-            padding: 30px 20px 20px;
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--t1);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .sb-close {
-            background: none;
-            border: none;
-            color: var(--t3);
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .sb-link {
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: var(--t2);
-            font-size: 14px;
-            font-weight: 600;
-            font-family: 'Sora', sans-serif;
-            text-decoration: none;
-            border: none;
-            border-bottom: 1px solid var(--border);
-            background: transparent;
-            border-left: 3px solid transparent;
-            cursor: pointer;
-            text-align: left;
-        }
-
-        .sb-link svg {
-            width: 22px;
-            height: 22px;
-            opacity: 0.7;
-        }
-
-        .sb-link.active {
-            color: var(--acc);
-            border-left-color: var(--acc);
-            background: var(--acc-bg);
-        }
-
-        .sb-link.active svg {
-            opacity: 1;
-        }
     </style>
 </head>
 
 <body>
     <script>
         if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
-            document.body.classList.add('light-mode');
-            document.documentElement.classList.add('light-mode');
+            document.body.classList.add('light-mode'); document.documentElement.classList.add('light-mode');
         }
     </script>
 
-
-
     <div class="app-container">
-        <div class="home-content">
-
-            <div class="header-top">
-                <button class="back-btn" onclick="window.location.href='home_admin.html'">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Despachar</div>
+        <!-- HEADER SOBREPOSTO AO MAPA -->
+        <div class="header-overlay">
+            <button class="back-btn" onclick="window.history.back()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <div
+                style="background: var(--card); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 800; color: var(--t1); border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                Visão de Despacho
             </div>
+        </div>
 
+        <!-- O MAPA -->
+        <div id="mapa-despacho"></div>
+
+        <!-- CONTEÚDO (SOBE UM POUQUINHO SOBRE O MAPA PARA DAR ESTILO) -->
+        <div class="home-content">
             <div id="mensagem-erro" class="toast-msg toast-error" style="display: none; margin-bottom: 16px;"></div>
 
             <div class="card-hot" id="dados-corrida" style="display: none;">
                 <div
-                    style="font-size:10px;color:var(--acc);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">
-                    📋 Solicitação #<span id="corrida-id">...</span>
+                    style="font-size:10px;color:var(--acc);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px; display:flex; justify-content:space-between">
+                    <span>📋 Solicitação #<span id="corrida-id">...</span></span>
+                    <span id="distancia-calc" style="color: var(--t2);"></span>
                 </div>
                 <div class="divl" style="margin-top:0"></div>
 
@@ -280,7 +206,8 @@
                 <div class="divl"></div>
                 <div>
                     <div class="meta">Valor Estimado</div>
-                    <div class="val" style="color:var(--acc); font-weight: 800;" id="corrida-valor">R$ 0,00</div>
+                    <div class="val" style="color:var(--acc); font-weight: 800; font-size: 15px;" id="corrida-valor">R$
+                        0,00</div>
                 </div>
             </div>
 
@@ -288,8 +215,9 @@
 
             <form id="form-despacho">
                 <div id="lista-motoristas">
-                    <div style="text-align: center; font-size: 12px; color: var(--t3); padding: 20px;">Carregando
-                        motoristas...</div>
+                    <div style="text-align: center; font-size: 12px; color: var(--t3); padding: 20px;">
+                        Carregando motoristas e suas posições...
+                    </div>
                 </div>
 
                 <div style="margin-top: 24px;">
@@ -299,17 +227,151 @@
                     </button>
                 </div>
             </form>
-
         </div>
     </div>
 
     <script src="../static/app.js"></script>
+
+    <!-- LEAFLET JS PARA O MAPA -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('open');
+        // === VARIÁVEIS GLOBAIS ===
+        let map;
+        let bounds = new L.LatLngBounds();
+        let marcadoresMotoristas = {};
+        
+        // Guarda a posição da corrida para calcular a distância ao vivo
+        let corridaLatG = null;
+        let corridaLngG = null;
+
+        // Ícone do carrinho para os motoristas
+        var iconeCarro = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/128/13210/13210672.png',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
+
+        function inicializarMapa() {
+            map = L.map('mapa-despacho', { zoomControl: false }).setView([-6.0673, -49.9036], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
         }
 
+        function adicionarPin(lat, lng, tipo, nome) {
+            if(!lat || !lng) return;
+            let iconHtml = tipo === 'passageiro' 
+                ? `<div style="background:var(--acc); width:14px; height:14px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.5);"></div>`
+                : `<div style="background:#2ecc71; width:14px; height:14px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.5);"></div>`;
+
+            const customIcon = L.divIcon({ className: 'custom-pin', html: iconHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
+            L.marker([lat, lng], {icon: customIcon}).addTo(map).bindPopup(`<b>${tipo.toUpperCase()}</b><br>${nome}`);
+            bounds.extend([lat, lng]);
+        }
+
+        // Fórmula Haversine para Distância em KM
+        function calcularDistanciaKm(lat1, lon1, lat2, lon2) {
+            if(!lat1 || !lon1 || !lat2 || !lon2) return null;
+            const R = 6371; 
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+
+        // ==========================================
+        // MÁGICA: ATUALIZA MAPA E LISTA AO MESMO TEMPO
+        // ==========================================
+        async function atualizarMapaTempoReal() {
+            try {
+                const urlBase = window.API_URL;
+                const tokenAdmin = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+                const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, {
+                    headers: { "Authorization": `Bearer ${tokenAdmin}` }
+                });
+
+                if (!response.ok) throw new Error('Erro na rede');
+
+                const motoristas = await response.json();
+                if (!Array.isArray(motoristas)) return;
+
+                const idsOnlineDaVez = [];
+
+                motoristas.forEach(mot => {
+                    const id = mot.motorista_id || mot.MotoristaID;
+                    if(!id) return;
+                    
+                    idsOnlineDaVez.push(id);
+
+                    const lat = mot.latitude || mot.Latitude;
+                    const lng = mot.longitude || mot.Longitude;
+                    const nome = mot.nome || `Motorista #${id}`;
+                    const statusOriginal = mot.status || mot.Status || "Disponível";
+                    const statusSafe = statusOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+                    // 1. ATUALIZA O MAPA (Apenas os Disponíveis aparecem no mapa)
+                    if (statusSafe === "disponivel" && lat && lng) {
+                        if (marcadoresMotoristas[id]) {
+                            marcadoresMotoristas[id].setLatLng([lat, lng]);
+                        } else {
+                            let novoMarcador = L.marker([lat, lng], { icon: iconeCarro })
+                                .bindPopup(`<b>🚙 ${nome}</b><br><span style="color:#2ecc71;">Disponível</span>`);
+                            novoMarcador.addTo(map);
+                            marcadoresMotoristas[id] = novoMarcador;
+                        }
+                    } else if (marcadoresMotoristas[id]) {
+                        // Se mudou de status (ex: ficou Ocupado), tira o carrinho do mapa
+                        map.removeLayer(marcadoresMotoristas[id]);
+                        delete marcadoresMotoristas[id];
+                    }
+
+                    // 2. ATUALIZA A LISTA EM TEMPO REAL (Se o card dele existir na tela)
+                    const statusDiv = document.getElementById(`drv-status-label-${id}`);
+                    if (statusDiv) {
+                        let distTexto = "";
+                        // Calcula a distância só se estiver disponível e tiver as coordenadas
+                        if (statusSafe === "disponivel" && corridaLatG && corridaLngG && lat && lng) {
+                            const dist = calcularDistanciaKm(corridaLatG, corridaLngG, lat, lng);
+                            if (dist) distTexto = `· ${dist.toFixed(1)} km`;
+                        }
+
+                        // Define cores baseadas no status vivo
+                        let corStatus = "#94a3b8"; 
+                        if (statusSafe === "disponivel") corStatus = "#22C55E";
+                        else if (statusSafe === "em corrida" || statusSafe === "ocupado") corStatus = "#F59E0B";
+                        else if (statusSafe === "inativo" || statusSafe === "offline") corStatus = "#EF4444";
+
+                        statusDiv.style.color = corStatus;
+                        statusDiv.innerHTML = `● ${statusOriginal} <span style="color:var(--t3)">${distTexto}</span>`;
+                    }
+                });
+
+                // 3. LIMPEZA DOS OFFLINES: Quem desconectou de vez do app cai pra "Offline" na lista
+                Object.keys(marcadoresMotoristas).forEach(idMap => {
+                    if (!idsOnlineDaVez.includes(parseInt(idMap))) {
+                        map.removeLayer(marcadoresMotoristas[idMap]);
+                        delete marcadoresMotoristas[idMap];
+                    }
+                });
+
+                document.querySelectorAll('[id^="drv-status-label-"]').forEach(el => {
+                    const idCard = parseInt(el.id.replace('drv-status-label-', ''));
+                    if(!idsOnlineDaVez.includes(idCard)) {
+                        el.style.color = "#94a3b8";
+                        el.innerHTML = `● Offline <span style="color:var(--t3)"></span>`;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro no tempo real:", error);
+            }
+        }
+
+        // === LÓGICA DE SELEÇÃO DA LISTA ===
         function selDrv(element) {
             const radio = element.querySelector('input[type="radio"]');
             if (radio) radio.checked = true;
@@ -323,74 +385,69 @@
             element.style.background = 'var(--acc-bg)';
         }
 
-        function fazerLogout(avisarApi = true) {
-            if (avisarApi) {
-                fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
-            }
-            localStorage.removeItem("token");
-            sessionStorage.removeItem("token");
-            window.location.href = "../Usuario/login.html";
-        }
-
         // ==========================================
-        // FLUXO DE CARREGAMENTO (API REST)
+        // FLUXO DE CARREGAMENTO INICIAL DA TELA
         // ==========================================
         const token = sessionStorage.getItem("token") || localStorage.getItem("token");
         if (!token) window.location.href = "../Usuario/login.html";
 
-        // 1. Pega o ID da corrida na URL (ex: despachar.html?id=5)
         const urlParams = new URLSearchParams(window.location.search);
         const corridaIdStr = urlParams.get('id');
 
-        if (!corridaIdStr) {
-            alert("ID da corrida não encontrado.");
-            window.location.href = "home_admin.html";
-        }
+        window.onload = () => {
+            inicializarMapa();
+            atualizarMapaTempoReal();
+            setInterval(atualizarMapaTempoReal, 5000); 
+        };
 
-        // 2. Busca os dados da Corrida e a lista de Motoristas
         fetch(`${window.API_URL}/api/admin/despachar/${corridaIdStr}`, {
             method: "GET",
             headers: { "Authorization": `Bearer ${token}` }
         })
-            .then(res => {
-                if (res.status === 401 || res.status === 403) throw new Error("Acesso Negado");
-                return res.json();
-            })
-            .then(dados => {
-                if (dados.sucesso) {
-                    preencherDetalhesCorrida(dados.corrida);
-                    renderizarMotoristas(dados.motoristas, dados.admin_id);
-                    document.getElementById('btn-submit').disabled = false;
-                } else {
-                    alert("Erro: " + dados.erro);
-                    window.location.href = "home_admin.html";
-                }
-            })
-            .catch(err => {
-                if (err.message === "Acesso Negado") fazerLogout(false);
-                console.error(err);
-            });
+        .then(res => res.json())
+        .then(dados => {
+            if (dados.sucesso) {
+                preencherDetalhesCorrida(dados.corrida);
+                renderizarMotoristasNaLista(dados.motoristas, dados.admin_id);
+                document.getElementById('btn-submit').disabled = false;
+            } else {
+                alert("Erro: " + dados.erro);
+                window.location.href = "home_admin.html";
+            }
+        })
+        .catch(err => console.error(err));
 
         function preencherDetalhesCorrida(c) {
             document.getElementById('dados-corrida').style.display = 'block';
             document.getElementById('corrida-id').textContent = c.ID;
-            document.getElementById('corrida-passageiro').textContent = `${c.Usuario.Nome} · ${c.Usuario.Whatsapp}`;
+            
+            let nomePass = c.Usuario && c.Usuario.Nome ? c.Usuario.Nome : "Passageiro Avulso";
+            let whatsPass = c.Usuario && c.Usuario.Whatsapp ? ` · ${c.Usuario.Whatsapp}` : "";
+            document.getElementById('corrida-passageiro').textContent = nomePass + whatsPass;
 
-            const dataFmt = new Date(c.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            const dataFmt = new Date(c.DataHoraAgendada || c.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
             document.getElementById('corrida-data').textContent = dataFmt;
 
             document.getElementById('corrida-origem').textContent = c.OrigemTexto;
             document.getElementById('corrida-destino').textContent = c.DestinoTexto;
             document.getElementById('corrida-valor').textContent = `R$ ${c.ValorEstimado.toFixed(2).replace('.', ',')}`;
+
+            corridaLatG = c.origem_lat || c.OrigemLat;
+            corridaLngG = c.origem_lng || c.OrigemLng;
+
+            if(corridaLatG && corridaLngG) {
+                adicionarPin(corridaLatG, corridaLngG, 'passageiro', 'Local do Cliente');
+                map.setView([corridaLatG, corridaLngG], 14);
+            }
         }
 
-        function renderizarMotoristas(motoristas, adminId) {
+        // Renderiza a lista crua (O atualizador em tempo real vai colorir e botar as distâncias!)
+        function renderizarMotoristasNaLista(motoristasNaBase, adminId) {
             const container = document.getElementById('lista-motoristas');
             let html = "";
 
-            // Lista os motoristas reais
-            if (motoristas && motoristas.length > 0) {
-                motoristas.forEach(m => {
+            if (motoristasNaBase && motoristasNaBase.length > 0) {
+                motoristasNaBase.forEach(m => {
                     html += `
                     <label class="driver-card" onclick="selDrv(this)">
                         <input type="radio" name="motorista_id" value="${m.ID}" required>
@@ -400,15 +457,19 @@
                             </div>
                             <div>
                                 <div style="font-size:13px;font-weight:600;color:var(--t1);">${m.Nome}</div>
-                                <div style="font-size:10px;color:#22C55E;font-weight:600">● Motorista Disponível</div>
+                                <!-- AQUI ESTÁ O ID MÁGICO QUE O JAVASCRIPT ATUALIZA SOZINHO -->
+                                <div id="drv-status-label-${m.ID}" style="font-size:10px;color:#94a3b8;font-weight:600">
+                                    ● Buscando status...
+                                </div>
                             </div>
                         </div>
                         <div class="dchk"></div>
                     </label>`;
                 });
+            } else {
+                html += `<div style="text-align:center; padding:10px; font-size:12px; color:var(--t3);">Nenhum motorista cadastrado na base.</div>`;
             }
 
-            // Opção para o próprio Admin assumir
             html += `
             <label class="driver-card" onclick="selDrv(this)">
                 <input type="radio" name="motorista_id" value="${adminId}" required>
@@ -417,59 +478,46 @@
                         👤
                     </div>
                     <div>
-                        <div style="font-size:13px;font-weight:600;color:var(--t1);">Assumir eu mesmo</div>
-                        <div style="font-size:10px;color:var(--t3);">Administrador</div>
+                        <div style="font-size:13px;font-weight:600;color:var(--t1);">Eu vou assumir essa viagem</div>
+                        <div style="font-size:10px;color:var(--acc);font-weight:700;">Abrirá no modo Motorista</div>
                     </div>
                 </div>
                 <div class="dchk"></div>
             </label>`;
 
             container.innerHTML = html;
+            // Força uma atualização imediata da lista recém criada
+            atualizarMapaTempoReal();
         }
 
         // ==========================================
-        // ENVIAR A ATRIBUIÇÃO VIA POST (JSON)
+        // ENVIAR A ATRIBUIÇÃO
         // ==========================================
         document.getElementById('form-despacho').addEventListener('submit', function (e) {
             e.preventDefault();
-
             const motoristaId = document.querySelector('input[name="motorista_id"]:checked').value;
-            const msgErro = document.getElementById('mensagem-erro');
             const btn = document.getElementById('btn-submit');
-
-            msgErro.style.display = 'none';
-            btn.innerHTML = 'Atribuindo...';
-            btn.disabled = true;
+            btn.innerHTML = 'Processando...'; btn.disabled = true;
 
             fetch(`${window.API_URL}/api/admin/atribuir`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    corrida_id: parseInt(corridaIdStr),
-                    motorista_id: parseInt(motoristaId)
-                })
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ corrida_id: parseInt(corridaIdStr), motorista_id: parseInt(motoristaId) })
             })
-                .then(res => res.json())
-                .then(dados => {
-                    if (dados.sucesso) {
-                        alert("Corrida atribuída com sucesso!");
-                        window.location.href = "home_admin.html";
-                    } else {
-                        msgErro.textContent = dados.erro;
-                        msgErro.style.display = 'block';
-                        btn.innerHTML = '✓ Confirmar Atribuição';
-                        btn.disabled = false;
-                    }
-                })
-                .catch(err => {
-                    msgErro.textContent = "Erro de conexão.";
-                    msgErro.style.display = 'block';
-                    btn.innerHTML = '✓ Confirmar Atribuição';
-                    btn.disabled = false;
-                });
+            .then(res => res.json())
+            .then(dados => {
+                if (dados.sucesso) {
+                    alert("Viagem atribuída com sucesso!");
+                    window.location.href = "home_admin.html";
+                } else {
+                    alert(dados.erro);
+                    btn.innerHTML = '✓ Confirmar Atribuição'; btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert("Erro de conexão.");
+                btn.innerHTML = '✓ Confirmar Atribuição'; btn.disabled = false;
+            });
         });
     </script>
 </body>

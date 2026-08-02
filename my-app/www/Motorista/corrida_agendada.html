@@ -306,7 +306,7 @@
         const corridaID = urlParams.get('id');
 
         // Impede de abrir a tela sem um ID de corrida
-        if (!corridaID) window.location.href = "home_motorista.html";
+        if (!corridaID) window.history.back();
 
         let valorEstimadoOriginal = 0;
 
@@ -367,7 +367,7 @@
             if (window.GPSGlobal) {
                 window.GPSGlobal.mudarStatus("Disponível");
             }
-            window.location.href = "home_motorista.html";
+            window.history.back();
         }
 
         function salvarFechamento() {

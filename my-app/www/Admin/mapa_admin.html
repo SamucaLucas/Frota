@@ -380,71 +380,71 @@
 
         // Função que bate na API do Go e atualiza o mapa
         async function atualizarMapaTempoReal() {
-            try {
-                // Utiliza a variável global que aponta para o Render (ou localhost)
-                const urlBase = window.API_URL;
-                const tokenAdmin = localStorage.getItem("token") || sessionStorage.getItem("token");
+    try {
+        const urlBase = window.API_URL;
+        const tokenAdmin = localStorage.getItem("token") || sessionStorage.getItem("token");
 
-                // Note que estou usando a rota que você já tem no Go
-                const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, {
-                    headers: { "Authorization": `Bearer ${tokenAdmin}` } // Sempre mande o token!
-                });
+        const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, {
+            headers: { "Authorization": `Bearer ${tokenAdmin}` }
+        });
 
-                if (!response.ok) throw new Error('Erro na rede: ' + response.status);
+        if (!response.ok) throw new Error('Erro na rede: ' + response.status);
 
-                const motoristas = await response.json();
+        const motoristas = await response.json();
+        if (!Array.isArray(motoristas)) return;
 
-                if (!Array.isArray(motoristas)) return;
+        // Filtra apenas motoristas com status "Disponível" (case-insensitive e variações)
+        const motoristasDisponiveis = motoristas.filter(m => {
+            const status = (m.status || m.Status || '').toString().trim().toLowerCase();
+            return status === 'disponível' || status === 'disponivel' || status === 'disponible' || status === 'available';
+        });
 
-                // Cria um array com os IDs ativos nesta exata requisição
-                const idsAtivos = motoristas.map(m => m.motorista_id || m.MotoristaID);
+        // Conjunto de IDs ativos (como string) nesta requisição
+        const idsAtivosSet = new Set(motoristasDisponiveis.map(m => String(m.motorista_id || m.MotoristaID)));
 
-                motoristas.forEach(mot => {
-                    const id = mot.motorista_id || mot.MotoristaID;
-                    const lat = mot.latitude || mot.Latitude;
-                    const lng = mot.longitude || mot.Longitude;
-                    const status = mot.status || mot.Status || 'Disponível';
+        // Atualiza/insere marcadores apenas para os disponíveis
+        motoristasDisponiveis.forEach(mot => {
+            const id = String(mot.motorista_id || mot.MotoristaID);
+            const lat = mot.latitude || mot.Latitude;
+            const lng = mot.longitude || mot.Longitude;
+            const status = mot.status || mot.Status || 'Disponível';
 
-                    if (!id || !lat || !lng) return;
+            if (!id || !lat || !lng) return;
 
-                    if (marcadoresMotoristas[id]) {
-                        // O carrinho já existe: move suavemente e atualiza o status
-                        marcadoresMotoristas[id].setLatLng([lat, lng]);
-                        marcadoresMotoristas[id].getPopup().setContent(`
-                            <div style="font-family:Sora; font-size:12px;">
-                                <b>🚙 Motorista #${id}</b><br>
-                                <span style="color:#2ecc71;">${status}</span>
-                            </div>
-                        `);
-                    } else {
-                        // Carrinho novo: plota no mapa
-                        let novoMarcador = L.marker([lat, lng], { icon: iconeCarro })
-                            .bindPopup(`
-                                <div style="font-family:Sora; font-size:12px;">
-                                    <b>🚙 Motorista #${id}</b><br>
-                                    <span style="color:#2ecc71;">${status}</span>
-                                </div>
-                            `);
-
-                        novoMarcador.addTo(map);
-                        marcadoresMotoristas[id] = novoMarcador;
-                    }
-                });
-
-                // LIMPEZA: Remove do mapa motoristas que caíram, fecharam o app ou estão Indisponíveis
-                Object.keys(marcadoresMotoristas).forEach(idMarcador => {
-                    // O ID do objeto é uma String, então convertemos para conferir com o array numérico do Go
-                    const idInt = parseInt(idMarcador);
-                    if (!idsAtivos.includes(idInt)) {
-                        map.removeLayer(marcadoresMotoristas[idMarcador]); // Remove do Leaflet
-                        delete marcadoresMotoristas[idMarcador]; // Remove da memória do navegador
-                    }
-                });
-
-            } catch (error) {
-                console.error("Erro ao buscar localizações dos motoristas:", error);
+            if (marcadoresMotoristas[id]) {
+                marcadoresMotoristas[id].setLatLng([lat, lng]);
+                marcadoresMotoristas[id].getPopup().setContent(`
+                    <div style="font-family:Sora; font-size:12px;">
+                        <b>🚙 Motorista #${id}</b><br>
+                        <span style="color:#2ecc71;">${status}</span>
+                    </div>
+                `);
+            } else {
+                let novoMarcador = L.marker([lat, lng], { icon: iconeCarro })
+                    .bindPopup(`
+                        <div style="font-family:Sora; font-size:12px;">
+                            <b>🚙 Motorista #${id}</b><br>
+                            <span style="color:#2ecc71;">${status}</span>
+                        </div>
+                    `);
+                novoMarcador.addTo(map);
+                marcadoresMotoristas[id] = novoMarcador;
             }
-        }
+        });
+
+        // LIMPEZA: remove marcadores que não estão mais no conjunto de disponíveis
+        Object.keys(marcadoresMotoristas).forEach(idMarcador => {
+            if (!idsAtivosSet.has(idMarcador)) {
+                map.removeLayer(marcadoresMotoristas[idMarcador]);
+                delete marcadoresMotoristas[idMarcador];
+            }
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar localizações dos motoristas:", error);
+    }
+}
+
 
         // Executa imediatamente ao carregar a página
         atualizarMapaTempoReal();

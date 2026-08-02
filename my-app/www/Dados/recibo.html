@@ -649,15 +649,39 @@
         function voltarSeguro() {
             const paginaAnterior = document.referrer || "";
 
-            // Se o usuário veio de uma corrida recém finalizada, joga para a Home usando replace para limpar a stack do histórico
+            // 1. Descobrimos qual é a Home correta do usuário logado
+            let linkHome = "../Motorista/home_motorista.html"; // Fallback padrão (Motorista)
+            
+            try {
+                const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+                if (token) {
+                    // Decodifica o payload do JWT para saber quem está logado
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    
+                    // Se no seu banco/token o admin tiver a role "admin", "Admin" ou ID específico
+                    if (payload.papel === "admin" || payload.role === "admin" || payload.tipo_usuario === "admin") {
+                        linkHome = "../Admin/home_admin.html";
+                    }
+                }
+                
+                // Backup: Se a página anterior tinha "admin" na URL (ex: despachar.html)
+                if (paginaAnterior.includes("admin") || paginaAnterior.includes("Admin")) {
+                    linkHome = "../Admin/home_admin.html";
+                }
+            } catch (e) {
+                console.log("Modo de segurança ativado no redirecionamento.");
+            }
+
+            // 2. Faz o redirecionamento baseado de onde ele veio
             if (paginaAnterior.includes("corrida_agendada.html") || paginaAnterior.includes("taximetro.html")) {
-                window.location.replace("../Motorista/home_motorista.html");
+                // Se veio de uma corrida ativa, joga para a Home CORRETA limpando o histórico
+                window.location.replace(linkHome);
             } else if (paginaAnterior !== "") {
                 // Se acessou pelo histórico normal (Admin, Extrato, etc), volta uma página naturalmente
                 window.history.back();
             } else {
-                // Fallback de segurança se abrir em aba anônima/direto
-                window.location.replace("../Motorista/home_motorista.html");
+                // Fallback de segurança se abrir link direto
+                window.location.replace(linkHome);
             }
         }
 

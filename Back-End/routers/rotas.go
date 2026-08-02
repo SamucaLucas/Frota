@@ -34,6 +34,7 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/api/admin/despachar/", controller.ApiGetDespachar) // GET com o ID no final
 	r.HandleFunc("/api/admin/atribuir", controller.ApiPostAtribuir)   // POST salvando os dados
 	r.HandleFunc("/api/admin/motoristas/localizacao", controller.BuscarLocalizacoesAdmin)
+	r.HandleFunc("/api/admin/nova-chamada", controller.NovaChamada)
 	
 	// Rotas de API - Motorista
 	r.HandleFunc("/api/motorista/home", controller.ApiHomeMotorista)
