@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Histórico de Corridas</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            font-family: 'Sora', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-voltar {
+            background: transparent;
+            border: none;
+            color: var(--t1);
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--t1);
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .content {
+            padding: 0 18px 20px;
+            flex: 1;
+        }
+
+        /* --- SESSÃO DE FILTROS --- */
+        .filter-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .filter-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .styled-input {
+            width: 100%;
+            background-color: var(--bg);
+            border: 1.5px solid var(--border);
+            color: var(--t1);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .styled-input:focus {
+            border-color: var(--acc);
+        }
+
+        .styled-select {
+            width: 100%;
+            background-color: var(--bg);
+            border: 1.5px solid var(--border);
+            color: var(--t1);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 700;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .styled-select:focus {
+            border-color: var(--acc);
+        }
+
+        .btn-limpar {
+            background: transparent;
+            border: none;
+            color: var(--acc);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* --- CARDS DA LISTA --- */
+        .list-card {
+            display: block;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .list-card:active {
+            transform: scale(0.98);
+        }
+
+        .badge-blue {
+            background: var(--acc-bg);
+            color: var(--acc);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--t3);
+            font-size: 13px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode');
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+    <div class="top-bar">
+        <button class="btn-voltar" onclick="window.history.back()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <div class="page-title">Histórico de Corridas</div>
+    </div>
+
+    <div class="content">
+        <!-- ÁREA DE FILTROS -->
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-col">
+                    <label class="filter-label">Data Inicial</label>
+                    <input type="date" id="filtro-inicio" class="styled-input" onchange="aplicarFiltros()">
+                </div>
+                <div class="filter-col">
+                    <label class="filter-label">Data Final</label>
+                    <input type="date" id="filtro-fim" class="styled-input" onchange="aplicarFiltros()">
+                </div>
+            </div>
+            <div class="filter-row" style="margin-bottom: 0; align-items: flex-end;">
+                <div class="filter-col" style="flex: 1;">
+                    <label class="filter-label">Tipo de Corrida</label>
+                    <select id="filtro-tipo" class="styled-select" onchange="aplicarFiltros()">
+                        <option value="todas">📋 Todas as Corridas</option>
+                        <option value="agendada">📅 Apenas Agendadas (App)</option>
+                        <option value="livre">🚕 Apenas Taxímetro (Livres)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 12px;">
+                <div style="font-size: 11px; font-weight: 600; color: var(--t3);">
+                    Resultados: <span id="contador-resultados">0</span>
+                </div>
+                <button class="btn-limpar" onclick="limparFiltros()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                        <line x1="18" y1="9" x2="12" y2="15"></line>
+                        <line x1="12" y1="9" x2="18" y2="15"></line>
+                    </svg>
+                    Limpar Filtros
+                </button>
+            </div>
+        </div>
+
+        <!-- LISTA DE HISTÓRICO -->
+        <div id="lista-historico">
+            <div class="empty-state">Carregando histórico...</div>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <script>
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+        // Variável GLOBAL que vai armazenar todas as corridas que vieram do banco
+        let todasAsCorridas = [];
+
+        if (!token) {
+            window.location.href = "../Usuario/login.html";
+        } else {
+            carregarHistorico();
+        }
+
+        function carregarHistorico() {
+            fetch(`${window.API_URL}/api/motorista/home`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(res => {
+                    if (res.status === 401 || res.status === 403) throw new Error("Sessão expirada");
+                    return res.json();
+                })
+                .then(dados => {
+                    if (dados.sucesso) {
+                        todasAsCorridas = dados.concluidas || [];
+                        // Ordena da mais recente para a mais antiga
+                        todasAsCorridas.sort((a, b) => new Date(b.DataHoraAgendada || b.created_at) - new Date(a.DataHoraAgendada || a.created_at));
+
+                        // Roda o filtro a primeira vez (sem nada preenchido, vai exibir todas)
+                        aplicarFiltros();
+                    } else {
+                        alert("Erro ao carregar histórico: " + dados.erro);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (err.message === "Sessão expirada") {
+                        localStorage.removeItem("token");
+                        sessionStorage.removeItem("token");
+                        window.location.href = "../Usuario/login.html";
+                    }
+                });
+        }
+
+        function aplicarFiltros() {
+            // Pega os valores preenchidos no formulário
+            const dataInicio = document.getElementById('filtro-inicio').value; // Formato YYYY-MM-DD
+            const dataFim = document.getElementById('filtro-fim').value;       // Formato YYYY-MM-DD
+            const tipo = document.getElementById('filtro-tipo').value;
+
+            // Filtra o array grandão baseado nas regras
+            const corridasFiltradas = todasAsCorridas.filter(c => {
+                // Prepara a data da corrida para comparar com o YYYY-MM-DD do calendário nativo do celular
+                let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
+                let ano = dataObj.getFullYear();
+                let mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+                let dia = String(dataObj.getDate()).padStart(2, '0');
+                let dataDaCorrida = `${ano}-${mes}-${dia}`;
+
+                // 1. Filtro de Data
+                let passaData = true;
+                if (dataInicio && dataDaCorrida < dataInicio) passaData = false;
+                if (dataFim && dataDaCorrida > dataFim) passaData = false;
+
+                // 2. Filtro de Tipo (Agendada vs Livre/Avulsa)
+                // Usamos o ID = 1 (Usuário Avulso do Banco) ou a falta de usuário para classificar
+                let isAvulso = !c.Usuario || c.Usuario.ID === 1 || c.Usuario.Nome === "Avulso";
+
+                let passaTipo = true;
+                if (tipo === 'agendada' && isAvulso) passaTipo = false;
+                if (tipo === 'livre' && !isAvulso) passaTipo = false;
+
+                // A corrida só aparece se passar nos dois testes
+                return passaData && passaTipo;
+            });
+
+            renderizarLista(corridasFiltradas);
+        }
+
+        function limparFiltros() {
+            document.getElementById('filtro-inicio').value = '';
+            document.getElementById('filtro-fim').value = '';
+            document.getElementById('filtro-tipo').value = 'todas';
+            aplicarFiltros();
+        }
+
+        function renderizarLista(corridas) {
+            const container = document.getElementById('lista-historico');
+            const contador = document.getElementById('contador-resultados');
+
+            contador.innerText = corridas.length;
+
+            if (!corridas || corridas.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhuma corrida encontrada para os filtros selecionados.</div>';
+                return;
+            }
+
+            let html = "";
+            corridas.forEach(c => {
+                let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
+                let dataFmt = dataObj.toLocaleDateString('pt-BR');
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                let nomePassageiro = c.Usuario ? c.Usuario.Nome : "Avulso";
+                let valor = c.ValorFinal ? c.ValorFinal.toFixed(2) : (c.ValorEstimado ? c.ValorEstimado.toFixed(2) : "0.00");
+
+                // Põe uma tag visual extra se for do taxímetro
+                let isAvulso = !c.Usuario || c.Usuario.ID === 1 || c.Usuario.Nome === "Avulso";
+                let tagTipo = isAvulso ? '🚕 Livre' : '📅 Agendada';
+
+                html += `
+                <div class="card list-card" style="border-left: 3px solid var(--t4);" onclick="window.location.href='../Dados/recibo.html?id=${c.ID}'">
+                    <div class="row" style="margin-bottom: 7px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--t1); line-height: 1.4; padding-right: 10px;">
+                            ${c.OrigemTexto} → ${c.DestinoTexto}
+                        </div>
+                        <span class="badge-blue">R$ ${valor.replace('.', ',')}</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--t3); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="display:flex; gap: 8px; align-items: center;">
+                            📅 ${dataFmt} às ${horaFmt} 
+                        </span>
+                        <span style="color: var(--t2); font-weight: 600;">${tagTipo} · 👤 ${nomePassageiro}</span>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+
+</html>

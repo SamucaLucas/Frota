@@ -14,47 +14,47 @@ import (
 
 // HomePassageiro agora é uma API REST que devolve os dados em JSON
 func HomePassageiro(w http.ResponseWriter, r *http.Request) {
-	// 1. Avisa que a resposta é JSON
-	w.Header().Set("Content-Type", "application/json")
+    // 1. Avisa que a resposta é JSON
+    w.Header().Set("Content-Type", "application/json")
 
-	// 2. Extrai o ID do usuário (Agora lendo tanto Header quanto Cookie)
-	usuarioID, err := services.ExtrairUsuarioID(r)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Sessão expirada ou inválida."})
-		return
-	}
+    // 2. Extrai o ID do usuário (Agora lendo tanto Header quanto Cookie)
+    usuarioID, err := services.ExtrairUsuarioID(r)
+    if err != nil {
+        w.WriteHeader(http.StatusUnauthorized)
+        json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Sessão expirada ou inválida."})
+        return
+    }
 
-	// 3. Busca o usuário no banco
-	var usuario structs.Usuario
-	if err := db.DB.First(&usuario, usuarioID).Error; err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Usuário não encontrado."})
-		return
-	}
+    // 3. Busca o usuário no banco
+    var usuario structs.Usuario
+    if err := db.DB.First(&usuario, usuarioID).Error; err != nil {
+        w.WriteHeader(http.StatusNotFound)
+        json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Usuário não encontrado."})
+        return
+    }
 
-	// 4. Busca as próximas viagens
-	var proximas []structs.Corrida
-	db.DB.Preload("Motorista").
-		Where("usuario_id = ? AND status IN ?", usuarioID, []string{"Aguardando Confirmacao", "Aprovada"}).
-		Order("data_hora_agendada ASC").
-		Find(&proximas)
+    // 4. Busca as próximas viagens (ADICIONADO PRELOAD DO USUARIO)
+    var proximas []structs.Corrida
+    db.DB.Preload("Motorista").Preload("Usuario").
+        Where("usuario_id = ? AND status IN ?", usuarioID, []string{"Aguardando Confirmacao", "Aprovada"}).
+        Order("data_hora_agendada ASC").
+        Find(&proximas)
 
-	// 5. Busca o histórico
-	var historico []structs.Corrida
-	db.DB.Where("usuario_id = ? AND status = ?", usuarioID, "Concluida").
-		Order("data_hora_agendada DESC").
-		Limit(3).
-		Find(&historico)
+    // 5. Busca o histórico (ADICIONADO PRELOADS E REMOVIDO O LIMIT)
+    var historico []structs.Corrida
+    db.DB.Preload("Motorista").Preload("Usuario").
+        Where("usuario_id = ? AND status = ?", usuarioID, "Concluida").
+        Order("data_hora_agendada DESC").
+        Find(&historico)
 
-	// 6. Devolve tudo mastigadinho em JSON para o Front-end
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"sucesso":   true,
-		"usuario":   usuario,
-		"proximas":  proximas,
-		"historico": historico,
-	})
+    // 6. Devolve tudo mastigadinho em JSON para o Front-end
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]interface{}{
+        "sucesso":   true,
+        "usuario":   usuario,
+        "proximas":  proximas,
+        "historico": historico,
+    })
 }
 
 // ReqAgendamento mapeia o JSON exato que o Front-end envia no POST
