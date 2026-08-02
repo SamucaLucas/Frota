@@ -49,28 +49,35 @@ func HomeAdmin(w http.ResponseWriter, r *http.Request) {
 
 	// 6. Busca solicitações aguardando atribuição (Pendentes)
 	// O Preload("Usuario") garante que os dados de quem pediu a corrida venham no JSON
+
 	var pendentes []structs.Corrida
-	db.DB.Preload("Usuario").
-		Where("status = ?", "Aguardando Confirmacao").
-		Order("data_hora_agendada ASC").
+	db.DB.Preload("Usuario").Preload("Motorista").
+		Where("status = ? OR status = ?", "Pendente", "Aguardando Confirmacao").
+		Order("created_at DESC").
 		Find(&pendentes)
 
-	// 7. Busca a agenda geral da frota (Corridas já atribuídas a algum motorista)
-	// O Preload pega os dados do Passageiro e do Motorista
+	// 2. Busca TODAS as Aprovadas (Confirmadas)
 	var aprovadas []structs.Corrida
 	db.DB.Preload("Usuario").Preload("Motorista").
-		Where("status = ?", "Aprovada").
+		Where("status = ? OR status = ?", "Aprovada", "Confirmada").
 		Order("data_hora_agendada ASC").
 		Find(&aprovadas)
 
-	// 8. Devolve tudo formatado em JSON para o App
+	// 3. Busca TODO o Histórico de Concluídas
+	var concluidas []structs.Corrida
+	db.DB.Preload("Usuario").Preload("Motorista").
+		Where("status = ? OR status = ?", "Concluida", "Realizada").
+		Order("data_hora_agendada DESC").
+		Find(&concluidas)
+
+	// 4. Retorna tudo no JSON
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"sucesso":    true,
-		"usuario":    usuario,
-		"motoristas": motoristas,
+		"usuario":    usuario, // Aqui é o perfil do admin para mostrar o nome dele no topo
 		"pendentes":  pendentes,
 		"aprovadas":  aprovadas,
+		"concluidas": concluidas,
 	})
 }
 
