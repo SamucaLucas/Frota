@@ -286,10 +286,8 @@
         // ==========================================
         // REGRAS DE NEGÓCIO E PRECIFICAÇÃO DINÂMICA
         // ==========================================
-        // Inicia nulo para obrigar a consulta e não permitir cálculos fantasmas
         let taxasAtuais = null;
 
-        // Busca os dados oficiais do Admin antes da corrida começar
         async function carregarTabelaDePrecos() {
             try {
                 const response = await fetch(`${URL_API}/api/configuracoes`);
@@ -299,41 +297,50 @@
                 }
 
                 taxasAtuais = await response.json();
-                console.log("Tabela de preços atualizada com sucesso pelo servidor:", taxasAtuais);
+                console.log("Tabela de preços atualizada com sucesso:", taxasAtuais);
 
-                // Força a atualização da tela (ex: preencher a bandeirada inicial na tela R$ 10,00)
                 atualizarTela();
 
             } catch (error) {
-                console.error("Falha ao buscar as tarifas oficiais:", error);
+                console.error("Falha ao buscar as tarifas:", error);
                 alert("Atenção: Não foi possível carregar as tarifas atuais. Verifique sua conexão com a internet. O Taxímetro está bloqueado até sincronizar.");
             }
         }
 
-        // Chama a função logo que a página carregar
         document.addEventListener("DOMContentLoaded", () => {
             carregarTabelaDePrecos();
         });
 
 
+        // A NOVA LÓGICA DO TAXÍMETRO (10 REAIS ATÉ 2,5 KM)
         function calcularPreco(km) {
-            // TRAVA: Se não baixou as taxas, retorna 0 para evitar bugs matemáticos
             if (!taxasAtuais) return 0.00;
 
-            let valorCalculado = 0;
-            const base = taxasAtuais.base_urbana;
-            const limite = taxasAtuais.limite_urbano;
-            const precoUrbano = taxasAtuais.km_urbano;
-            const precoInter = taxasAtuais.km_inter;
+            const base = taxasAtuais.base_urbana;       // Ex: 10.00
+            const limite = taxasAtuais.limite_urbano;   // Ex: 20 km
+            const precoUrbano = taxasAtuais.km_urbano;  // Ex: 2.50
+            const precoInter = taxasAtuais.km_inter;    // Ex: 4.00
+            const kmIncluso = 2.5;                      // Primeiros 2,5 km (Inclusos na base)
 
-            // Calcula apenas o valor da distância rodada
-            if (km <= limite) {
-                valorCalculado = km * precoUrbano;
-            } else {
-                valorCalculado = (limite * precoUrbano) + ((km - limite) * precoInter);
+            // Se rodar menos ou igual a 2,5 km, cobra apenas os 10 reais
+            if (km <= kmIncluso) {
+                return base;
             }
 
-            // O valor final é a Bandeirada + o valor da distância
+            // O que passar de 2,5 km, começamos a cobrar o KM excedente
+            let kmExcedente = km - kmIncluso;
+            let valorCalculado = 0;
+
+            if (km <= limite) {
+                // Viagem dentro da cidade
+                valorCalculado = kmExcedente * precoUrbano;
+            } else {
+                // Viagem mista: Passou do limite da cidade
+                let kmUrbanoCobrado = limite - kmIncluso;
+                let kmInterCobrado = km - limite;
+                valorCalculado = (kmUrbanoCobrado * precoUrbano) + (kmInterCobrado * precoInter);
+            }
+
             return base + valorCalculado;
         }
 
@@ -341,7 +348,6 @@
             document.getElementById("km-atual").innerText = kmTotal.toFixed(2) + " KM";
             const preco = calcularPreco(kmTotal);
 
-            // Tratamento visual para não aparecer "R$ NaN" caso as taxas estejam carregando
             if (!taxasAtuais && preco === 0) {
                 document.getElementById("valor-atual").innerText = "R$ 0,00";
             } else {
@@ -350,13 +356,11 @@
         }
 
         function iniciarTaximetro() {
-            // TRAVA 1: Impede iniciar a corrida sem o preço atualizado
             if (!taxasAtuais) {
                 alert("Aguarde as tarifas serem carregadas do servidor ou verifique sua internet para iniciar a viagem.");
                 return;
             }
 
-            // TRAVA 2: GPS não carregado
             if (!window.GPSGlobal) {
                 alert("O motor de GPS não foi carregado. Verifique sua conexão.");
                 return;
@@ -367,7 +371,7 @@
             ultimaLatCorrida = null;
             ultimaLngCorrida = null;
             coordenadaOrigem = { lat: 0, lng: 0 };
-            dataHoraInicio = new Date().toISOString(); // Guarda a hora do início para o BD
+            dataHoraInicio = new Date().toISOString();
 
             document.getElementById("btn-iniciar").style.display = "none";
             document.getElementById("btn-parar").style.display = "block";
@@ -377,20 +381,16 @@
 
             atualizarTela();
 
-            // 1. Muda o status pro mapa do Admin ver dinamicamente
             window.GPSGlobal.mudarStatus("Em Corrida Livre");
 
-            // 2. "Pluga" o taxímetro no GPS Global
             window.GPSGlobal.callbackTela = function (latAtual, lngAtual) {
                 if (!taximetroAtivo) return;
 
-                // Grava a coordenada de origem no primeiro pulso
                 if (coordenadaOrigem.lat === 0) {
                     coordenadaOrigem = { lat: latAtual, lng: lngAtual };
                 }
 
                 if (ultimaLatCorrida !== null && ultimaLngCorrida !== null) {
-                    // Usa a fórmula de Haversine que agora mora no GPSGlobal
                     kmTotal += window.GPSGlobal.calcularDistancia(ultimaLatCorrida, ultimaLngCorrida, latAtual, lngAtual);
                     atualizarTela();
                 }
@@ -406,7 +406,6 @@
         function finalizarTaximetro() {
             taximetroAtivo = false;
 
-            // "Despluga" o taxímetro e avisa o Admin que o motorista voltou a ficar livre
             if (window.GPSGlobal) {
                 window.GPSGlobal.callbackTela = null;
                 window.GPSGlobal.mudarStatus("Disponível");
@@ -414,7 +413,6 @@
 
             const valorSugerido = calcularPreco(kmTotal);
 
-            // Preenche o resumo e já injeta o valor sugerido no campo de input
             document.getElementById("modal-resumo-texto").innerHTML =
                 `<b>Valor Sugerido:</b> R$ ${valorSugerido.toFixed(2).replace('.', ',')} <br> <b>Distância:</b> ${kmTotal.toFixed(2)} KM`;
 
@@ -427,7 +425,6 @@
             document.getElementById("modal-salvar").style.display = "none";
         }
 
-        // Busca o passageiro na API do Go com Feedback Visual (UX) e Tratamento de Erros
         async function buscarPassageiroAPI() {
             const inputBusca = document.getElementById("input-busca");
             const btnBusca = document.getElementById("btn-buscar-pass");
@@ -438,7 +435,6 @@
                 return;
             }
 
-            // Efeito visual de carregamento
             const textoOriginal = btnBusca.innerText;
             btnBusca.innerText = "Buscando...";
             btnBusca.disabled = true;
@@ -450,7 +446,6 @@
                 const usuarios = await response.json();
                 const containerLista = document.getElementById("lista-passageiros");
 
-                // Limpa resultados anteriores, mantendo a opção avulsa padrão
                 containerLista.innerHTML = `
                     <label class="radio-passageiro">
                         <input type="radio" name="passageiro_selecionado" value="1" checked>
@@ -458,17 +453,14 @@
                     </label>
                 `;
 
-                // Verifica se a lista veio vazia
                 if (!usuarios || usuarios.length === 0) {
                     alert(`Nenhum passageiro encontrado com o dado: "${query}".\nVerifique se digitou corretamente.`);
                 } else {
-                    // Se achou, monta a lista tratando Maiúsculas/Minúsculas
                     usuarios.forEach(user => {
                         const id = user.id || user.ID;
                         const nome = user.nome || user.Nome || "Cliente";
                         const telefone = user.telefone || user.Telefone || "";
                         const email = user.email || user.Email || "";
-
                         const contato = telefone !== "" ? telefone : email;
 
                         const label = document.createElement("label");
@@ -484,21 +476,17 @@
             } catch (err) {
                 alert("Erro ao conectar com o servidor para buscar o passageiro.");
             } finally {
-                // Devolve o botão ao estado normal independente de dar certo ou erro
                 btnBusca.innerText = textoOriginal;
                 btnBusca.disabled = false;
             }
         }
 
-        // Salva a corrida definitiva no banco de dados e gera o Recibo
         async function salvarCorridaBanco() {
-            // TRAVA 3: Bloqueia fechamento fraudulento
             if (!taxasAtuais) {
                 alert("Falha na tabela de preços. Verifique a conexão antes de salvar.");
                 return;
             }
 
-            // Lê o ID de forma segura puxando da função global
             const motoristaId = window.GPSGlobal ? window.GPSGlobal.obterIdToken() : 1;
             const radioSelecionado = document.querySelector('input[name="passageiro_selecionado"]:checked');
             const passageiroId = radioSelecionado ? parseInt(radioSelecionado.value) : 1;
@@ -506,10 +494,9 @@
             const valorSugerido = calcularPreco(kmTotal);
             let valorRecebido = parseFloat(document.getElementById("input-valor-recebido").value);
 
-            // VALIDAÇÃO DE SEGURANÇA NO FRONTEND (Puxando a base oficial da nuvem)
             if (isNaN(valorRecebido) || valorRecebido < taxasAtuais.base_urbana) {
                 alert(`O valor recebido não pode ser menor que a bandeirada de R$ ${taxasAtuais.base_urbana.toFixed(2).replace('.', ',')}.`);
-                return; // Trava o envio
+                return;
             }
 
             const payload = {
@@ -520,8 +507,8 @@
                 destino_lat: ultimaLatCorrida,
                 destino_lng: ultimaLngCorrida,
                 km_rodado: kmTotal,
-                valor_estimado: valorSugerido, // Manda o que o app calculou
-                valor_final: valorRecebido,    // Manda o que o motorista de fato cobrou
+                valor_estimado: valorSugerido,
+                valor_final: valorRecebido,
                 data_inicio: dataHoraInicio || new Date().toISOString()
             };
 
@@ -538,7 +525,6 @@
                     fecharModal();
                     alert(`✅ Corrida Salva com Sucesso!\nTokens ativados!\nGerando Recibo...`);
 
-                    // Reset total da tela
                     kmTotal = 0.0;
                     ultimaLatCorrida = null;
                     ultimaLngCorrida = null;
@@ -551,7 +537,6 @@
                     document.getElementById("status-texto").style.color = "var(--t2)";
                     document.getElementById("status-texto").style.background = "var(--bg3)";
 
-                    // REDIRECIONAMENTO DIRETO PARA O RECIBO!
                     window.location.href = `../Dados/recibo.html?id=${dados.corrida_id}`;
                 } else {
                     alert("Erro ao salvar: " + dados.erro);

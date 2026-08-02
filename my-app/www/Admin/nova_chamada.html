@@ -627,77 +627,72 @@
                 const motoristas = await response.json();
                 if (!Array.isArray(motoristas)) return;
 
-                // Se a lista de rádios ainda não foi criada, cria pela primeira vez!
-                if (!listaRenderizada) {
+                if (!window.listaRenderizada) {
                     renderizarMotoristasNaLista(motoristas, meuAdminId);
-                    listaRenderizada = true;
+                    window.listaRenderizada = true;
                 }
 
                 const idsOnlineDaVez = [];
-                // Pega a origem preenchida no input para calcular a distância
-                const latOrigem = document.getElementById('origem_lat').value;
-                const lngOrigem = document.getElementById('origem_lng').value;
+
+                // MÁGICA: Puxa a origem não importa em qual tela o Admin esteja!
+                const inputLat = document.getElementById('origem_lat');
+                const inputLng = document.getElementById('origem_lng');
+                const latOrigem = inputLat && inputLat.value ? parseFloat(inputLat.value) : (typeof corridaLatG !== 'undefined' ? corridaLatG : null);
+                const lngOrigem = inputLng && inputLng.value ? parseFloat(inputLng.value) : (typeof corridaLngG !== 'undefined' ? corridaLngG : null);
 
                 motoristas.forEach(mot => {
-                    const id = mot.motorista_id || mot.MotoristaID;
-                    if (!id) return;
+                    try {
+                        const id = mot.motorista_id || mot.MotoristaID;
+                        if (!id) return;
 
-                    idsOnlineDaVez.push(id);
+                        idsOnlineDaVez.push(id);
 
-                    const lat = mot.latitude || mot.Latitude;
-                    const lng = mot.longitude || mot.Longitude;
-                    const nome = (m.motorista && m.motorista.Nome) ? m.motorista.Nome : `Motorista #${id}`;
-                    const statusOriginal = mot.status || mot.Status || "Disponível";
-                    const statusSafe = statusOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                        const lat = mot.latitude || mot.Latitude;
+                        const lng = mot.longitude || mot.Longitude;
+                        const nome = (mot.motorista && mot.motorista.Nome) ? mot.motorista.Nome : `Motorista #${id}`;
+                        const statusOriginal = mot.status || mot.Status || "Disponível";
+                        const statusSafe = statusOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-                    // 1. ATUALIZA O MAPA (Apenas os Disponíveis aparecem no mapa)
-                    if (statusSafe === "disponivel" && lat && lng) {
-                        if (marcadoresMotoristas[id]) {
-                            marcadoresMotoristas[id].setLatLng([lat, lng]);
-                        } else {
-                            let novoMarcador = L.marker([lat, lng], { icon: iconeCarro })
-                                .bindPopup(`<b>🚙 ${nome}</b><br><span style="color:#2ecc71;">Disponível</span>`);
-                            novoMarcador.addTo(mapa);
-                            marcadoresMotoristas[id] = novoMarcador;
-                        }
-                    } else if (marcadoresMotoristas[id]) {
-                        // Se mudou de status (ex: ficou Ocupado), tira o carrinho do mapa
-                        mapa.removeLayer(marcadoresMotoristas[id]);
-                        delete marcadoresMotoristas[id];
-                    }
-
-                    // 2. ATUALIZA A LISTA EM TEMPO REAL (Atualiza status e distância da origem atual)
-                    const statusDiv = document.getElementById(`drv-status-label-${id}`);
-                    if (statusDiv) {
-                        let distTexto = "";
-                        if (statusSafe === "disponivel" && latOrigem && lngOrigem && lat && lng) {
-                            const dist = calcularDistanciaKmHaversine(latOrigem, lngOrigem, lat, lng);
-                            if (dist) distTexto = `· ${dist.toFixed(1)} km`;
+                        // 1. ATUALIZA O MAPA (Apenas Disponíveis)
+                        if (statusSafe === "disponivel" && lat && lng && typeof mapa !== 'undefined') {
+                            if (marcadoresMotoristas[id]) {
+                                marcadoresMotoristas[id].setLatLng([lat, lng]);
+                                marcadoresMotoristas[id].getPopup().setContent(`<b>🚙 ${nome}</b><br><span style="color:#2ecc71;">Disponível</span>`);
+                            } else {
+                                marcadoresMotoristas[id] = L.marker([lat, lng], { icon: iconeCarro }).addTo(mapa)
+                                    .bindPopup(`<b>🚙 ${nome}</b><br><span style="color:#2ecc71;">Disponível</span>`);
+                            }
+                        } else if (marcadoresMotoristas[id] && typeof mapa !== 'undefined') {
+                            mapa.removeLayer(marcadoresMotoristas[id]);
+                            delete marcadoresMotoristas[id];
                         }
 
-                        let corStatus = "#94a3b8";
-                        if (statusSafe === "disponivel") corStatus = "#22C55E";
-                        else if (statusSafe === "em corrida" || statusSafe === "ocupado") corStatus = "#F59E0B";
-                        else if (statusSafe === "inativo" || statusSafe === "offline") corStatus = "#EF4444";
+                        // 2. ATUALIZA A LISTA EM TEMPO REAL
+                        const statusDiv = document.getElementById(`drv-status-label-${id}`);
+                        if (statusDiv) {
+                            let distTexto = "";
+                            if (statusSafe === "disponivel" && latOrigem && lngOrigem && lat && lng) {
+                                const dist = calcularDistanciaKmHaversine(latOrigem, lngOrigem, lat, lng);
+                                if (dist) distTexto = `· ${dist.toFixed(1)} km`;
+                            }
 
-                        statusDiv.style.color = corStatus;
-                        statusDiv.innerHTML = `● ${statusOriginal} <span style="color:var(--t3)">${distTexto}</span>`;
-                    }
+                            let corStatus = "#94a3b8";
+                            if (statusSafe === "disponivel") corStatus = "#22C55E";
+                            else if (statusSafe === "em corrida" || statusSafe === "ocupado") corStatus = "#F59E0B";
+                            else if (statusSafe === "inativo" || statusSafe === "offline") corStatus = "#EF4444";
+
+                            statusDiv.style.color = corStatus;
+                            statusDiv.innerHTML = `● ${statusOriginal} <span style="color:var(--t3)">${distTexto}</span>`;
+                        }
+                    } catch (e) { console.log("Erro ao processar um motorista", e); }
                 });
 
-                // 3. LIMPEZA DOS OFFLINES: Quem desconectou de vez do app cai pra "Offline" na lista
-                Object.keys(marcadoresMotoristas).forEach(idMap => {
-                    if (!idsOnlineDaVez.includes(parseInt(idMap))) {
-                        mapa.removeLayer(marcadoresMotoristas[idMap]);
-                        delete marcadoresMotoristas[idMap];
-                    }
-                });
-
+                // 3. LIMPEZA DOS OFFLINES
                 document.querySelectorAll('[id^="drv-status-label-"]').forEach(el => {
                     const idCard = parseInt(el.id.replace('drv-status-label-', ''));
                     if (!idsOnlineDaVez.includes(idCard)) {
                         el.style.color = "#94a3b8";
-                        el.innerHTML = `● Offline <span style="color:var(--t3)"></span>`;
+                        el.innerHTML = `● Offline`;
                     }
                 });
 
