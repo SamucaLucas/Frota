@@ -5,6 +5,7 @@ import (
 	"Frota/services"
 	"Frota/structs"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -194,6 +195,7 @@ func ApiPostAtribuir(w http.ResponseWriter, r *http.Request) {
 }
 
 // BuscarLocalizacoesAdmin retorna a posição de todos os motoristas ativos
+// BuscarLocalizacoesAdmin retorna a posição de todos os motoristas ativos
 func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, `{"erro": "Método não permitido"}`, http.StatusMethodNotAllowed)
@@ -202,15 +204,54 @@ func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 
 	var localizacoes []structs.LocalizacaoMotorista
 
-	// O Preload faz o GORM ir na tabela 'usuarios' e preencher os dados do motorista automaticamente!
+	// Mantém o Preload original por segurança
 	if err := db.DB.Preload("Motorista").Find(&localizacoes).Error; err != nil {
 		http.Error(w, `{"erro": "Falha ao buscar localizações"}`, http.StatusInternalServerError)
 		return
 	}
 
+	// -------------------------------------------------------------------
+	// GARANTIA DE NOME: Busca motoristas e força o nome no JSON
+	// -------------------------------------------------------------------
+	var motoristas []structs.Usuario
+	db.DB.Where("papel = ?", "motorista").Find(&motoristas)
+
+	// Cria um dicionário rápido de ID -> Nome
+	mapaMotoristas := make(map[uint]string)
+	for _, m := range motoristas {
+		mapaMotoristas[m.ID] = m.Nome
+	}
+
+	// Converte para mapa dinâmico para podermos injetar dados livremente
+	dadosJSON, _ := json.Marshal(localizacoes)
+	var listaDinamica []map[string]interface{}
+	json.Unmarshal(dadosJSON, &listaDinamica)
+
+	for i, loc := range listaDinamica {
+		var id float64
+		// Tenta extrair o ID de diferentes formatos que o banco possa cuspir
+		if v, ok := loc["motorista_id"].(float64); ok {
+			id = v
+		} else if v, ok := loc["MotoristaID"].(float64); ok {
+			id = v
+		} else if v, ok := loc["usuario_id"].(float64); ok {
+			id = v
+		} else if v, ok := loc["id"].(float64); ok {
+			id = v
+		}
+
+		// Injeta o nome diretamente no objeto
+		if nome, existe := mapaMotoristas[uint(id)]; existe {
+			loc["nome_garantido"] = nome
+		} else {
+			loc["nome_garantido"] = "Motorista #" + fmt.Sprint(id)
+		}
+		listaDinamica[i] = loc
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(localizacoes)
+	json.NewEncoder(w).Encode(listaDinamica)
 }
 
 // Estrutura para receber o JSON do Front-End da Nova Chamada

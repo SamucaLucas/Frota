@@ -20,6 +20,8 @@
             padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
+            background: var(--bg);
+            font-family: 'Sora', sans-serif;
         }
 
         .app-container {
@@ -29,19 +31,13 @@
             position: relative;
         }
 
-        .home-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            padding-bottom: 30px;
-        }
-
         .header-top {
             display: flex;
             align-items: center;
             gap: 16px;
-            margin-bottom: 20px;
+            padding: 20px 20px 10px 20px;
+            background: var(--bg);
+            z-index: 50;
         }
 
         .back-btn {
@@ -58,17 +54,6 @@
             transition: background 0.2s;
         }
 
-        /* Container do mapa ocupa a altura restante do celular de forma dinâmica */
-        #mapa-frota-central {
-            flex: 1;
-            min-height: calc(100vh - 160px);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            z-index: 1;
-            /* Mantém abaixo da sidebar */
-        }
-
-        /* --- ESTILOS DO MENU LATERAL (SIDEBAR) --- */
         .menu-btn {
             background: var(--card);
             border: 1px solid var(--border);
@@ -83,6 +68,116 @@
             margin-left: auto;
         }
 
+        /* --- MAPA E LISTA --- */
+        .map-wrapper {
+            width: 100%;
+            height: 45vh;
+            border-bottom: 2px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        #mapa-frota-central {
+            width: 100%;
+            height: 100%;
+        }
+
+        .frota-list-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg);
+        }
+
+        .sec-lbl {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--t1);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .driver-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            background: var(--card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s;
+        }
+
+        .btn-focar {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--t1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-focar:active {
+            transform: scale(0.95);
+            background: var(--border);
+        }
+
+        /* --- ÍCONES PERSONALIZADOS DO MAPA (PLACAS) --- */
+        .frota-icon-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .car-label {
+            background: rgba(10, 10, 12, 0.9);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 8px;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            margin-bottom: -4px;
+            z-index: 10;
+        }
+
+        .light-mode .car-label {
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .car-emoji {
+            font-size: 26px;
+            line-height: 1;
+            transition: all 0.3s;
+        }
+
+        /* Cores baseadas no Status */
+        .status-verde .car-emoji {
+            filter: drop-shadow(0px 0px 8px #2ecc71);
+        }
+
+        .status-laranja .car-emoji {
+            filter: drop-shadow(0px 0px 8px #f39c12);
+        }
+
+        .status-cinza .car-emoji {
+            filter: grayscale(100%) opacity(0.6);
+        }
+
+        /* --- SIDEBAR --- */
         .sidebar {
             position: fixed;
             top: 0;
@@ -148,7 +243,6 @@
             color: var(--t2);
             font-size: 14px;
             font-weight: 600;
-            font-family: 'Sora', sans-serif;
             text-decoration: none;
             border: none;
             border-bottom: 1px solid var(--border);
@@ -183,17 +277,12 @@
             border: 1px solid var(--border);
             color: var(--t1);
             font-weight: 700;
-            font-family: 'Sora', sans-serif;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             transition: background 0.2s;
-        }
-
-        .sb-theme-btn:active {
-            background: var(--border);
         }
     </style>
 </head>
@@ -212,12 +301,8 @@
             Painel Admin
             <button class="sb-close" onclick="toggleMenu()">×</button>
         </div>
-
-        <button id="theme-toggle" class="sb-theme-btn">
-            ☀️ Alternar Tema
-        </button>
-
-        <button class="sb-link" onclick="window.location.href='/admin/home'">
+        <button id="theme-toggle" class="sb-theme-btn">☀️ Alternar Tema</button>
+        <button class="sb-link" onclick="window.location.href='home_admin.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
@@ -228,7 +313,7 @@
             </svg>
             Despacho
         </button>
-        <button class="sb-link active" onclick="window.location.href='/admin/mapa'">
+        <button class="sb-link active" onclick="window.location.href='mapa_admin.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
@@ -237,14 +322,14 @@
             </svg>
             Mapa da Frota
         </button>
-        <button class="sb-link" onclick="window.location.href='/admin/sorteio'">
+        <button class="sb-link" onclick="window.location.href='sorteio_admin.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
             Sorteio
         </button>
-        <button class="sb-link" onclick="window.location.href='/admin/motoristas'">
+        <button class="sb-link" onclick="window.location.href='../Em dev/contrucao.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -253,15 +338,6 @@
                 <path d="M16 3.13a4 4 0 010 7.75" />
             </svg>
             Motoristas
-        </button>
-        <button class="sb-link" onclick="window.location.href='/admin/config'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path
-                    d="M19.07 4.93l-1.41 1.41M16.95 16.95l1.41 1.41M4.93 4.93l1.41 1.41M7.05 16.95l-1.41 1.41M21 12h-2M5 12H3M12 3V1M12 23v-2" />
-            </svg>
-            Configurações
         </button>
         <button class="sb-link" onclick="fazerLogout()"
             style="margin-top: auto; color: #EF4444; border-bottom: none; border-top: 1px solid var(--border);">
@@ -276,42 +352,49 @@
     </div>
 
     <div class="app-container">
-        <div class="home-content">
 
-            <div class="header-top">
-                <button class="back-btn" onclick="window.location.href='/admin/home'">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Mapa da Frota</div>
+        <div class="header-top">
+            <button class="back-btn" onclick="window.location.href='home_admin.html'">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Radar da Frota</div>
+            <button class="menu-btn" onclick="toggleMenu()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round" width="22" height="22">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
 
-                <button class="menu-btn" onclick="toggleMenu()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                        stroke-linejoin="round" width="22" height="22">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                </button>
+        <div class="map-wrapper">
+            <div id="mapa-frota-central"></div>
+        </div>
+
+        <div class="frota-list-wrapper">
+            <div class="sec-lbl">
+                <span>Motoristas Conectados</span>
+                <span
+                    style="font-size: 10px; font-weight: 600; color: var(--acc); background: var(--acc-bg); padding: 4px 10px; border-radius: 10px;"
+                    id="contador-frota">0 Online</span>
             </div>
 
-            <div id="mapa-frota-central"></div>
-
+            <div id="lista-frota-central">
+                <div style="text-align: center; padding: 20px; color: var(--t3); font-size: 12px;">Buscando radar...
+                </div>
+            </div>
         </div>
+
     </div>
 
     <script src="../static/app.js"></script>
     <script>
-        // Pega o token da URL (se veio do login do Google Web)
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenURL = urlParams.get('token');
-
-        if (tokenURL) {
-            localStorage.setItem("token", tokenURL);
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) window.location.href = "../Usuario/login.html";
 
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
@@ -319,137 +402,183 @@
         }
 
         // ==========================================
-        // 1. INICIALIZA O MAPA (Com Posição Inicial Padrão)
+        // 1. INICIALIZA O MAPA
         // ==========================================
-        const centroPadrao = [-6.0673, -49.9036]; // Parauapebas-PA como fallback
-        var map = L.map('mapa-frota-central').setView(centroPadrao, 13);
+        const centroPadrao = [-6.0673, -49.9036];
+        var map = L.map('mapa-frota-central', { zoomControl: false }).setView(centroPadrao, 14);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
+        const tileUrl = isLight ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
-        // ==========================================
-        // 2. CAPTURA E ATUALIZA A LOCALIZAÇÃO DO ADMIN (EM MOVIMENTO)
-        // ==========================================
-        let marcadorAdmin = null; // Variável para guardar a nossa bolinha azul
-
-        if (navigator.geolocation) {
-            // watchPosition fica "assistindo" o GPS o tempo todo
-            navigator.geolocation.watchPosition(
-                (position) => {
-                    const adminLat = position.coords.latitude;
-                    const adminLng = position.coords.longitude;
-
-                    if (!marcadorAdmin) {
-                        // Primeira vez: Centraliza o mapa e cria a bolinha
-                        map.setView([adminLat, adminLng], 14);
-
-                        marcadorAdmin = L.circleMarker([adminLat, adminLng], {
-                            radius: 8,
-                            fillColor: '#3B82F6', // Azul
-                            color: '#FFFFFF',
-                            weight: 2,
-                            opacity: 1,
-                            fillOpacity: 0.9
-                        }).addTo(map).bindPopup('<b style="font-family:Sora; font-size:12px;">📍 Você (Admin)</b>');
-                    } else {
-                        // As próximas vezes: Apenas faz a bolinha deslizar para a nova coordenada
-                        marcadorAdmin.setLatLng([adminLat, adminLng]);
-                    }
-                },
-                (error) => {
-                    console.warn("GPS do Admin não ativado ou permissão negada. Usando posição padrão.", error);
-                },
-                // enableHighAccuracy liga o sensor máximo do GPS
-                { enableHighAccuracy: true, maximumAge: 0 }
-            );
-        }
+        L.tileLayer(tileUrl, { attribution: '© OpenStreetMap' }).addTo(map);
 
         // ==========================================
-        // 3. LÓGICA DE TEMPO REAL DOS MOTORISTAS (API REST)
+        // 2. ÍCONES E MÁGICA DE TEMPO REAL
         // ==========================================
         let marcadoresMotoristas = {};
 
-        // Ícone do carrinho para os motoristas
-        var iconeCarro = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/128/13210/13210672.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32]
-        });
+        function criarIconeCarro(nome, statusSafe) {
+            let corShadow = "rgba(255,255,255,0.5)"; // Cinza/Offline
+            if (statusSafe === "disponivel") corShadow = "#2ecc71"; // Verde
+            else if (statusSafe === "em corrida" || statusSafe === "ocupado") corShadow = "#f39c12"; // Laranja
 
-        // Função que bate na API do Go e atualiza o mapa
-        async function atualizarMapaTempoReal() {
-    try {
-        const urlBase = window.API_URL;
-        const tokenAdmin = localStorage.getItem("token") || sessionStorage.getItem("token");
-
-        const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, {
-            headers: { "Authorization": `Bearer ${tokenAdmin}` }
-        });
-
-        if (!response.ok) throw new Error('Erro na rede: ' + response.status);
-
-        const motoristas = await response.json();
-        if (!Array.isArray(motoristas)) return;
-
-        // Filtra apenas motoristas com status "Disponível" (case-insensitive e variações)
-        const motoristasDisponiveis = motoristas.filter(m => {
-            const status = (m.status || m.Status || '').toString().trim().toLowerCase();
-            return status === 'disponível' || status === 'disponivel' || status === 'disponible' || status === 'available';
-        });
-
-        // Conjunto de IDs ativos (como string) nesta requisição
-        const idsAtivosSet = new Set(motoristasDisponiveis.map(m => String(m.motorista_id || m.MotoristaID)));
-
-        // Atualiza/insere marcadores apenas para os disponíveis
-        motoristasDisponiveis.forEach(mot => {
-            const id = String(mot.motorista_id || mot.MotoristaID);
-            const lat = mot.latitude || mot.Latitude;
-            const lng = mot.longitude || mot.Longitude;
-            const status = mot.status || mot.Status || 'Disponível';
-
-            if (!id || !lat || !lng) return;
-
-            if (marcadoresMotoristas[id]) {
-                marcadoresMotoristas[id].setLatLng([lat, lng]);
-                marcadoresMotoristas[id].getPopup().setContent(`
-                    <div style="font-family:Sora; font-size:12px;">
-                        <b>🚙 Motorista #${id}</b><br>
-                        <span style="color:#2ecc71;">${status}</span>
-                    </div>
-                `);
-            } else {
-                let novoMarcador = L.marker([lat, lng], { icon: iconeCarro })
-                    .bindPopup(`
-                        <div style="font-family:Sora; font-size:12px;">
-                            <b>🚙 Motorista #${id}</b><br>
-                            <span style="color:#2ecc71;">${status}</span>
+            return L.divIcon({
+                className: '',
+                html: `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                        <div style="background: rgba(0,0,0,0.85); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; margin-bottom: 2px; border: 1px solid rgba(255,255,255,0.2); font-family: 'Sora', sans-serif;">
+                            ${nome}
                         </div>
-                    `);
-                novoMarcador.addTo(map);
-                marcadoresMotoristas[id] = novoMarcador;
+                        <div style="font-size: 28px; line-height: 1; filter: drop-shadow(0px 0px 6px ${corShadow});">
+                            🚗
+                        </div>
+                    </div>
+                `,
+                iconSize: [60, 50],
+                iconAnchor: [30, 45],
+                popupAnchor: [0, -45]
+            });
+        }
+
+        async function atualizarMapaTempoReal() {
+            try {
+                const response = await fetch(`${window.API_URL}/api/admin/motoristas/localizacao`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Erro na rede');
+
+                const motoristas = await response.json();
+                if (!Array.isArray(motoristas)) return;
+
+                renderizarListaFrota(motoristas);
+
+                const idsAtivosMap = [];
+
+                motoristas.forEach(mot => {
+                    const id = mot.motorista_id || mot.MotoristaID || mot.id || mot.ID;
+
+                    // 1. Lê o nome garantido injetado pelo back-end novo!
+                    const nome = mot.nome_garantido || mot.nome || `Mot. #${id}`;
+
+                    const lat = mot.latitude || mot.Latitude;
+                    const lng = mot.longitude || mot.Longitude;
+
+                    const statusOriginal = mot.status || mot.Status || 'Offline';
+                    const statusSafe = statusOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+                    // 2. REGRA DO MAPA: Identifica Offline, Inativo e INDISPONÍVEL
+                    const ocultarNoMapa = (statusSafe === "offline" || statusSafe === "inativo" || statusSafe === "indisponivel");
+
+                    // 3. Só desenha no mapa se a coordenada for válida e NÃO estiver oculto
+                    if (lat !== 0 && lng !== 0 && !ocultarNoMapa) {
+                        idsAtivosMap.push(String(id));
+                        const iconeDinamico = criarIconeCarro(nome, statusSafe);
+
+                        if (marcadoresMotoristas[id]) {
+                            marcadoresMotoristas[id].setLatLng([lat, lng]);
+                            marcadoresMotoristas[id].setIcon(iconeDinamico);
+                        } else {
+                            marcadoresMotoristas[id] = L.marker([lat, lng], { icon: iconeDinamico }).addTo(map);
+                        }
+                    }
+                });
+
+                // LIMPEZA: Remove quem ficou offline ou indisponível
+                Object.keys(marcadoresMotoristas).forEach(idMarcador => {
+                    if (!idsAtivosMap.includes(idMarcador)) {
+                        map.removeLayer(marcadoresMotoristas[idMarcador]);
+                        delete marcadoresMotoristas[idMarcador];
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro ao buscar localizações:", error);
             }
-        });
+        }
 
-        // LIMPEZA: remove marcadores que não estão mais no conjunto de disponíveis
-        Object.keys(marcadoresMotoristas).forEach(idMarcador => {
-            if (!idsAtivosSet.has(idMarcador)) {
-                map.removeLayer(marcadoresMotoristas[idMarcador]);
-                delete marcadoresMotoristas[idMarcador];
+        // ==========================================
+        // RENDERIZAR A LISTA VIVA
+        // ==========================================
+        function renderizarListaFrota(motoristas) {
+            const container = document.getElementById('lista-frota-central');
+            const contador = document.getElementById('contador-frota');
+
+            if (!motoristas || motoristas.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--t3); font-size: 12px;">Nenhum motorista no radar.</div>';
+                contador.innerText = "0 Motoristas";
+                return;
             }
-        });
 
-    } catch (error) {
-        console.error("Erro ao buscar localizações dos motoristas:", error);
-    }
-}
+            contador.innerText = `${motoristas.length} Registros`;
 
+            // Ordena
+            const motOrdenados = [...motoristas].sort((a, b) => {
+                const sa = (a.status || a.Status || "").toLowerCase();
+                const sb = (b.status || b.Status || "").toLowerCase();
+                if (sa.includes("disponivel")) return -1;
+                if (sb.includes("disponivel")) return 1;
+                if (sa.includes("corrida")) return -1;
+                if (sb.includes("corrida")) return 1;
+                return 0;
+            });
 
-        // Executa imediatamente ao carregar a página
+            let html = "";
+            motOrdenados.forEach(m => {
+                const id = m.motorista_id || m.MotoristaID || m.id || m.ID;
+
+                // Lendo o nome garantido
+                const nome = m.nome_garantido || m.nome || `Mot. #${id}`;
+
+                const statusOriginal = m.status || m.Status || "Offline";
+                const statusSafe = statusOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+                let corBorda = "#94a3b8";
+                let iconeStatus = "⚪";
+
+                if (statusSafe === "disponivel") { corBorda = "#2ecc71"; iconeStatus = "🟢"; }
+                else if (statusSafe === "em corrida" || statusSafe === "ocupado") { corBorda = "#f39c12"; iconeStatus = "🟠"; }
+                else if (statusSafe === "indisponivel") { corBorda = "#95a5a6"; iconeStatus = "🟡"; }
+                else { corBorda = "#e74c3c"; iconeStatus = "🔴"; } // Offline
+
+                const lat = m.latitude || m.Latitude;
+                const lng = m.longitude || m.Longitude;
+
+                // Também ocultamos o botão "Ver Mapa" se ele não vai aparecer no mapa
+                const ocultarNoMapa = (statusSafe === "offline" || statusSafe === "inativo" || statusSafe === "indisponivel");
+
+                const btnMapa = (lat !== 0 && lng !== 0 && !ocultarNoMapa)
+                    ? `<button class="btn-focar" onclick="focarNoMapa(${lat}, ${lng})">📍 Ver Mapa</button>`
+                    : `<span style="font-size:10px; color:var(--t3); font-weight:700;">Localização Oculta</span>`;
+
+                html += `
+                <div class="driver-card" style="border-left: 4px solid ${corBorda};">
+                    <div style="display:flex; align-items:center; gap: 12px;">
+                        <div style="width:40px;height:40px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;">
+                            🚗
+                        </div>
+                        <div>
+                            <div style="font-size:13.5px;font-weight:800;color:var(--t1); margin-bottom: 3px;">${nome}</div>
+                            <div style="font-size:10px;color:var(--t2);font-weight:700;">${iconeStatus} ${statusOriginal}</div>
+                        </div>
+                    </div>
+                    ${btnMapa}
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function focarNoMapa(lat, lng) {
+            if (lat && lng && map) {
+                map.flyTo([lat, lng], 16, { animate: true, duration: 1.5 });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // START
         atualizarMapaTempoReal();
-
-        // Atualiza a posição dos motoristas a cada 5 segundos
         setInterval(atualizarMapaTempoReal, 5000);
 
         function fazerLogout(avisarApi = true) {
