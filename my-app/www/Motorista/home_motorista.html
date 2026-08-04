@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Painel do Motorista</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        /* --- SCROLL NATIVO LIVRE --- */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .home-content {
+            flex: 1;
+            padding-bottom: 40px;
+        }
+
+        .sec-lbl {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            margin: 24px 18px 10px;
+        }
+
+        .list-card {
+            display: block;
+            margin: 0 18px 12px;
+        }
+
+        .badge-green {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .badge-blue {
+            background: var(--acc-bg);
+            color: var(--acc);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .btn-iniciar-rota {
+            background: #10B981;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            transition: opacity 0.2s;
+            margin-top: 14px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-iniciar-rota:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* --- MODAL DE PERMISSÕES OBRIGATÓRIAS --- */
+        .modal-permissoes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-permissoes.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            width: 85%;
+            max-width: 340px;
+            color: var(--t1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            font-family: 'Sora', sans-serif;
+        }
+
+        /* SIDEBAR */
+        .menu-btn {
+            position: absolute;
+            top: 24px;
+            right: 18px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 260px;
+            height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            transition: left 0.3s ease;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sb-header {
+            padding: 30px 20px 20px;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--t1);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sb-close {
+            background: none;
+            border: none;
+            color: var(--t3);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .sb-link {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--t2);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            text-decoration: none;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background: transparent;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }
+
+        .sb-link svg {
+            width: 22px;
+            height: 22px;
+            opacity: 0.7;
+        }
+
+        .sb-link.active {
+            color: var(--acc);
+            border-left-color: var(--acc);
+            background: var(--acc-bg);
+        }
+
+        .sb-link.active svg {
+            opacity: 1;
+        }
+
+        .sb-theme-btn {
+            margin: 20px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            font-weight: 700;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .sb-theme-btn:active {
+            background: var(--border);
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode');
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sb-header">
+            Motorista
+            <button class="sb-close" onclick="toggleMenu()">×</button>
+        </div>
+
+        <button id="theme-toggle" class="sb-theme-btn">☀️ Alternar Tema</button>
+
+        <button class="sb-link active" onclick="window.location.href='home_motorista.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            Início
+        </button>
+        <button class="sb-link" onclick="window.location.href='taximetro.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M12 14L16 10" />
+                <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+            </svg>
+            Taxímetro
+        </button>
+        <button class="sb-link" onclick="window.location.href='historico_motorista.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+            </svg>
+            Histórico
+        </button>
+        <button class="sb-link" onclick="window.location.href='../Em dev/contrucao.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            Perfil
+        </button>
+
+        <button class="sb-link" onclick="fazerLogout()"
+            style="margin-top: auto; color: #EF4444; border-bottom: none; border-top: 1px solid var(--border);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Sair da Conta
+        </button>
+    </div>
+
+    <div class="app-container">
+        <div class="home-content">
+
+            <div class="hero" style="position: relative;">
+                <button class="menu-btn" onclick="toggleMenu()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" width="22" height="22">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
+                <div class="row" style="align-items: flex-end;">
+                    <div>
+                        <div class="hero-subtitle">Modo motorista</div>
+                        <div class="hero-title" id="motorista-nome">...</div>
+                    </div>
+                    <div style="width: 190px;margin-bottom: -45px;">
+                        <img src="../static/img/Logo.png" class="sousa-logo logo-white"
+                            style="width: 100%; height: auto;">
+                        <img src="../static/img/Logo-branco.png" class="sousa-logo logo-dark"
+                            style="width: 100%; height: auto;">
+                    </div>
+                </div>
+
+                <div class="hero-accent"></div>
+            </div>
+
+            <div class="sec-lbl">Minha Agenda 📅</div>
+            <div id="lista-atribuidas">
+                <div class="card list-card" style="text-align: center; padding: 20px 10px;">
+                    <div style="font-size: 12px; color: var(--t3);">Carregando agenda...</div>
+                </div>
+            </div>
+
+            <div class="sec-lbl">Corridas Concluídas hoje ✅</div>
+            <div id="lista-concluidas">
+                <div class="card list-card" style="text-align: center; padding: 20px 10px;">
+                    <div style="font-size: 12px; color: var(--t3);">Carregando histórico...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-permissoes" id="modalPermissoes">
+        <div class="modal-card">
+            <div style="font-size: 32px; text-align: center; margin-bottom: 10px;">⚙️</div>
+            <div style="font-size: 16px; font-weight: 800; text-align: center; margin-bottom: 16px;">Configuração
+                Obrigatória</div>
+
+            <div
+                style="font-size: 12.5px; color: var(--t2); line-height: 1.5; margin-bottom: 16px; text-align: center;">
+                Para receber viagens com o aplicativo fechado ou no bolso, precisamos que você conceda duas permissões:
+            </div>
+
+            <div
+                style="background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+                <div style="font-size: 12px; font-weight: 800; color: var(--t1); margin-bottom: 4px;">🔔 1. Notificações
+                </div>
+                <div style="font-size: 11px; color: var(--t3);">Ao clicar em continuar, clique em <b>"Permitir"</b>
+                    quando o sistema perguntar sobre notificações.</div>
+            </div>
+
+            <div
+                style="background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 24px;">
+                <div style="font-size: 12px; font-weight: 800; color: var(--t1); margin-bottom: 4px;">📍 2. Localização
+                    em 2º Plano</div>
+                <div style="font-size: 11px; color: var(--t3);">O app vai pedir o acesso ao GPS. Primeiro escolha
+                    <b>"Durante o uso do app"</b>. Depois, acesse as configurações do celular e troque a localização
+                    para <b>"Permitir o tempo todo"</b>.
+                </div>
+            </div>
+
+            <button class="btn-iniciar-rota" style="margin-top: 0;" onclick="aceitarPermissoesNativas()">
+                Entendi, solicitar
+            </button>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <script src="../static/gps_tracker.js"></script>
+    <script>
+        // ==========================================
+        // LÓGICA DE PERMISSÕES REAIS (CAPACITOR API)
+        // ==========================================
+        window.addEventListener("DOMContentLoaded", () => {
+            verificarPermissoesNativas();
+        });
+
+        async function verificarPermissoesNativas() {
+            // Só executa se for o aplicativo instalado no celular
+            if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
+
+            let faltaPermissao = false;
+
+            try {
+                // 1. O SISTEMA VERIFICA O GPS
+                if (window.Capacitor.Plugins.Geolocation) {
+                    const gpsStatus = await window.Capacitor.Plugins.Geolocation.checkPermissions();
+                    if (gpsStatus.location !== 'granted') {
+                        faltaPermissao = true;
+                    }
+                }
+
+                // 2. O SISTEMA VERIFICA AS NOTIFICAÇÕES
+                if (window.Capacitor.Plugins.PushNotifications) {
+                    const pushStatus = await window.Capacitor.Plugins.PushNotifications.checkPermissions();
+                    if (pushStatus.receive !== 'granted') faltaPermissao = true;
+                } else if (window.Capacitor.Plugins.LocalNotifications) {
+                    const localStatus = await window.Capacitor.Plugins.LocalNotifications.checkPermissions();
+                    if (localStatus.display !== 'granted') faltaPermissao = true;
+                }
+
+                if (faltaPermissao) {
+                    setTimeout(() => {
+                        document.getElementById('modalPermissoes').classList.add('open');
+                    }, 500);
+                }
+
+            } catch (error) {
+                console.log("Erro ao checar permissões reais:", error);
+                if (!localStorage.getItem('permissoes_motorista_ok')) {
+                    document.getElementById('modalPermissoes').classList.add('open');
+                }
+            }
+        }
+
+        async function aceitarPermissoesNativas() {
+            if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                try {
+                    // 1. TENTA PEDIR NOTIFICAÇÃO
+                    if (window.Capacitor.Plugins.LocalNotifications) {
+                        await window.Capacitor.Plugins.LocalNotifications.requestPermissions();
+                    } else if (window.Capacitor.Plugins.PushNotifications) {
+                        await window.Capacitor.Plugins.PushNotifications.requestPermissions();
+                    } else {
+                        alert("Atenção Dev: O plugin @capacitor/local-notifications não está instalado no app!");
+                    }
+
+                    // 2. TENTA PEDIR GPS
+                    if (window.Capacitor.Plugins.Geolocation) {
+                        await window.Capacitor.Plugins.Geolocation.requestPermissions();
+                    } else {
+                        alert("Atenção Dev: O plugin @capacitor/geolocation não está instalado!");
+                    }
+                } catch (e) {
+                    alert("Falha no sistema ao pedir permissão: " + JSON.stringify(e));
+                }
+
+                document.getElementById('modalPermissoes').classList.remove('open');
+                localStorage.setItem('permissoes_motorista_ok', 'true');
+            }
+        }
+
+
+        // ==========================================
+        // LÓGICA ORIGINAL DA HOME DO MOTORISTA
+        // ==========================================
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('open');
+        }
+
+        // ==========================================
+        // CAPTURA INTELIGENTE DO TOKEN DO GOOGLE (WEB)
+        // ==========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenURL = urlParams.get('token');
+
+        if (tokenURL) {
+            // Verifica se o cara marcou "Manter Conectado" antes de ir pro Google
+            if (localStorage.getItem("forcar_lembrar_google_web") === "true") {
+                localStorage.setItem("token", tokenURL);
+                localStorage.removeItem("forcar_lembrar_google_web"); // Limpa o aviso
+            } else {
+                sessionStorage.setItem("token", tokenURL); // Salva temporário
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // ==========================================
+        // FLUXO DE CARREGAMENTO
+        // ==========================================
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "../Usuario/login.html";
+        } else {
+            carregarDadosMotorista();
+        }
+
+        function carregarDadosMotorista() {
+            fetch(`${window.API_URL}/api/motorista/home`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(res => {
+                    if (res.status === 401 || res.status === 403) throw new Error("Sessão expirada");
+                    return res.json();
+                })
+                .then(dados => {
+                    if (dados.sucesso) {
+                        document.getElementById('motorista-nome').textContent = dados.usuario.Nome;
+                        renderizarAtribuidas(dados.atribuidas);
+                        renderizarConcluidas(dados.concluidas);
+                    } else {
+                        alert("Erro ao carregar dados: " + dados.erro);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (err.message === "Sessão expirada") fazerLogout(false);
+                });
+        }
+
+        function renderizarAtribuidas(corridas) {
+            const container = document.getElementById('lista-atribuidas');
+            if (!corridas || corridas.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida pendente na sua agenda.</div></div>';
+                return;
+            }
+
+            let html = "";
+            corridas.forEach(c => {
+                let dataFmt = new Date(c.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+                html += `
+                <div class="card list-card" style="border-left: 3px solid #10B981;">
+                    <div class="row" style="margin-bottom: 8px;">
+                        <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${c.OrigemTexto} → ${c.DestinoTexto}</div>
+                        <span class="badge-green">Aprovada</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--t3); margin-bottom: 6px;">📅 ${dataFmt}</div>
+                    <div style="font-size: 11px; color: var(--t2);">
+                        👤 Passageiro: <span style="color: var(--t1); font-weight: bold;">${c.Usuario.Nome}</span>
+                    </div>
+                    
+                    <button type="button" class="btn-iniciar-rota" onclick="abrirCorridaAgendada(${c.ID})">
+                        ▶ Iniciar Corrida
+                    </button>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderizarConcluidas(corridas) {
+            const container = document.getElementById('lista-concluidas');
+
+            const dataDeHoje = new Date().toLocaleDateString('pt-BR');
+
+            const corridasDeHoje = (corridas || []).filter(c => {
+                const dataCorrida = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt || new Date()).toLocaleDateString('pt-BR');
+                return dataCorrida === dataDeHoje;
+            });
+
+            if (corridasDeHoje.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida concluída hoje.</div></div>';
+                return;
+            }
+
+            let html = "";
+            corridasDeHoje.forEach(c => {
+                let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                let nomePassageiro = c.Usuario ? c.Usuario.Nome : "Avulso";
+
+                html += `
+                <div class="card list-card" style="border-left: 3px solid var(--t4); cursor: pointer;" onclick="window.location.href='../Dados/recibo.html?id=${c.ID}'">
+                    <div class="row" style="margin-bottom: 7px;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--t1);">${c.OrigemTexto} → ${c.DestinoTexto}</div>
+                        <span class="badge-blue">Concluída</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--t3);">
+                        Hoje às ${horaFmt} · Passageiro: ${nomePassageiro}
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function abrirCorridaAgendada(id) {
+            window.location.href = `corrida_agendada.html?id=${id}`;
+        }
+
+        function fazerLogout(avisarApi = true) {
+            if (window.GPSGlobal) {
+                window.GPSGlobal.parar();
+            }
+
+            if (avisarApi) {
+                fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
+            }
+
+            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
+            window.location.href = "../Usuario/login.html";
+        }
+    </script>
+</body>
+
+</html>

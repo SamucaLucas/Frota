@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cadastro - Sousa Locações e Transportes</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="stylesheet" href="../static/style.css">
+
+    <style>
+        /* --- ESTILOS DA VALIDAÇÃO DE SENHA --- */
+        .pwd-rules {
+            font-size: 11px;
+            color: var(--t3);
+            margin-top: -10px;
+            margin-bottom: 20px;
+            padding: 14px;
+            background: var(--bg3);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pwd-rule {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s ease;
+            font-weight: 600;
+        }
+
+        .pwd-rule.valid {
+            color: #2ecc71;
+            /* Verde Sucesso */
+        }
+
+        .rule-icon {
+            font-size: 12px;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+
+        .pwd-rule.valid .rule-icon {
+            filter: grayscale(0%);
+        }
+
+        /* Botão desabilitado */
+        button[type="submit"]:disabled {
+            background: var(--bg3);
+            color: var(--t3);
+            border: 1px solid var(--border);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <button id="theme-toggle" class="theme-btn">☀️ Claro</button>
+
+        <div style="display:flex; flex-direction:column; flex:1">
+
+            <div class="hero">
+                <div class="hero-accent"></div>
+                <div style="display:flex; align-items:center; gap:12px; margin-top:6px">
+                    <a href="login.html"
+                        style="width:34px; height:34px; border:none; background:rgba(255,255,255,.12); border-radius:10px; color:#fff; cursor:pointer; font-size:17px; display:flex; align-items:center; justify-content:center; font-family:inherit; text-decoration:none;">←</a>
+                    <span class="hero-title" style="font-size:18px;">Criar Conta</span>
+                </div>
+            </div>
+
+            <form id="formCadastro" style="flex:1; padding:18px 18px 0; background:var(--bg2)">
+
+                <div id="mensagem-erro" class="toast-msg toast-error" style="display: none;"></div>
+                <div id="mensagem-sucesso" class="toast-msg toast-success" style="display: none;"></div>
+
+                <div class="inp-wrap">
+                    <span class="inp-icon">👤</span>
+                    <div style="flex:1">
+                        <div class="inp-lbl">Nome Completo</div>
+                        <input class="inp" type="text" id="nome" name="nome" required placeholder="Nome completo">
+                    </div>
+                </div>
+
+                <div class="inp-wrap">
+                    <span class="inp-icon">✉️</span>
+                    <div style="flex:1">
+                        <div class="inp-lbl">E-mail</div>
+                        <input class="inp" type="email" id="email" name="email" required placeholder="seu@email.com"
+                            autocapitalize="none">
+                    </div>
+                </div>
+
+                <div class="inp-wrap">
+                    <span class="inp-icon">📱</span>
+                    <div style="flex:1">
+                        <div class="inp-lbl">WhatsApp</div>
+                        <input class="inp" type="tel" id="whatsapp" name="whatsapp" required
+                            placeholder="(94) 99999-9999" maxlength="15"
+                            oninput="this.value = mascaraWhatsApp(this.value)">
+                    </div>
+                </div>
+
+                <div class="inp-wrap" style="margin-bottom:12px">
+                    <span class="inp-icon">🔒</span>
+                    <div style="flex:1">
+                        <div class="inp-lbl">Senha</div>
+                        <input class="inp" type="password" id="senha" name="senha" required
+                            placeholder="Crie sua senha">
+                    </div>
+                </div>
+
+                <div class="pwd-rules" id="pwdRules">
+                    <div class="pwd-rule" id="rule-len"><span class="rule-icon">❌</span> Pelo menos 8 caracteres</div>
+                    <div class="pwd-rule" id="rule-upper"><span class="rule-icon">❌</span> Uma letra maiúscula (A-Z)
+                    </div>
+                    <div class="pwd-rule" id="rule-lower"><span class="rule-icon">❌</span> Uma letra minúscula (a-z)
+                    </div>
+                    <div class="pwd-rule" id="rule-num"><span class="rule-icon">❌</span> Pelo menos um número (0-9)
+                    </div>
+                    <div class="pwd-rule" id="rule-spec"><span class="rule-icon">❌</span> Um caractere especial (@, #,
+                        !, etc.)</div>
+                </div>
+
+                <div
+                    style="display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; background:var(--bg3); border-radius:12px; padding:12px; border:1px solid var(--border)">
+                    <input type="checkbox" id="aceitou" name="aceitou" value="true" required
+                        style="margin-top:2px; width:15px; height:15px; accent-color:var(--acc); flex-shrink:0">
+                    <span style="font-size:11px; color:var(--t3); line-height:1.5">Li e aceito os
+                        <a href="Termo.html" style="color:var(--acc); text-decoration: none; font-weight: 700;">Termos
+                            de Uso e a Política de Privacidade</a>
+                    </span>
+                </div>
+
+                <button type="submit" class="btn" id="btnSubmit" style="width: 100%;" disabled>Criar Minha
+                    Conta</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+
+    <script>
+        function mascaraWhatsApp(v) {
+            v = v.replace(/\D/g, "");
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 2) v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+            if (v.length > 7) v = v.replace(/(\d{5})(\d)/, "$1-$2");
+            return v;
+        }
+
+        // ==========================================
+        // VALIDADOR DINÂMICO DE SENHA
+        // ==========================================
+        const senhaInput = document.getElementById('senha');
+        const btnSubmit = document.getElementById('btnSubmit');
+
+        senhaInput.addEventListener('input', function () {
+            const val = this.value;
+
+            // 1. Testa todas as condições (Expressões Regulares)
+            const regras = {
+                len: val.length >= 8,
+                upper: /[A-Z]/.test(val),
+                lower: /[a-z]/.test(val),
+                num: /[0-9]/.test(val),
+                spec: /[^A-Za-z0-9]/.test(val) // Qualquer coisa que não seja letra ou número
+            };
+
+            let todasValidas = true;
+
+            // 2. Atualiza a tabela na tela
+            for (const regra in regras) {
+                const elemento = document.getElementById(`rule-${regra}`);
+                const icone = elemento.querySelector('.rule-icon');
+                const estaValido = regras[regra];
+
+                if (estaValido) {
+                    elemento.classList.add('valid');
+                    icone.textContent = '✅';
+                } else {
+                    elemento.classList.remove('valid');
+                    icone.textContent = '❌';
+                    todasValidas = false; // Se uma falhar, reprova tudo
+                }
+            }
+
+            // 3. Libera ou bloqueia o botão de submit
+            btnSubmit.disabled = !todasValidas;
+        });
+
+        // ==========================================
+        // MÁGICA DA API REST (ENVIO DO CADASTRO)
+        // ==========================================
+        document.getElementById('formCadastro').addEventListener('submit', function (event) {
+            event.preventDefault(); // Impede a tela de recarregar
+
+            const nomeInput = document.getElementById('nome').value;
+            const emailInput = document.getElementById('email').value;
+            const whatsappInput = document.getElementById('whatsapp').value;
+            const senhaInput = document.getElementById('senha').value;
+
+            const msgErro = document.getElementById('mensagem-erro');
+            const btn = this.querySelector('button[type="submit"]');
+
+            msgErro.style.display = 'none';
+            btn.innerHTML = 'Criando conta...';
+            btn.disabled = true;
+
+            // Envia os dados no formato JSON para a API do Go
+            fetch(`${window.API_URL}/api/cadastrar`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    nome: nomeInput,
+                    email: emailInput,
+                    whatsapp: whatsappInput,
+                    senha: senhaInput
+                })
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        // Se a API já devolver o token de login após o cadastro, nós salvamos:
+                        if (dados.token) localStorage.setItem("token", dados.token);
+
+                        // Redireciona o cliente para a Home de Passageiro!
+                        window.location.href = "../Passageiro/home_Passageiro.html";
+                    } else {
+                        // Mostra erro (ex: E-mail já cadastrado)
+                        msgErro.textContent = dados.erro;
+                        msgErro.style.display = 'block';
+                        btn.innerHTML = 'Criar Minha Conta';
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    msgErro.textContent = "Erro de conexão com o servidor.";
+                    msgErro.style.display = 'block';
+                    btn.innerHTML = 'Criar Minha Conta';
+                    btn.disabled = false;
+                });
+        });
+    </script>
+</body>
+
+</html>

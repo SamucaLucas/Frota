@@ -1,0 +1,17 @@
+{
+  "appId": "com.sousa.app",
+  "appName": "Sousa LT",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 2000
+    },
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "734481346100-e3088m26bdu14q3p3qj7pdk2sj6dms9v.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
+  }
+}

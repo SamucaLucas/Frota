@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Central da Frota - Admin</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        /* --- SCROLL NATIVO LIVRE --- */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .home-content {
+            flex: 1;
+            padding-bottom: 40px;
+        }
+
+        .sec-lbl {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            margin: 24px 18px 10px;
+        }
+
+        .list-card {
+            display: block !important;
+            margin: 0 18px 12px;
+            box-sizing: border-box;
+        }
+
+        .divl {
+            height: 1px;
+            background: var(--border);
+            margin: 12px 0;
+            width: 100%;
+        }
+
+        .badge-warning,
+        .badge-green,
+        .badge-red,
+        .badge-blue {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .badge-warning {
+            background: rgba(243, 156, 18, 0.15);
+            color: #f39c12;
+        }
+
+        .badge-green {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+        }
+
+        .badge-blue {
+            background: var(--acc-bg);
+            color: var(--acc);
+        }
+
+        /* SIDEBAR */
+        .menu-btn {
+            position: absolute;
+            top: 24px;
+            right: 18px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 260px;
+            height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sb-header {
+            padding: 30px 20px 20px;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--t1);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sb-close {
+            background: none;
+            border: none;
+            color: var(--t3);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .sb-link {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--t2);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            text-decoration: none;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background: transparent;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }
+
+        .sb-link svg {
+            width: 22px;
+            height: 22px;
+            opacity: 0.7;
+        }
+
+        .sb-link.active {
+            color: var(--acc);
+            border-left-color: var(--acc);
+            background: var(--acc-bg);
+        }
+
+        .sb-link.active svg {
+            opacity: 1;
+        }
+
+        .sb-theme-btn {
+            margin: 20px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            font-weight: 700;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .sb-theme-btn:active {
+            background: var(--border);
+        }
+
+        /* --- CAIXA SUSPENSA MODERNA (SELECT) --- */
+        .styled-select-wrapper {
+            margin: 16px 18px 10px;
+            position: relative;
+        }
+
+        .styled-select {
+            width: 100%;
+            background-color: var(--card);
+            border: 1.5px solid var(--border);
+            color: var(--t1);
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 13.5px;
+            font-weight: 700;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .styled-select:focus {
+            border-color: var(--acc);
+            box-shadow: 0 0 0 3px var(--acc-bg);
+        }
+
+        /* --- BANNER DE CORRIDA ATIVA (ADMIN COMO MOTORISTA) --- */
+        .banner-ativa {
+            display: none;
+            margin: 0 18px 10px;
+            background: linear-gradient(135deg, var(--acc) 0%, #1a73e8 100%);
+            color: #ffffff;
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            animation: fadeInDown 0.4s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode');
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sb-header">
+            Painel Admin
+            <button class="sb-close" onclick="toggleMenu()">×</button>
+        </div>
+
+        <button id="theme-toggle" class="sb-theme-btn">☀️ Alternar Tema</button>
+
+        <button class="sb-link active" onclick="window.location.href='home_admin.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+            </svg>
+            Despacho
+        </button>
+        <button class="sb-link" onclick="window.location.href='nova_chamada.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+            </svg>
+            Agendamento
+        </button>
+        <button class="sb-link" onclick="window.location.href='mapa_admin.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                <line x1="9" y1="3" x2="9" y2="18" />
+                <line x1="15" y1="6" x2="15" y2="21" />
+            </svg>
+            Mapa da Frota
+        </button>
+        <button class="sb-link" onclick="window.location.href='sorteio_admin.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            Sorteio
+        </button>
+        <button class="sb-link" onclick="window.location.href='../Em dev/contrucao.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                <path d="M16 3.13a4 4 0 010 7.75" />
+            </svg>
+            Motoristas
+        </button>
+        <button class="sb-link" onclick="window.location.href='historico_admin.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+            </svg>
+            Histórico Completo
+        </button>
+        <button class="sb-link" onclick="window.location.href='../Em dev/contrucao.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                    d="M19.07 4.93l-1.41 1.41M16.95 16.95l1.41 1.41M4.93 4.93l1.41 1.41M7.05 16.95l-1.41 1.41M21 12h-2M5 12H3M12 3V1M12 23v-2" />
+            </svg>
+            Configurações
+        </button>
+        <button class="sb-link" onclick="fazerLogout()"
+            style="margin-top: auto; color: #EF4444; border-bottom: none; border-top: 1px solid var(--border);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Sair da Conta
+        </button>
+    </div>
+
+    <div class="app-container">
+        <div class="home-content">
+
+            <div class="hero" style="padding-bottom: 30px; position: relative;">
+                <button class="menu-btn" onclick="toggleMenu()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" width="22" height="22">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
+                <div class="row" style="align-items: flex-end;">
+                    <div>
+                        <div class="hero-subtitle">Gestão de Frota 👑</div>
+                        <div class="hero-title">Central, <span id="admin-nome">...</span></div>
+                    </div>
+                    <div style="width: 140px; margin-bottom: -15px;">
+                        <img src="../static/img/Logo.png" class="sousa-logo logo-white"
+                            style="width: 100%; height: auto;">
+                        <img src="../static/img/Logo-branco.png" class="sousa-logo logo-dark"
+                            style="width: 100%; height: auto;">
+                    </div>
+                </div>
+                <div class="hero-accent"></div>
+            </div>
+
+            <!-- BANNER DINÂMICO: APARECE SE O ADMIN ASSUMIR UMA CORRIDA -->
+            <div id="banner-corrida-ativa" class="banner-ativa">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div
+                            style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">
+                            🚨 Viagem Ativa</div>
+                        <div style="font-size: 13px; margin-top: 4px; font-weight: 600;">Você assumiu uma corrida.</div>
+                    </div>
+                    <button onclick="abrirMinhaCorrida()"
+                        style="background: #ffffff; color: var(--acc); border: none; padding: 10px 16px; border-radius: 10px; font-weight: 800; font-size: 12px; font-family: 'Sora', sans-serif; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        Abrir Mapa 📍
+                    </button>
+                </div>
+            </div>
+
+            <!-- CAIXA SUSPENSA (SELECT) PARA FILTRAR AS SEÇÕES -->
+            <div class="styled-select-wrapper">
+                <div
+                    style="font-size: 11px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px;">
+                    Filtrar Visão 🔍
+                </div>
+                <select id="filtro-select" class="styled-select" onchange="filtrarListas(this.value)">
+                    <option value="todos">📋 Exibir Todas as Seções</option>
+                    <option value="pendentes">🚨 Novas Solicitações (<span id="total-pendentes-opt">0</span>)</option>
+                    <option value="aprovadas">📅 Confirmadas Hoje (<span id="total-aprovadas-opt">0</span>)</option>
+                    <option value="realizadas">🏁 Realizadas Hoje (<span id="total-realizadas-opt">0</span>)</option>
+                </select>
+            </div>
+
+            <!-- SEÇÃO 1: PENDENTES -->
+            <div id="secao-pendentes">
+                <div class="sec-lbl">Novas Solicitações 🔥</div>
+                <div id="lista-pendentes-api">
+                    <div style="text-align: center; padding: 20px; font-size: 12px; color: var(--t3);">
+                        Carregando solicitações...
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 2: APROVADAS / CONFIRMADAS -->
+            <div id="secao-aprovadas">
+                <div class="sec-lbl">Agenda da Frota de hoje 📅</div>
+                <div id="lista-aprovadas-api">
+                    <div style="text-align: center; padding: 20px; font-size: 12px; color: var(--t3);">
+                        Carregando agenda...
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 3: REALIZADAS -->
+            <div id="secao-realizadas">
+                <div class="sec-lbl">Realizadas Hoje 🏁</div>
+                <div id="lista-realizadas-api">
+                    <div style="text-align: center; padding: 20px; font-size: 12px; color: var(--t3);">
+                        Carregando histórico...
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <script>
+        let idMinhaCorridaAtiva = null;
+
+        function abrirMinhaCorrida() {
+            if (idMinhaCorridaAtiva) {
+                // Direciona o Admin para a tela exata que os Motoristas usam
+                window.location.href = `../Motorista/corrida_agendada.html?id=${idMinhaCorridaAtiva}`;
+            }
+        }
+
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('open');
+        }
+
+        function filtrarListas(tipo) {
+            const secaoPendentes = document.getElementById('secao-pendentes');
+            const secaoAprovadas = document.getElementById('secao-aprovadas');
+            const secaoRealizadas = document.getElementById('secao-realizadas');
+
+            if (tipo === 'todos') {
+                if (secaoPendentes) secaoPendentes.style.display = 'block';
+                if (secaoAprovadas) secaoAprovadas.style.display = 'block';
+                if (secaoRealizadas) secaoRealizadas.style.display = 'block';
+            } else {
+                if (secaoPendentes) secaoPendentes.style.display = tipo === 'pendentes' ? 'block' : 'none';
+                if (secaoAprovadas) secaoAprovadas.style.display = tipo === 'aprovadas' ? 'block' : 'none';
+                if (secaoRealizadas) secaoRealizadas.style.display = tipo === 'realizadas' ? 'block' : 'none';
+            }
+        }
+
+        // ==========================================
+        // CAPTURA INTELIGENTE DO TOKEN DO GOOGLE (WEB)
+        // ==========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenURL = urlParams.get('token');
+
+        if (tokenURL) {
+            // Verifica se o usuário marcou "Manter Conectado" antes de ser redirecionado pro Google
+            if (localStorage.getItem("forcar_lembrar_google_web") === "true") {
+                localStorage.setItem("token", tokenURL);
+                localStorage.removeItem("forcar_lembrar_google_web"); // Limpa o aviso
+            } else {
+                // Se não marcou, salva apenas para essa sessão (fecha a aba = desloga)
+                sessionStorage.setItem("token", tokenURL);
+            }
+
+            // Limpa a barra de endereços do navegador para não ficar aparecendo o ?token=... gigante
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // ==========================================
+        // FLUXO DE CARREGAMENTO DA HOME
+        // ==========================================
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "../Usuario/login.html";
+        } else {
+            carregarDadosAdmin();
+        }
+
+        function carregarDadosAdmin() {
+            fetch(`${window.API_URL}/api/admin/home`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(res => {
+                    if (res.status === 401 || res.status === 403) throw new Error("Sessão expirada");
+                    return res.json();
+                })
+                .then(dados => {
+                    if (dados.sucesso) {
+                        const adminID = dados.usuario.ID;
+                        document.getElementById('admin-nome').textContent = dados.usuario.Nome;
+
+                        // --- LÓGICA DO BANNER DO ADMIN-MOTORISTA ---
+                        // Verifica se o Admin assumiu alguma corrida aprovada (onde ele é o motorista)
+                        const minhaCorrida = (dados.aprovadas || []).find(c => c.Motorista && c.Motorista.ID === adminID);
+
+                        if (minhaCorrida) {
+                            idMinhaCorridaAtiva = minhaCorrida.ID;
+                            document.getElementById('banner-corrida-ativa').style.display = 'block';
+                        } else {
+                            document.getElementById('banner-corrida-ativa').style.display = 'none';
+                        }
+                        // -------------------------------------------
+
+                        const dataDeHoje = new Date().toLocaleDateString('pt-BR');
+
+                        const aprovadasDeHoje = (dados.aprovadas || []).filter(c => {
+                            const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
+                            return d === dataDeHoje;
+                        });
+
+                        const realizadasDeHoje = (dados.concluidas || []).filter(c => {
+                            const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
+                            return d === dataDeHoje;
+                        });
+
+                        if (document.getElementById('total-pendentes-opt')) {
+                            document.getElementById('total-pendentes-opt').textContent = dados.pendentes ? dados.pendentes.length : 0;
+                        }
+                        if (document.getElementById('total-aprovadas-opt')) {
+                            document.getElementById('total-aprovadas-opt').textContent = aprovadasDeHoje.length;
+                        }
+                        if (document.getElementById('total-realizadas-opt')) {
+                            document.getElementById('total-realizadas-opt').textContent = realizadasDeHoje.length;
+                        }
+
+                        renderizarPendentes(dados.pendentes);
+                        renderizarAprovadas(aprovadasDeHoje);
+                        renderizarRealizadas(realizadasDeHoje);
+                    } else {
+                        alert("Erro ao carregar painel: " + dados.erro);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (err.message === "Sessão expirada") {
+                        fazerLogout(false);
+                    }
+                });
+        }
+
+        function renderizarPendentes(pendentes) {
+            const container = document.getElementById('lista-pendentes-api');
+            if (!container) return;
+
+            if (!pendentes || pendentes.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhum pedido novo no momento.</div></div>';
+                return;
+            }
+
+            let html = '';
+            pendentes.forEach(corrida => {
+                let dataFormatada = new Date(corrida.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                html += `
+            <div class="card list-card" style="cursor:pointer; border-left: 3px solid #EF4444;" onclick="window.location.href='despachar.html?id=${corrida.ID}'">
+                <div class="row" style="margin-bottom:8px; align-items: flex-start;">
+                    <div style="font-size:12px;font-weight:700;color:var(--t1); line-height: 1.4; padding-right: 12px; flex: 1;">
+                        ${corrida.OrigemTexto} → ${corrida.DestinoTexto}
+                    </div>
+                    <span class="badge-red" style="margin-top: 2px;">Pendente</span>
+                </div>
+                <div style="font-size:11px;color:var(--t3);margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                    <span>📅 ${dataFormatada}</span>
+                    <span>·</span>
+                    <span>👤 ${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</span>
+                </div>
+                <button class="btn" style="font-size:12px; padding:12px; width:100%; box-sizing: border-box; margin-top: 12px;" onclick="event.stopPropagation(); window.location.href='despachar.html?id=${corrida.ID}'">
+                    Revisar e Despachar →
+                </button>
+            </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderizarAprovadas(aprovadasDeHoje) {
+            const container = document.getElementById('lista-aprovadas-api');
+            if (!container) return;
+
+            if (aprovadasDeHoje.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida confirmada para hoje.</div></div>';
+                return;
+            }
+
+            let html = '';
+            aprovadasDeHoje.forEach(corrida => {
+                let dataObj = new Date(corrida.DataHoraAgendada || corrida.created_at || corrida.UpdatedAt);
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
+                let valor = corrida.ValorEstimado ? corrida.ValorEstimado.toFixed(2) : "0.00";
+
+                html += `
+            <div class="card list-card" style="border-left: 3px solid #2ecc71;">
+                <div class="row" style="margin-bottom: 8px;">
+                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</div>
+                    <span class="badge-green">Confirmada</span>
+                </div>
+                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                    ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
+                </div>
+                <div class="divl" style="margin: 10px 0;"></div>
+                <div class="row" style="align-items: flex-end;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 Hoje às ${horaFmt}</div>
+                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
+                    </div>
+                    <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ ${valor}</div>
+                </div>
+            </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderizarRealizadas(realizadasDeHoje) {
+            const container = document.getElementById('lista-realizadas-api');
+            if (!container) return;
+
+            if (realizadasDeHoje.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida finalizada hoje.</div></div>';
+                return;
+            }
+
+            let html = '';
+            realizadasDeHoje.forEach(corrida => {
+                let dataObj = new Date(corrida.DataHoraAgendada || corrida.created_at || corrida.UpdatedAt);
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
+                let valor = corrida.ValorFinal ? corrida.ValorFinal.toFixed(2) : (corrida.ValorEstimado ? corrida.ValorEstimado.toFixed(2) : "0.00");
+
+                html += `
+            <div class="card list-card" style="border-left: 3px solid var(--t4); cursor: pointer;" onclick="window.location.href='../Dados/recibo.html?id=${corrida.ID}'">
+                <div class="row" style="margin-bottom: 8px;">
+                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'Avulso'}</div>
+                    <span class="badge-blue">Realizada</span>
+                </div>
+                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                    ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
+                </div>
+                <div class="divl" style="margin: 10px 0;"></div>
+                <div class="row" style="align-items: flex-end;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 Hoje às ${horaFmt}</div>
+                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
+                    </div>
+                    <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ ${valor}</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; color: var(--t3); text-align: right;">
+                    🧾 Toque para ver recibo
+                </div>
+            </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function fazerLogout(avisarApi = true) {
+            if (avisarApi) {
+                fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
+            }
+            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
+            window.location.href = "../Usuario/login.html";
+        }
+    </script>
+</body>
+
+</html>

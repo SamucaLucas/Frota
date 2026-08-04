@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Histórico Geral da Frota</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            font-family: 'Sora', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-voltar {
+            background: transparent;
+            border: none;
+            color: var(--t1);
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--t1);
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .content {
+            padding: 0 18px 20px;
+            flex: 1;
+        }
+
+        /* --- SESSÃO DE FILTROS --- */
+        .filter-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .filter-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .styled-input {
+            width: 100%;
+            background-color: var(--bg);
+            border: 1.5px solid var(--border);
+            color: var(--t1);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .styled-input:focus {
+            border-color: var(--acc);
+        }
+
+        .styled-select {
+            width: 100%;
+            background-color: var(--bg);
+            border: 1.5px solid var(--border);
+            color: var(--t1);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 700;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .styled-select:focus {
+            border-color: var(--acc);
+        }
+
+        .btn-limpar {
+            background: transparent;
+            border: none;
+            color: var(--acc);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* --- CARDS DA LISTA --- */
+        .list-card {
+            display: block;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border-left: 3px solid var(--border);
+        }
+
+        .list-card:active {
+            transform: scale(0.98);
+        }
+
+        /* Cores Dinâmicas para os Status */
+        .badge-status {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .status-pendente {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+        }
+
+        .status-aprovada {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+        }
+
+        .status-concluida {
+            background: var(--acc-bg);
+            color: var(--acc);
+        }
+
+        .border-pendente {
+            border-left-color: #EF4444;
+        }
+
+        .border-aprovada {
+            border-left-color: #2ecc71;
+        }
+
+        .border-concluida {
+            border-left-color: var(--acc);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--t3);
+            font-size: 13px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode');
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+    <div class="top-bar">
+        <button class="btn-voltar" onclick="window.history.back()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <div class="page-title">Histórico Geral (Admin)</div>
+    </div>
+
+    <div class="content">
+        <!-- ÁREA DE FILTROS -->
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-col">
+                    <label class="filter-label">De</label>
+                    <input type="date" id="filtro-inicio" class="styled-input" onchange="aplicarFiltros()">
+                </div>
+                <div class="filter-col">
+                    <label class="filter-label">Até</label>
+                    <input type="date" id="filtro-fim" class="styled-input" onchange="aplicarFiltros()">
+                </div>
+            </div>
+            <div class="filter-row" style="margin-bottom: 0; align-items: flex-end;">
+                <div class="filter-col" style="flex: 1;">
+                    <label class="filter-label">Status da Viagem</label>
+                    <select id="filtro-status" class="styled-select" onchange="aplicarFiltros()">
+                        <option value="todas">📋 Todos os Status</option>
+                        <option value="Concluida">🏁 Concluídas (Recibo)</option>
+                        <option value="Aprovada">✅ Confirmadas Hoje</option>
+                        <option value="Pendente">🚨 Pendentes de Despacho</option>
+                    </select>
+                </div>
+            </div>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 12px;">
+                <div style="font-size: 11px; font-weight: 600; color: var(--t3);">
+                    Total Encontrado: <span id="contador-resultados">0</span>
+                </div>
+                <button class="btn-limpar" onclick="limparFiltros()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                        <line x1="18" y1="9" x2="12" y2="15"></line>
+                        <line x1="12" y1="9" x2="18" y2="15"></line>
+                    </svg>
+                    Limpar Filtros
+                </button>
+            </div>
+        </div>
+
+        <!-- LISTA DE HISTÓRICO -->
+        <div id="lista-historico">
+            <div class="empty-state">Buscando banco de dados da frota...</div>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <script>
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+        // Array com TODAS as corridas do sistema (Admin tem acesso a tudo)
+        let todasAsCorridas = [];
+
+        if (!token) {
+            window.location.href = "../Usuario/login.html";
+        } else {
+            carregarHistorico();
+        }
+
+        function carregarHistorico() {
+            fetch(`${window.API_URL}/api/admin/home`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(res => {
+                    if (res.status === 401 || res.status === 403) throw new Error("Sessão expirada");
+                    return res.json();
+                })
+                .then(dados => {
+                    if (dados.sucesso) {
+                        // Juntamos pendentes, aprovadas e concluidas em um super array
+                        let pendentes = dados.pendentes || [];
+                        let aprovadas = dados.aprovadas || [];
+                        let concluidas = dados.concluidas || [];
+
+                        todasAsCorridas = [...pendentes, ...aprovadas, ...concluidas];
+
+                        // Ordena da mais recente para a mais antiga
+                        todasAsCorridas.sort((a, b) => new Date(b.DataHoraAgendada || b.created_at || b.UpdatedAt) - new Date(a.DataHoraAgendada || a.created_at || a.UpdatedAt));
+
+                        aplicarFiltros();
+                    } else {
+                        alert("Erro ao carregar histórico: " + dados.erro);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (err.message === "Sessão expirada") {
+                        localStorage.removeItem("token");
+                        sessionStorage.removeItem("token");
+                        window.location.href = "../Usuario/login.html";
+                    }
+                });
+        }
+
+        function aplicarFiltros() {
+            const dataInicio = document.getElementById('filtro-inicio').value;
+            const dataFim = document.getElementById('filtro-fim').value;
+            const statusEscolhido = document.getElementById('filtro-status').value;
+
+            const corridasFiltradas = todasAsCorridas.filter(c => {
+                let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
+                let ano = dataObj.getFullYear();
+                let mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+                let dia = String(dataObj.getDate()).padStart(2, '0');
+                let dataDaCorrida = `${ano}-${mes}-${dia}`;
+
+                // 1. Filtro de Data
+                let passaData = true;
+                if (dataInicio && dataDaCorrida < dataInicio) passaData = false;
+                if (dataFim && dataDaCorrida > dataFim) passaData = false;
+
+                // 2. Filtro de Status
+                let passaStatus = true;
+                const statusCorridaNormalizado = (c.Status || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                const statusEscolhidoNormalizado = statusEscolhido.toLowerCase();
+
+                if (statusEscolhido !== 'todas' && statusCorridaNormalizado !== statusEscolhidoNormalizado) {
+                    passaStatus = false;
+                }
+
+                return passaData && passaStatus;
+            });
+
+            renderizarLista(corridasFiltradas);
+        }
+
+        function limparFiltros() {
+            document.getElementById('filtro-inicio').value = '';
+            document.getElementById('filtro-fim').value = '';
+            document.getElementById('filtro-status').value = 'todas';
+            aplicarFiltros();
+        }
+
+        function renderizarLista(corridas) {
+            const container = document.getElementById('lista-historico');
+            document.getElementById('contador-resultados').innerText = corridas.length;
+
+            if (!corridas || corridas.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhuma corrida no banco de dados para esse filtro.</div>';
+                return;
+            }
+
+            let html = "";
+            corridas.forEach(c => {
+                let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
+                let dataFmt = dataObj.toLocaleDateString('pt-BR');
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                // Tratamento blindado de nomes (Admin precisa ver tudo certinho)
+                let usr = c.Usuario || c.usuario;
+                let mot = c.Motorista || c.motorista;
+
+                let nomePassageiro = usr && (usr.Nome || usr.nome) ? (usr.Nome || usr.nome) : "Avulso / Desconhecido";
+
+                let statusSafe = (c.Status || "Pendente").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+                let nomeMotorista = "Não identificado";
+                if (mot && (mot.Nome || mot.nome)) {
+                    nomeMotorista = mot.Nome || mot.nome;
+                } else if (statusSafe === "pendente" || statusSafe === "aguardando confirmacao") {
+                    nomeMotorista = "Aguardando Despacho";
+                }
+
+                let valor = c.ValorFinal ? c.ValorFinal.toFixed(2) : (c.ValorEstimado ? c.ValorEstimado.toFixed(2) : "0.00");
+
+                // Roteamento inteligente: Se a corrida não foi concluída, o admin abre no despachar para poder editar!
+                let linkDestino = (statusSafe === "concluida" || statusSafe === "realizada")
+                    ? `../Dados/recibo.html?id=${c.ID}`
+                    : `despachar.html?id=${c.ID}`;
+
+                let labelBotao = (statusSafe === "concluida" || statusSafe === "realizada") ? "🧾 Ver Recibo" : "⚙️ Gerenciar / Despachar";
+
+                let classBadge = "badge-status ";
+                let classBorder = "";
+
+                if (statusSafe === "pendente" || statusSafe === "aguardando confirmacao") {
+                    classBadge += "status-pendente";
+                    classBorder = "border-pendente";
+                } else if (statusSafe === "aprovada" || statusSafe === "confirmada") {
+                    classBadge += "status-aprovada";
+                    classBorder = "border-aprovada";
+                } else if (statusSafe === "concluida" || statusSafe === "realizada") {
+                    classBadge += "status-concluida";
+                    classBorder = "border-concluida";
+                } else {
+                    classBadge += "status-pendente";
+                }
+
+                html += `
+                <div class="card list-card ${classBorder}" onclick="window.location.href='${linkDestino}'">
+                    <div class="row" style="margin-bottom: 8px;">
+                        <div style="font-size: 13px; font-weight: 800; color: var(--t1); line-height: 1.4; padding-right: 10px;">
+                            ${nomePassageiro}
+                        </div>
+                        <span class="${classBadge}">${c.Status}</span>
+                    </div>
+                    
+                    <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                        ${c.OrigemTexto} <span style="color:var(--t4);">→</span> ${c.DestinoTexto}
+                    </div>
+
+                    <div style="height: 1px; background: var(--border); width: 100%; margin: 10px 0;"></div>
+                    
+                    <div class="row" style="align-items: flex-end;">
+                        <div>
+                            <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 ${dataFmt} às ${horaFmt}</div>
+                            <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${nomeMotorista}</div>
+                        </div>
+                        <div style="font-size: 13px; color: var(--t1); font-weight: 800;">
+                            R$ ${valor.replace('.', ',')}
+                        </div>
+                    </div>
+                    
+                    <div style="font-size: 11px; color: var(--t3); text-align: right; margin-top: 12px; font-weight: 600;">
+                        ${labelBotao}
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+
+</html>

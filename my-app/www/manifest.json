@@ -1,0 +1,24 @@
+{
+  "name": "Sousa - Locações e Transporte",
+  "short_name": "Sousa LT",
+  "description": "Agendamento de corridas e fidelidade",
+  "start_url": "/Usuario/login.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0A0C",
+  "theme_color": "#DF0611",
+  "icons": [
+    {
+      "src": "static/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "static/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nova Chamada - Central</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="stylesheet" href="../static/style.css">
+
+    <!-- LEAFLET CSS PARA O MAPA -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: var(--bg);
+            font-family: 'Sora', sans-serif;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-voltar {
+            background: transparent;
+            border: none;
+            color: var(--t1);
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--t1);
+        }
+
+        .content {
+            padding: 20px 18px;
+            flex: 1;
+        }
+
+        .card-secao {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 8px;
+            margin-left: 4px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .form-control {
+            width: 100%;
+            flex: 1;
+            background: var(--inp-bg);
+            border: 1px solid var(--inp-border);
+            color: var(--t1);
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            border-color: var(--acc);
+        }
+
+        .btn-util {
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            background: var(--bg3);
+            border: 1px solid var(--inp-border);
+            color: var(--t2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-util.active {
+            background: var(--acc-bg);
+            border-color: var(--acc-border);
+            color: var(--acc);
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 4px;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 999;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 12px 16px;
+            font-size: 12px;
+            color: var(--t2);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .autocomplete-item:active {
+            background: var(--bg3);
+        }
+
+        .loading-spinner {
+            font-size: 11px;
+            color: var(--t3);
+            padding: 14px 16px;
+            text-align: center;
+        }
+
+        /* MAPA */
+        .map-wrapper {
+            margin-bottom: 20px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #mapa {
+            width: 100%;
+            height: 260px;
+            z-index: 1;
+        }
+
+        .map-instruction {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 10, 12, 0.85);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            z-index: 99;
+            pointer-events: none;
+            display: none;
+        }
+
+        .pin-origem-visual {
+            width: 20px;
+            height: 20px;
+            background: #2ecc71;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .pin-destino-visual {
+            width: 20px;
+            height: 20px;
+            background: #e74c3c;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        }
+
+        /* MOTORISTAS */
+        .driver-card {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1.5px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .driver-card.selected {
+            border-color: var(--acc);
+            background: var(--acc-bg);
+        }
+
+        .dchk {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--border2);
+            flex-shrink: 0;
+            transition: all .2s;
+        }
+
+        input[type="radio"] {
+            display: none;
+        }
+
+        input[type="radio"]:checked~.dchk {
+            background: var(--acc);
+            border-color: var(--acc);
+        }
+
+        .preco-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .preco-prefix {
+            position: absolute;
+            left: 14px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--t1);
+        }
+
+        .preco-input {
+            padding-left: 40px !important;
+            font-size: 16px !important;
+            font-weight: 800 !important;
+            color: var(--acc) !important;
+        }
+
+        /* --- CORES DO LABEL DO CARRO NO MAPA (mesmo padrão do Mapa da Frota / Despacho) --- */
+        .light-mode .car-label-inline {
+            background: rgba(255, 255, 255, 0.95) !important;
+            color: #000 !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode'); document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+    <div class="app-container">
+        <div class="top-bar">
+            <button class="btn-voltar" onclick="window.history.back()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
+            <div class="page-title">Nova Chamada c/ GPS</div>
+        </div>
+
+        <div class="content">
+            <form id="form-nova-chamada">
+                <div id="mensagem-erro" class="toast-msg toast-error" style="display: none; margin-bottom: 16px;"></div>
+
+                <!-- DADOS DO CLIENTE -->
+                <div class="card-secao">
+                    <div style="font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 12px;">👤 Dados do
+                        Cliente</div>
+                    <div class="form-group">
+                        <label class="form-label">Nome (Opcional)</label>
+                        <input type="text" id="cli-nome" class="form-control" placeholder="Ex: Maria (Avulso)">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Telefone / WhatsApp (Opcional)</label>
+                        <input type="tel" id="cli-tel" class="form-control" placeholder="(00) 00000-0000">
+                    </div>
+                </div>
+
+                <!-- MAPA E ROTAS -->
+                <div class="card-secao">
+                    <div style="font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 12px;">📍 Trajeto e
+                        Mapa</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Origem</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="origem_texto" class="form-control"
+                                placeholder="Endereço de partida..." autocomplete="off" required>
+                            <button type="button" class="btn-util" onclick="pegarLocalizacao()" title="Usar GPS">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                            <button type="button" id="pin-origem" class="btn-util"
+                                onclick="ativarInsercaoMapa('origem')" title="Marcar no mapa">
+                                <span style="color: #2ecc71;">📍</span>
+                            </button>
+                        </div>
+                        <div id="lista-origem" class="autocomplete-list"></div>
+                        <input type="hidden" id="origem_lat">
+                        <input type="hidden" id="origem_lng">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Destino</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="destino_texto" class="form-control"
+                                placeholder="Endereço de destino..." autocomplete="off" required>
+                            <button type="button" id="pin-destino" class="btn-util"
+                                onclick="ativarInsercaoMapa('destino')" title="Marcar no mapa">
+                                <span style="color: #e74c3c;">📍</span>
+                            </button>
+                        </div>
+                        <div id="lista-destino" class="autocomplete-list"></div>
+                        <input type="hidden" id="destino_lat">
+                        <input type="hidden" id="destino_lng">
+                    </div>
+
+                    <div class="map-wrapper">
+                        <div id="mapa"></div>
+                        <div id="instrucao-mapa" class="map-instruction">Toque no mapa para fixar o ponto</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Data e Horário</label>
+                        <input type="datetime-local" id="data_hora" class="form-control" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Valor Cobrado <span id="distancia-label"
+                                style="text-transform:none; font-weight:500; color:var(--t3);">(0 km)</span></label>
+                        <div class="preco-input-wrapper">
+                            <span class="preco-prefix">R$</span>
+                            <!-- O valor calcula automático, mas o admin pode apagar e digitar outro -->
+                            <input type="number" step="0.01" id="valor_estimado" class="form-control preco-input"
+                                placeholder="0.00" required>
+                        </div>
+                    </div>
+                    <input type="hidden" id="km_rodado">
+                    <input type="hidden" id="tipo_viagem">
+                </div>
+
+                <!-- ATRIBUIR MOTORISTA -->
+                <div class="card-secao" style="border-top: 3px solid var(--acc);">
+                    <div style="font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 12px;">🚗 Atribuir a
+                        um Motorista</div>
+                    <div id="lista-motoristas">
+                        <div style="text-align: center; font-size: 12px; color: var(--t3); padding: 10px;">Buscando
+                            frota na base de dados...</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%; padding: 16px; font-size: 14px;" id="btn-submit">
+                    ✓ Criar e Despachar Chamada
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+
+    <!-- LEAFLET JS PARA O MAPA -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+        if (!token) window.location.href = "../Usuario/login.html";
+
+        // ==========================================
+        // VARIÁVEIS GLOBAIS (MAPA E TAXAS)
+        // ==========================================
+        let mapa, origemMarker, destinoMarker;
+        let marcadoresMotoristas = {};
+        let modoSelecaoMapa = null;
+        let timeoutBusca;
+        let taxasAtuais = null;
+        let meuAdminId = null;
+        let listaRenderizada = false; // Controle para criar os botões da lista apenas uma vez
+
+        const iconeOrigem = L.divIcon({ className: 'custom-icon', html: '<div class="pin-origem-visual"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+        const iconeDestino = L.divIcon({ className: 'custom-icon', html: '<div class="pin-destino-visual"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+
+        // =========================================================
+        // IDÊNTICO AO MAPA DA FROTA E À TELA DE DESPACHO
+        // =========================================================
+        function criarIconeCarro(nome, statusSafe) {
+            let corShadow = "rgba(255,255,255,0.5)"; // Cinza/Offline
+            if (statusSafe === "disponivel") corShadow = "#2ecc71"; // Verde
+            else if (statusSafe === "em corrida" || statusSafe === "ocupado") corShadow = "#f39c12"; // Laranja
+
+            return L.divIcon({
+                className: '',
+                html: `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                        <div class="car-label-inline" style="background: rgba(0,0,0,0.85); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; margin-bottom: 2px; border: 1px solid rgba(255,255,255,0.2); font-family: 'Sora', sans-serif;">
+                            ${nome}
+                        </div>
+                        <div style="font-size: 28px; line-height: 1; filter: drop-shadow(0px 0px 6px ${corShadow});">
+                            🚗
+                        </div>
+                    </div>
+                `,
+                iconSize: [60, 50],
+                iconAnchor: [30, 45],
+                popupAnchor: [0, -45]
+            });
+        }
+
+        // Seta a data/hora atual como padrão no input
+        const now = new Date();
+        const localDateTime = (new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString()).slice(0, 16);
+        document.getElementById('data_hora').value = localDateTime;
+
+        // ==========================================
+        // INICIALIZAÇÃO
+        // ==========================================
+        document.addEventListener("DOMContentLoaded", function () {
+            mapa = L.map('mapa', { zoomControl: false }).setView([-6.4975, -49.8794], 13);
+            const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
+            const tileUrl = isLight ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(mapa);
+
+            mapa.on('click', function (e) {
+                if (!modoSelecaoMapa) return;
+                atualizarPosicaoPorPino(modoSelecaoMapa, e.latlng.lat, e.latlng.lng);
+            });
+
+            carregarTaxas();
+            carregarFrotaAdmin();
+            setInterval(atualizarMapaTempoReal, 5000);
+        });
+
+        // ==========================================
+        // LÓGICA DE ROTAS E OSRM (PASSAGEIRO)
+        // ==========================================
+        async function carregarTaxas() {
+            try {
+                const response = await fetch(`${window.API_URL}/api/configuracoes`);
+                if (response.ok) taxasAtuais = await response.json();
+            } catch (err) { console.error("Erro taxas:", err); }
+        }
+
+        function ativarInsercaoMapa(tipo) {
+            const btnOrigem = document.getElementById('pin-origem');
+            const btnDestino = document.getElementById('pin-destino');
+            const instrucao = document.getElementById('instrucao-mapa');
+
+            if (modoSelecaoMapa === tipo) {
+                modoSelecaoMapa = null;
+                btnOrigem.classList.remove('active'); btnDestino.classList.remove('active');
+                instrucao.style.display = 'none';
+            } else {
+                modoSelecaoMapa = tipo;
+                btnOrigem.classList.toggle('active', tipo === 'origem');
+                btnDestino.classList.toggle('active', tipo === 'destino');
+                instrucao.innerText = `Toque no mapa para fixar a ${tipo === 'origem' ? 'Origem (Verde)' : 'Destino (Vermelho)'}`;
+                instrucao.style.display = 'block';
+            }
+        }
+
+        function atualizarPosicaoPorPino(tipo, lat, lng) {
+            document.getElementById(`${tipo}_lat`).value = lat;
+            document.getElementById(`${tipo}_lng`).value = lng;
+            const inputTexto = document.getElementById(`${tipo}_texto`);
+            inputTexto.value = "Buscando endereço...";
+
+            atualizarMarcadorNoMapa(tipo, lat, lng);
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(res => res.json())
+                .then(data => {
+                    let endereco = data.address.road || data.address.suburb || "Local no mapa";
+                    if (data.address.house_number) endereco += ", " + data.address.house_number;
+                    inputTexto.value = endereco;
+                    ativarInsercaoMapa(tipo);
+                    calcularEstimativa();
+                }).catch(() => {
+                    inputTexto.value = `Ponto (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                    ativarInsercaoMapa(tipo);
+                    calcularEstimativa();
+                });
+        }
+
+        function atualizarMarcadorNoMapa(tipo, lat, lng) {
+            const coord = [lat, lng];
+            if (tipo === 'origem') {
+                if (origemMarker) { origemMarker.setLatLng(coord); }
+                else {
+                    origemMarker = L.marker(coord, { icon: iconeOrigem, draggable: true }).addTo(mapa);
+                    origemMarker.on('dragend', function () { const p = origemMarker.getLatLng(); atualizarPosicaoPorPino('origem', p.lat, p.lng); });
+                }
+            } else {
+                if (destinoMarker) { destinoMarker.setLatLng(coord); }
+                else {
+                    destinoMarker = L.marker(coord, { icon: iconeDestino, draggable: true }).addTo(mapa);
+                    destinoMarker.on('dragend', function () { const p = destinoMarker.getLatLng(); atualizarPosicaoPorPino('destino', p.lat, p.lng); });
+                }
+            }
+            if (origemMarker && destinoMarker) {
+                mapa.fitBounds(new L.featureGroup([origemMarker, destinoMarker]).getBounds().pad(0.3));
+            } else {
+                mapa.setView(coord, 15);
+            }
+        }
+
+        function configurarBuscaEnderecos(inputId, listId, latId, lngId, tipo) {
+            const input = document.getElementById(inputId), list = document.getElementById(listId);
+            input.addEventListener('input', function () {
+                clearTimeout(timeoutBusca);
+                if (this.value.length < 4) { list.style.display = 'none'; return; }
+                list.innerHTML = '<div class="loading-spinner">Buscando...</div>'; list.style.display = 'block';
+
+                timeoutBusca = setTimeout(() => {
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.value)}&countrycodes=br&limit=5`)
+                        .then(res => res.json())
+                        .then(data => {
+                            list.innerHTML = '';
+                            if (data.length === 0) { list.innerHTML = '<div class="loading-spinner">Nada encontrado.</div>'; return; }
+                            data.forEach(local => {
+                                const div = document.createElement('div'); div.className = 'autocomplete-item';
+                                div.innerHTML = `<span>📍</span> ${local.display_name.split(',').slice(0, 3).join(', ')}`;
+                                div.onclick = function () {
+                                    input.value = local.display_name.split(',').slice(0, 3).join(', ');
+                                    document.getElementById(latId).value = local.lat; document.getElementById(lngId).value = local.lon;
+                                    list.style.display = 'none';
+                                    atualizarMarcadorNoMapa(tipo, parseFloat(local.lat), parseFloat(local.lon));
+                                    calcularEstimativa();
+                                };
+                                list.appendChild(div);
+                            });
+                        });
+                }, 800);
+            });
+            document.addEventListener('click', (e) => { if (e.target !== input && e.target !== list) list.style.display = 'none'; });
+        }
+
+        async function pegarLocalizacao() {
+            const btnGps = document.querySelector('.btn-util');
+            document.getElementById('origem_texto').value = "Buscando satélite..."; btnGps.style.opacity = "0.5";
+            navigator.geolocation.getCurrentPosition(pos => {
+                atualizarPosicaoPorPino('origem', pos.coords.latitude, pos.coords.longitude);
+                btnGps.style.opacity = "1";
+            }, err => { alert("Ative o GPS."); btnGps.style.opacity = "1"; document.getElementById('origem_texto').value = ""; });
+        }
+
+        function calcularEstimativa() {
+            if (!taxasAtuais) return;
+            const lat1 = document.getElementById('origem_lat').value, lng1 = document.getElementById('origem_lng').value;
+            const lat2 = document.getElementById('destino_lat').value, lng2 = document.getElementById('destino_lng').value;
+
+            if (lat1 && lng1 && lat2 && lng2) {
+                fetch(`https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.routes && data.routes.length > 0) {
+                            const distanciaKm = parseFloat((data.routes[0].distance / 1000).toFixed(1));
+                            let valorFinal = 0;
+                            let tipoViagem = "Urbana";
+
+                            if (distanciaKm <= taxasAtuais.limite_urbano) {
+                                valorFinal = taxasAtuais.base_urbana;
+                                if (distanciaKm > 1) valorFinal += (distanciaKm - 1) * taxasAtuais.km_urbano;
+                            } else {
+                                tipoViagem = "Intermunicipal";
+                                valorFinal = distanciaKm * taxasAtuais.km_inter;
+                            }
+
+                            document.getElementById('distancia-label').innerText = `(${distanciaKm} km)`;
+                            document.getElementById('km_rodado').value = distanciaKm;
+                            document.getElementById('tipo_viagem').value = tipoViagem;
+                            document.getElementById('valor_estimado').value = valorFinal.toFixed(2);
+                        }
+                    });
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DE FROTAS E DESPACHO AO VIVO
+        // ==========================================
+        function calcularDistanciaKmHaversine(lat1, lon1, lat2, lon2) {
+            if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+            const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+
+        async function carregarFrotaAdmin() {
+            try {
+                const res = await fetch(`${window.API_URL}/api/admin/home`, { headers: { "Authorization": `Bearer ${token}` } });
+                const dados = await res.json();
+                if (dados.sucesso) meuAdminId = dados.usuario.ID;
+                atualizarMapaTempoReal();
+            } catch (err) { }
+        }
+
+        async function atualizarMapaTempoReal() {
+            try {
+                const urlBase = window.API_URL;
+                const tokenAdmin = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+                const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, {
+                    headers: { "Authorization": `Bearer ${tokenAdmin}` }
+                });
+
+                if (!response.ok) throw new Error('Erro na rede');
+
+                const motoristas = await response.json();
+                if (!Array.isArray(motoristas)) return;
+
+                if (!window.listaRenderizada) {
+                    renderizarMotoristasNaLista(motoristas, meuAdminId);
+                    window.listaRenderizada = true;
+                }
+
+                const idsOnlineDaVez = [];
+
+                // MÁGICA: Puxa a origem não importa em qual tela o Admin esteja!
+                const inputLat = document.getElementById('origem_lat');
+                const inputLng = document.getElementById('origem_lng');
+                const latOrigem = inputLat && inputLat.value ? parseFloat(inputLat.value) : (typeof corridaLatG !== 'undefined' ? corridaLatG : null);
+                const lngOrigem = inputLng && inputLng.value ? parseFloat(inputLng.value) : (typeof corridaLngG !== 'undefined' ? corridaLngG : null);
+
+                motoristas.forEach(mot => {
+                    try {
+                        const id = mot.motorista_id || mot.MotoristaID;
+                        if (!id) return;
+
+                        idsOnlineDaVez.push(id);
+
+                        const lat = mot.latitude || mot.Latitude;
+                        const lng = mot.longitude || mot.Longitude;
+                        const nome = (mot.motorista && mot.motorista.Nome) ? mot.motorista.Nome : `Motorista #${id}`;
+                        const statusOriginal = mot.status || mot.Status || "Disponível";
+                        const statusSafe = statusOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+                        // 1. ATUALIZA O MAPA (Apenas Disponíveis)
+                        if (statusSafe === "disponivel" && lat && lng && typeof mapa !== 'undefined') {
+                            const iconeDinamico = criarIconeCarro(nome, statusSafe);
+                            if (marcadoresMotoristas[id]) {
+                                marcadoresMotoristas[id].setLatLng([lat, lng]);
+                                marcadoresMotoristas[id].setIcon(iconeDinamico);
+                            } else {
+                                marcadoresMotoristas[id] = L.marker([lat, lng], { icon: iconeDinamico }).addTo(mapa);
+                            }
+                        } else if (marcadoresMotoristas[id] && typeof mapa !== 'undefined') {
+                            mapa.removeLayer(marcadoresMotoristas[id]);
+                            delete marcadoresMotoristas[id];
+                        }
+
+                        // 2. ATUALIZA A LISTA EM TEMPO REAL
+                        const statusDiv = document.getElementById(`drv-status-label-${id}`);
+                        if (statusDiv) {
+                            let distTexto = "";
+                            if (statusSafe === "disponivel" && latOrigem && lngOrigem && lat && lng) {
+                                const dist = calcularDistanciaKmHaversine(latOrigem, lngOrigem, lat, lng);
+                                if (dist) distTexto = `· ${dist.toFixed(1)} km`;
+                            }
+
+                            let corStatus = "#94a3b8";
+                            if (statusSafe === "disponivel") corStatus = "#22C55E";
+                            else if (statusSafe === "em corrida" || statusSafe === "ocupado") corStatus = "#F59E0B";
+                            else if (statusSafe === "inativo" || statusSafe === "offline") corStatus = "#EF4444";
+
+                            statusDiv.style.color = corStatus;
+                            statusDiv.innerHTML = `● ${statusOriginal} <span style="color:var(--t3)">${distTexto}</span>`;
+                        }
+                    } catch (e) { console.log("Erro ao processar um motorista", e); }
+                });
+
+                // 3. LIMPEZA DOS OFFLINES
+                document.querySelectorAll('[id^="drv-status-label-"]').forEach(el => {
+                    const idCard = parseInt(el.id.replace('drv-status-label-', ''));
+                    if (!idsOnlineDaVez.includes(idCard)) {
+                        el.style.color = "#94a3b8";
+                        el.innerHTML = `● Offline`;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro no tempo real:", error);
+            }
+        }
+
+        function renderizarMotoristasNaLista(motoristasNaBase, adminId) {
+            const container = document.getElementById('lista-motoristas');
+            let html = "";
+
+            if (motoristasNaBase && motoristasNaBase.length > 0) {
+                // A LISTA EXIBE TODOS (SEM FILTRO DE MAPA)
+                motoristasNaBase.forEach(m => {
+                    const id = m.motorista_id || m.MotoristaID;
+                    const nome = (m.motorista && m.motorista.Nome) ? m.motorista.Nome : `Motorista #${id}`;
+                    html += `
+                    <label class="driver-card" onclick="selDrv(this)">
+                        <input type="radio" name="motorista_id" value="${id}" required>
+                        <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                            <div style="width:40px;height:40px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🚗</div>
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:var(--t1);">${nome}</div>
+                                <div id="drv-status-label-${id}" style="font-size:10px;color:#94a3b8;font-weight:600">● Buscando status...</div>
+                            </div>
+                        </div>
+                        <div class="dchk"></div>
+                    </label>`;
+                });
+            } else {
+                html += `<div style="text-align:center; padding:10px; font-size:12px; color:var(--t3);">Nenhum motorista cadastrado na base.</div>`;
+            }
+
+            html += `
+            <label class="driver-card" onclick="selDrv(this)">
+                <input type="radio" name="motorista_id" value="${adminId}" required>
+                <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                    <div style="width:40px;height:40px;background:var(--acc-bg);border-radius:12px;border:1px solid var(--acc-border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👤</div>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--t1);">Eu vou assumir essa viagem</div>
+                        <div style="font-size:10px;color:var(--acc);font-weight:700;">Abrirá no modo Motorista</div>
+                    </div>
+                </div>
+                <div class="dchk"></div>
+            </label>
+            
+            <label class="driver-card" onclick="selDrv(this)">
+                <input type="radio" name="motorista_id" value="0" required>
+                <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
+                    <div style="width:40px;height:40px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📋</div>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:var(--t1);">Deixar Pendente na Fila</div>
+                        <div style="font-size:10px;color:var(--t3);font-weight:600">Nenhum motorista será notificado agora</div>
+                    </div>
+                </div>
+                <div class="dchk"></div>
+            </label>`;
+
+            container.innerHTML = html;
+            atualizarMapaTempoReal();
+        }
+
+        function selDrv(element) {
+            const radio = element.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+            document.querySelectorAll('.driver-card').forEach(card => card.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        // ==========================================
+        // SUBMIT DO FORMULÁRIO PARA O BACKEND
+        // ==========================================
+        document.getElementById('form-nova-chamada').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const msgErro = document.getElementById('mensagem-erro');
+            msgErro.style.display = 'none';
+
+            if (!document.getElementById('origem_lat').value || !document.getElementById('destino_lat').value) {
+                msgErro.textContent = "Selecione as localizações exatas de origem e destino na busca ou no mapa.";
+                msgErro.style.display = 'block'; window.scrollTo(0, 0); return;
+            }
+
+            const motoristaRadio = document.querySelector('input[name="motorista_id"]:checked');
+            if (!motoristaRadio) { alert("Selecione um motorista ou deixe pendente."); return; }
+
+            const btn = document.getElementById('btn-submit');
+            btn.innerHTML = 'Processando...'; btn.disabled = true;
+
+            const payload = {
+                nome_passageiro: document.getElementById('cli-nome').value || "Cliente Avulso",
+                telefone_passageiro: document.getElementById('cli-tel').value || "",
+                origem_texto: document.getElementById('origem_texto').value,
+                origem_lat: parseFloat(document.getElementById('origem_lat').value),
+                origem_lng: parseFloat(document.getElementById('origem_lng').value),
+                destino_texto: document.getElementById('destino_texto').value,
+                destino_lat: parseFloat(document.getElementById('destino_lat').value),
+                destino_lng: parseFloat(document.getElementById('destino_lng').value),
+                data_hora: document.getElementById('data_hora').value,
+                km_rodado: parseFloat(document.getElementById('km_rodado').value) || 0,
+                valor_estimado: parseFloat(document.getElementById('valor_estimado').value) || 0,
+                tipo: document.getElementById('tipo_viagem').value || "Urbana",
+                motorista_id: parseInt(motoristaRadio.value)
+            };
+
+            fetch(`${window.API_URL}/api/admin/nova-chamada`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        alert("Chamada criada com sucesso!");
+                        if (payload.motorista_id === meuAdminId) window.location.href = `../Motorista/corrida_agendada.html?id=${dados.corrida_id}`;
+                        else window.location.href = "home_admin.html";
+                    } else {
+                        msgErro.textContent = dados.erro || "Erro ao criar chamada."; msgErro.style.display = 'block';
+                        btn.innerHTML = '✓ Criar e Despachar Chamada'; btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    msgErro.textContent = "Erro de conexão."; msgErro.style.display = 'block';
+                    btn.innerHTML = '✓ Criar e Despachar Chamada'; btn.disabled = false;
+                });
+        });
+    </script>
+</body>
+
+</html>
