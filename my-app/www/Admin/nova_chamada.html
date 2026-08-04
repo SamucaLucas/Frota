@@ -280,6 +280,13 @@
             font-weight: 800 !important;
             color: var(--acc) !important;
         }
+
+        /* --- CORES DO LABEL DO CARRO NO MAPA (mesmo padrão do Mapa da Frota / Despacho) --- */
+        .light-mode .car-label-inline {
+            background: rgba(255, 255, 255, 0.95) !important;
+            color: #000 !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
     </style>
 </head>
 
@@ -424,7 +431,32 @@
 
         const iconeOrigem = L.divIcon({ className: 'custom-icon', html: '<div class="pin-origem-visual"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
         const iconeDestino = L.divIcon({ className: 'custom-icon', html: '<div class="pin-destino-visual"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
-        const iconeCarro = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/128/13210/13210672.png', iconSize: [28, 28], iconAnchor: [14, 28] });
+
+        // =========================================================
+        // IDÊNTICO AO MAPA DA FROTA E À TELA DE DESPACHO
+        // =========================================================
+        function criarIconeCarro(nome, statusSafe) {
+            let corShadow = "rgba(255,255,255,0.5)"; // Cinza/Offline
+            if (statusSafe === "disponivel") corShadow = "#2ecc71"; // Verde
+            else if (statusSafe === "em corrida" || statusSafe === "ocupado") corShadow = "#f39c12"; // Laranja
+
+            return L.divIcon({
+                className: '',
+                html: `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                        <div class="car-label-inline" style="background: rgba(0,0,0,0.85); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; margin-bottom: 2px; border: 1px solid rgba(255,255,255,0.2); font-family: 'Sora', sans-serif;">
+                            ${nome}
+                        </div>
+                        <div style="font-size: 28px; line-height: 1; filter: drop-shadow(0px 0px 6px ${corShadow});">
+                            🚗
+                        </div>
+                    </div>
+                `,
+                iconSize: [60, 50],
+                iconAnchor: [30, 45],
+                popupAnchor: [0, -45]
+            });
+        }
 
         // Seta a data/hora atual como padrão no input
         const now = new Date();
@@ -655,12 +687,12 @@
 
                         // 1. ATUALIZA O MAPA (Apenas Disponíveis)
                         if (statusSafe === "disponivel" && lat && lng && typeof mapa !== 'undefined') {
+                            const iconeDinamico = criarIconeCarro(nome, statusSafe);
                             if (marcadoresMotoristas[id]) {
                                 marcadoresMotoristas[id].setLatLng([lat, lng]);
-                                marcadoresMotoristas[id].getPopup().setContent(`<b>🚙 ${nome}</b><br><span style="color:#2ecc71;">Disponível</span>`);
+                                marcadoresMotoristas[id].setIcon(iconeDinamico);
                             } else {
-                                marcadoresMotoristas[id] = L.marker([lat, lng], { icon: iconeCarro }).addTo(mapa)
-                                    .bindPopup(`<b>🚙 ${nome}</b><br><span style="color:#2ecc71;">Disponível</span>`);
+                                marcadoresMotoristas[id] = L.marker([lat, lng], { icon: iconeDinamico }).addTo(mapa);
                             }
                         } else if (marcadoresMotoristas[id] && typeof mapa !== 'undefined') {
                             mapa.removeLayer(marcadoresMotoristas[id]);

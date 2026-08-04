@@ -8,6 +8,56 @@
     <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
     <link rel="manifest" href="../manifest.json">
     <link rel="stylesheet" href="../static/style.css">
+
+    <style>
+        /* --- ESTILOS DA VALIDAÇÃO DE SENHA --- */
+        .pwd-rules {
+            font-size: 11px;
+            color: var(--t3);
+            margin-top: -10px;
+            margin-bottom: 20px;
+            padding: 14px;
+            background: var(--bg3);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pwd-rule {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s ease;
+            font-weight: 600;
+        }
+
+        .pwd-rule.valid {
+            color: #2ecc71;
+            /* Verde Sucesso */
+        }
+
+        .rule-icon {
+            font-size: 12px;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+
+        .pwd-rule.valid .rule-icon {
+            filter: grayscale(0%);
+        }
+
+        /* Botão desabilitado */
+        button[type="submit"]:disabled {
+            background: var(--bg3);
+            color: var(--t3);
+            border: 1px solid var(--border);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -59,13 +109,25 @@
                     </div>
                 </div>
 
-                <div class="inp-wrap" style="margin-bottom:16px">
+                <div class="inp-wrap" style="margin-bottom:12px">
                     <span class="inp-icon">🔒</span>
                     <div style="flex:1">
                         <div class="inp-lbl">Senha</div>
                         <input class="inp" type="password" id="senha" name="senha" required
-                            placeholder="Mínimo 8 caracteres">
+                            placeholder="Crie sua senha">
                     </div>
+                </div>
+
+                <div class="pwd-rules" id="pwdRules">
+                    <div class="pwd-rule" id="rule-len"><span class="rule-icon">❌</span> Pelo menos 8 caracteres</div>
+                    <div class="pwd-rule" id="rule-upper"><span class="rule-icon">❌</span> Uma letra maiúscula (A-Z)
+                    </div>
+                    <div class="pwd-rule" id="rule-lower"><span class="rule-icon">❌</span> Uma letra minúscula (a-z)
+                    </div>
+                    <div class="pwd-rule" id="rule-num"><span class="rule-icon">❌</span> Pelo menos um número (0-9)
+                    </div>
+                    <div class="pwd-rule" id="rule-spec"><span class="rule-icon">❌</span> Um caractere especial (@, #,
+                        !, etc.)</div>
                 </div>
 
                 <div
@@ -78,7 +140,8 @@
                     </span>
                 </div>
 
-                <button type="submit" class="btn" style="width: 100%;">Criar Minha Conta</button>
+                <button type="submit" class="btn" id="btnSubmit" style="width: 100%;" disabled>Criar Minha
+                    Conta</button>
             </form>
         </div>
     </div>
@@ -93,6 +156,47 @@
             if (v.length > 7) v = v.replace(/(\d{5})(\d)/, "$1-$2");
             return v;
         }
+
+        // ==========================================
+        // VALIDADOR DINÂMICO DE SENHA
+        // ==========================================
+        const senhaInput = document.getElementById('senha');
+        const btnSubmit = document.getElementById('btnSubmit');
+
+        senhaInput.addEventListener('input', function () {
+            const val = this.value;
+
+            // 1. Testa todas as condições (Expressões Regulares)
+            const regras = {
+                len: val.length >= 8,
+                upper: /[A-Z]/.test(val),
+                lower: /[a-z]/.test(val),
+                num: /[0-9]/.test(val),
+                spec: /[^A-Za-z0-9]/.test(val) // Qualquer coisa que não seja letra ou número
+            };
+
+            let todasValidas = true;
+
+            // 2. Atualiza a tabela na tela
+            for (const regra in regras) {
+                const elemento = document.getElementById(`rule-${regra}`);
+                const icone = elemento.querySelector('.rule-icon');
+                const estaValido = regras[regra];
+
+                if (estaValido) {
+                    elemento.classList.add('valid');
+                    icone.textContent = '✅';
+                } else {
+                    elemento.classList.remove('valid');
+                    icone.textContent = '❌';
+                    todasValidas = false; // Se uma falhar, reprova tudo
+                }
+            }
+
+            // 3. Libera ou bloqueia o botão de submit
+            btnSubmit.disabled = !todasValidas;
+        });
+
         // ==========================================
         // MÁGICA DA API REST (ENVIO DO CADASTRO)
         // ==========================================

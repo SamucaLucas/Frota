@@ -80,7 +80,7 @@
                         onclick="window.location.href='../Em dev/contrucao.html'">Esqueci minha senha</span>
                 </div>
 
-                <button type="submit" class="btn" style="width: 100%;">Entrar no Sistema →</button>
+                <button type="submit" class="btn" id="btnAcesso" style="width: 100%;">Entrar no Sistema →</button>
 
                 <div style="text-align:center; margin-bottom:14px; margin-top:14px;">
                     <span style="font-size:11px; color:var(--t4); letter-spacing:.3px">OU</span>
@@ -142,7 +142,44 @@
     <script src="../static/app.js"></script>
 
     <script>
-        
+        // ==========================================
+        // AUTO-LOGIN (A MÁGICA QUE FALTAVA)
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            const tokenExistente = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+            // Se já tiver um token salvo (permanente ou temporário), tenta pular o login!
+            if (tokenExistente) {
+                const btnSubmit = document.getElementById('btnAcesso');
+                btnSubmit.innerHTML = 'Restaurando sessão...';
+                btnSubmit.disabled = true;
+
+                fetch(`${window.API_URL}/api/verificar-token`, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${tokenExistente}` }
+                })
+                    .then(res => res.json())
+                    .then(dados => {
+                        if (dados.sucesso || dados.valido) {
+                            // Sessão válida! Redireciona pra home dele.
+                            if (dados.papel === "admin") window.location.href = "../Admin/home_admin.html";
+                            else if (dados.papel === "motorista") window.location.href = "../Motorista/home_motorista.html";
+                            else window.location.href = "../Passageiro/home_Passageiro.html";
+                        } else {
+                            // Token expirado ou conta bloqueada (Limpa tudo para forçar o usuário a digitar senha denovo)
+                            localStorage.removeItem("token");
+                            sessionStorage.removeItem("token");
+                            btnSubmit.innerHTML = 'Entrar no Sistema →';
+                            btnSubmit.disabled = false;
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro ao validar sessão silenciosa", err);
+                        btnSubmit.innerHTML = 'Entrar no Sistema →';
+                        btnSubmit.disabled = false;
+                    });
+            }
+        });
 
         // ==========================================
         // LÓGICA DE SENHA E CHECKBOX
@@ -171,7 +208,7 @@
             const emailInput = document.getElementById('email').value;
             const senhaInput = document.getElementById('inputSenha').value;
             const msgErro = document.getElementById('mensagem-erro');
-            const btnSubmit = this.querySelector('button[type="submit"]');
+            const btnSubmit = document.getElementById('btnAcesso');
 
             msgErro.style.display = 'none';
             btnSubmit.innerHTML = 'Entrando...';
@@ -184,14 +221,14 @@
             })
                 .then(res => res.json())
                 .then(dados => {
-                    if (dados.sucesso) {
+                    if (dados.sucesso || dados.valido) {
 
                         // A LÓGICA DO CHECKBOX FICA AQUI (Após o sucesso!)
                         const lembrar = document.querySelector('input[name="lembrar"]').checked;
                         if (lembrar) {
-                            localStorage.setItem("token", dados.token); // Salva permanente
+                            localStorage.setItem("token", dados.token); // Salva permanente (Auto-login vai ler isso)
                         } else {
-                            sessionStorage.setItem("token", dados.token); // Salva temporário
+                            sessionStorage.setItem("token", dados.token); // Salva temporário (Apaga se fechar guia)
                         }
 
                         // Redireciona conforme o papel
@@ -241,7 +278,7 @@
                         localStorage.setItem("email_temp_google", dados.email);
                         localStorage.setItem("nome_temp_google", dados.nome);
                         window.location.href = "completar_cadastro.html";
-                    } else if (dados.sucesso) {
+                    } else if (dados.sucesso || dados.valido) {
                         localStorage.setItem("token", dados.token);
 
                         if (dados.papel === "admin") window.location.href = "../Admin/home_admin.html";
@@ -257,19 +294,6 @@
             }
         }
 
-        // ----------------------------------------------------
-        // REGISTRO DO SERVICE WORKER (NECESSÁRIO PARA O PWA FUNCIONAR!)
-        // ----------------------------------------------------
-        // AMBIENTE DE TESTE: Desativamos o Service Worker no App Nativo para permitir requisições HTTP (Mixed Content).
-        // MODO SEGURO (PRODUÇÃO):
-        // 1. Use HTTPS em todos os servidores.
-        // 2. Remova a condição !(window.Capacitor && window.Capacitor.isNativePlatform()) abaixo.
-        /*if ('serviceWorker' in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform())) {
-            navigator.serviceWorker.register('../sw.js')
-                .then(() => console.log('[PWA] Service Worker Registrado com Sucesso!'))
-                .catch(err => console.log('[PWA] Falha ao registrar Service Worker:', err));
-        }*/
-        
         // Registra o PWA apenas se estiver no Navegador (Web) usando HTTPS
         if ('serviceWorker' in navigator && (!window.Capacitor || !window.Capacitor.isNativePlatform())) {
             navigator.serviceWorker.register('../sw.js')

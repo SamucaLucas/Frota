@@ -3,20 +3,30 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Carregando...</title>
-    <link rel="manifest" href="../manifest.json">
+
+    <link rel="manifest" href="manifest.json">
+
+    <script src="static/app.js"></script>
 </head>
 
-<body>
-    <script>
+<body
+    style="background: var(--bg, #0f172a); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
 
-        const token = localStorage.getItem("token");
+    <div style="text-align: center; color: #fff; font-family: sans-serif;">
+        <div style="font-size: 32px; margin-bottom: 8px;">🚕</div>
+        <div style="font-size: 14px; font-weight: bold; color: #94a3b8;">Acessando sistema...</div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
         if (!token) {
             // Se não tem token salvo, manda direto para o Login
-            window.location.href = "Usuario/login.html";
+            window.location.replace("Usuario/login.html");
         } else {
-            // Se tem token, pergunta para a API se ele é válido e qual o papel
+            // Agora o window.API_URL existe graças ao import no <head>!
             fetch(`${window.API_URL}/api/verificar-token`, {
                 method: "GET",
                 headers: {
@@ -25,37 +35,34 @@
             })
                 .then(res => res.json())
                 .then(dados => {
-                    if (dados.valido) {
+                    // Aceita tanto valido quanto sucesso dependendo de como sua API responde
+                    if (dados.valido || dados.sucesso) {
                         // Redireciona localmente conforme o papel
                         if (dados.papel === "admin") {
-                            window.location.href = "Admin/home_admin.html";
+                            window.location.replace("Admin/home_admin.html");
                         } else if (dados.papel === "motorista") {
-                            window.location.href = "Motorista/home_motorista.html";
+                            window.location.replace("Motorista/home_motorista.html");
                         } else {
-                            window.location.href = "Passageiro/home_Passageiro.html";
+                            window.location.replace("Passageiro/home_Passageiro.html");
                         }
                     } else {
                         // Token expirado/inválido: limpa o storage e manda pro login
                         localStorage.removeItem("token");
-                        window.location.href = "Usuario/login.html";
+                        sessionStorage.removeItem("token");
+                        window.location.replace("Usuario/login.html");
                     }
                 })
-                .catch(() => {
-                    // Em caso de offline/falha de servidor, pode mandar pro login ou tela de aviso
-                    window.location.href = "Usuario/login.html";
+                .catch((error) => {
+                    console.log("Erro de conexão na verificação:", error);
+                    // ATENÇÃO: Se der erro de internet (offline), NÃO deletamos o token!
+                    // Apenas mandamos pro login por segurança, mas ele continua salvo.
+                    window.location.replace("Usuario/login.html");
                 });
         }
-        // AMBIENTE DE TESTE: Desativamos o Service Worker no App Nativo para permitir requisições HTTP (Mixed Content).
-        // MODO SEGURO (PRODUÇÃO): Remova a verificação isNativePlatform() se estiver usando HTTPS.
-        /*if ('serviceWorker' in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform())) {
-            navigator.serviceWorker.register('../sw.js')
-                .then(() => console.log('[PWA] Service Worker Registrado com Sucesso!'))
-                .catch(err => console.log('[PWA] Falha ao registrar Service Worker:', err));
-        }*/
-        
+
         // Registra o PWA apenas se estiver no Navegador (Web) usando HTTPS
         if ('serviceWorker' in navigator && (!window.Capacitor || !window.Capacitor.isNativePlatform())) {
-            navigator.serviceWorker.register('../sw.js')
+            navigator.serviceWorker.register('sw.js')
                 .then(() => console.log('[PWA] Service Worker Registrado com Sucesso!'))
                 .catch(err => console.log('[PWA] Falha ao registrar Service Worker:', err));
         }
