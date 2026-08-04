@@ -236,8 +236,8 @@
             Início
         </button>
         <button class="sb-link" onclick="window.location.href='historico_passageiro.html'">
-            <svg viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
             </svg>
@@ -348,13 +348,23 @@
             document.getElementById('overlay').classList.toggle('open');
         }
 
-        // Pega o token da URL (se veio do login do Google Web)
+        // ==========================================
+        // CAPTURA INTELIGENTE DO TOKEN DO GOOGLE (WEB)
+        // ==========================================
         const urlParams = new URLSearchParams(window.location.search);
         const tokenURL = urlParams.get('token');
 
         if (tokenURL) {
-            // Salva permanentemente por padrão se vier do Google Web
-            localStorage.setItem("token", tokenURL);
+            // Verifica se o usuário marcou "Manter Conectado" antes de ser redirecionado pro Google
+            if (localStorage.getItem("forcar_lembrar_google_web") === "true") {
+                localStorage.setItem("token", tokenURL);
+                localStorage.removeItem("forcar_lembrar_google_web"); // Limpa o aviso
+            } else {
+                // Se não marcou, salva apenas para essa sessão (fecha a aba = desloga)
+                sessionStorage.setItem("token", tokenURL);
+            }
+
+            // Limpa a barra de endereços do navegador para não ficar aparecendo o ?token=... gigante
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 

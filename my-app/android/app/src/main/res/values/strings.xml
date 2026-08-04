@@ -4,4 +4,5 @@
     <string name="title_activity_main">Sousa LT</string>
     <string name="package_name">com.sousa.app</string>
     <string name="custom_url_scheme">com.sousa.app</string>
+    <string name="server_client_id">734481346100-e3088m26bdu14q3p3qj7pdk2sj6dms9v.apps.googleusercontent.com</string>
 </resources>

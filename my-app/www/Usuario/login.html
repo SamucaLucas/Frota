@@ -259,27 +259,49 @@
         // MÁGICA DA API REST (LOGIN GOOGLE HÍBRIDO)
         // ==========================================
         async function fazerLoginGoogle() {
+            // Pega o valor do checkbox de lembrar conexao antes de iniciar o fluxo
+            const lembrar = document.querySelector('input[name="lembrar"]').checked;
+
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                // FLUXO NATIVO DO APLICATIVO
                 try {
-                    const googleUser = await CapacitorGoogleAuth.signIn();
+                    // Puxa o plugin GoogleAuth correto do Capacitor
+                    const GoogleAuth = window.Capacitor.Plugins.GoogleAuth;
+
+                    // Em alguns casos é necessário inicializar antes
+                    await GoogleAuth.initialize();
+
+                    const googleUser = await GoogleAuth.signIn();
 
                     const response = await fetch(`${window.API_URL}/api/google/login`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             email: googleUser.email,
-                            nome: googleUser.displayName
+                            nome: googleUser.displayName || googleUser.name
                         })
                     });
 
                     const dados = await response.json();
 
                     if (dados.precisa_completar) {
+                        // Limpamos o localStorage temporario se o user nao concluiu antes
+                        localStorage.removeItem("email_temp_google");
+                        localStorage.removeItem("nome_temp_google");
+
                         localStorage.setItem("email_temp_google", dados.email);
                         localStorage.setItem("nome_temp_google", dados.nome);
+                        // Guarda a preferência de "lembrar" para a proxima tela
+                        localStorage.setItem("lembrar_google_temp", lembrar ? "true" : "false");
+
                         window.location.href = "completar_cadastro.html";
                     } else if (dados.sucesso || dados.valido) {
-                        localStorage.setItem("token", dados.token);
+                        // A LÓGICA DO CHECKBOX PARA O NATIVO AQUI
+                        if (lembrar) {
+                            localStorage.setItem("token", dados.token);
+                        } else {
+                            sessionStorage.setItem("token", dados.token);
+                        }
 
                         if (dados.papel === "admin") window.location.href = "../Admin/home_admin.html";
                         else if (dados.papel === "motorista") window.location.href = "../Motorista/home_motorista.html";
@@ -287,9 +309,16 @@
                     }
                 } catch (error) {
                     console.error("Erro no login Google Nativo:", error);
-                    alert("Falha ao abrir login do Google no aplicativo.");
+                    alert("Falha ao abrir login do Google no aplicativo: " + JSON.stringify(error));
                 }
             } else {
+                // FLUXO WEB NAVEGADOR
+                // Salva um "aviso" no navegador pra ele lembrar da escolha quando voltar da página do Google
+                if (lembrar) {
+                    localStorage.setItem("forcar_lembrar_google_web", "true");
+                } else {
+                    localStorage.removeItem("forcar_lembrar_google_web");
+                }
                 window.location.href = `${window.API_URL}/auth/google/login`;
             }
         }

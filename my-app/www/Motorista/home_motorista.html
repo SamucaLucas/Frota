@@ -419,13 +419,12 @@
                 // 1. O SISTEMA VERIFICA O GPS
                 if (window.Capacitor.Plugins.Geolocation) {
                     const gpsStatus = await window.Capacitor.Plugins.Geolocation.checkPermissions();
-                    // Se não estiver 'granted' (concedido), ele precisa ser avisado!
                     if (gpsStatus.location !== 'granted') {
                         faltaPermissao = true;
                     }
                 }
 
-                // 2. O SISTEMA VERIFICA AS NOTIFICAÇÕES (Push ou Local)
+                // 2. O SISTEMA VERIFICA AS NOTIFICAÇÕES
                 if (window.Capacitor.Plugins.PushNotifications) {
                     const pushStatus = await window.Capacitor.Plugins.PushNotifications.checkPermissions();
                     if (pushStatus.receive !== 'granted') faltaPermissao = true;
@@ -434,7 +433,6 @@
                     if (localStatus.display !== 'granted') faltaPermissao = true;
                 }
 
-                // SE FALTAR ALGUMA COISA, ABRE O MODAL NA CARA DELE!
                 if (faltaPermissao) {
                     setTimeout(() => {
                         document.getElementById('modalPermissoes').classList.add('open');
@@ -443,7 +441,6 @@
 
             } catch (error) {
                 console.log("Erro ao checar permissões reais:", error);
-                // Fallback de segurança caso algum plugin falhe
                 if (!localStorage.getItem('permissoes_motorista_ok')) {
                     document.getElementById('modalPermissoes').classList.add('open');
                 }
@@ -452,7 +449,6 @@
 
         async function aceitarPermissoesNativas() {
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-
                 try {
                     // 1. TENTA PEDIR NOTIFICAÇÃO
                     if (window.Capacitor.Plugins.LocalNotifications) {
@@ -473,7 +469,6 @@
                     alert("Falha no sistema ao pedir permissão: " + JSON.stringify(e));
                 }
 
-                // Fecha o modal após a tentativa
                 document.getElementById('modalPermissoes').classList.remove('open');
                 localStorage.setItem('permissoes_motorista_ok', 'true');
             }
@@ -488,13 +483,26 @@
             document.getElementById('overlay').classList.toggle('open');
         }
 
+        // ==========================================
+        // CAPTURA INTELIGENTE DO TOKEN DO GOOGLE (WEB)
+        // ==========================================
         const urlParams = new URLSearchParams(window.location.search);
         const tokenURL = urlParams.get('token');
+
         if (tokenURL) {
-            localStorage.setItem("token", tokenURL);
+            // Verifica se o cara marcou "Manter Conectado" antes de ir pro Google
+            if (localStorage.getItem("forcar_lembrar_google_web") === "true") {
+                localStorage.setItem("token", tokenURL);
+                localStorage.removeItem("forcar_lembrar_google_web"); // Limpa o aviso
+            } else {
+                sessionStorage.setItem("token", tokenURL); // Salva temporário
+            }
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
+        // ==========================================
+        // FLUXO DE CARREGAMENTO
+        // ==========================================
         const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
         if (!token) {

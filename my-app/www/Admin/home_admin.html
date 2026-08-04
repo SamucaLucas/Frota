@@ -494,6 +494,29 @@
             }
         }
 
+        // ==========================================
+        // CAPTURA INTELIGENTE DO TOKEN DO GOOGLE (WEB)
+        // ==========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenURL = urlParams.get('token');
+
+        if (tokenURL) {
+            // Verifica se o usuário marcou "Manter Conectado" antes de ser redirecionado pro Google
+            if (localStorage.getItem("forcar_lembrar_google_web") === "true") {
+                localStorage.setItem("token", tokenURL);
+                localStorage.removeItem("forcar_lembrar_google_web"); // Limpa o aviso
+            } else {
+                // Se não marcou, salva apenas para essa sessão (fecha a aba = desloga)
+                sessionStorage.setItem("token", tokenURL);
+            }
+
+            // Limpa a barra de endereços do navegador para não ficar aparecendo o ?token=... gigante
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // ==========================================
+        // FLUXO DE CARREGAMENTO DA HOME
+        // ==========================================
         const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
         if (!token) {
