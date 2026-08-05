@@ -174,16 +174,17 @@ func (TransacaoFinanceira) TableName() string {
 }
 
 type LocalizacaoMotorista struct {
-	MotoristaID uint      `gorm:"primaryKey" json:"motorista_id"`
-	Motorista   Usuario   `gorm:"foreignKey:MotoristaID" json:"motorista"` // O GORM agora sabe buscar o Usuário!
-	Latitude    float64   `json:"latitude"`
-	Longitude   float64   `json:"longitude"`
-	Status      string    `json:"status"` // Ex: "Disponível", "Em Corrida", "Inativo"
-	UpdatedAt   time.Time `json:"updated_at"`
+    MotoristaID    uint      `gorm:"primaryKey" json:"motorista_id"`
+    Motorista      Usuario   `gorm:"foreignKey:MotoristaID" json:"motorista"` 
+    Latitude       float64   `json:"latitude"`
+    Longitude      float64   `json:"longitude"`
+    Status         string    `json:"status"`
+    CorridaAtivaID uint      `json:"corrida_ativa_id"` // <--- NOVO CAMPO AQUI!
+    UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func (LocalizacaoMotorista) TableName() string {
-	return "localizacao_motoristas"
+    return "localizacao_motoristas"
 }
 
 type ConfiguracaoApp struct {

@@ -250,30 +250,6 @@
             border-color: var(--acc);
             box-shadow: 0 0 0 3px var(--acc-bg);
         }
-
-        /* --- BANNER DE CORRIDA ATIVA (ADMIN COMO MOTORISTA) --- */
-        .banner-ativa {
-            display: none;
-            margin: 0 18px 10px;
-            background: linear-gradient(135deg, var(--acc) 0%, #1a73e8 100%);
-            color: #ffffff;
-            border-radius: 14px;
-            padding: 16px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-            animation: fadeInDown 0.4s ease-out;
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
     </style>
 </head>
 
@@ -399,19 +375,19 @@
                 <div class="hero-accent"></div>
             </div>
 
-            <!-- BANNER DINÂMICO: APARECE SE O ADMIN ASSUMIR UMA CORRIDA -->
-            <div id="banner-corrida-ativa" class="banner-ativa">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+            <!-- BANNER DE AVISO: SÓ APARECE SE TIVER CORRIDA -->
+            <div id="alerta-corridas-admin"
+                style="display: none; background: #10B981; color: white; margin: 20px; padding: 16px; border-radius: 16px; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);"
+                onclick="window.location.href='minhas_corridas_admin.html'">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div>
-                        <div
-                            style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">
-                            🚨 Viagem Ativa</div>
-                        <div style="font-size: 13px; margin-top: 4px; font-weight: 600;">Você assumiu uma corrida.</div>
+                        <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Você tem corridas assumidas!
+                        </div>
+                        <div style="font-size: 12px; opacity: 0.9;">Clique aqui para abrir o modo motorista.</div>
                     </div>
-                    <button onclick="abrirMinhaCorrida()"
-                        style="background: #ffffff; color: var(--acc); border: none; padding: 10px 16px; border-radius: 10px; font-weight: 800; font-size: 12px; font-family: 'Sora', sans-serif; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        Abrir Mapa 📍
-                    </button>
+                    <div
+                        style="font-size: 24px; background: rgba(0,0,0,0.15); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                        🚗</div>
                 </div>
             </div>
 
@@ -464,15 +440,6 @@
 
     <script src="../static/app.js"></script>
     <script>
-        let idMinhaCorridaAtiva = null;
-
-        function abrirMinhaCorrida() {
-            if (idMinhaCorridaAtiva) {
-                // Direciona o Admin para a tela exata que os Motoristas usam
-                window.location.href = `../Motorista/corrida_agendada.html?id=${idMinhaCorridaAtiva}`;
-            }
-        }
-
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('open');
@@ -501,16 +468,12 @@
         const tokenURL = urlParams.get('token');
 
         if (tokenURL) {
-            // Verifica se o usuário marcou "Manter Conectado" antes de ser redirecionado pro Google
             if (localStorage.getItem("forcar_lembrar_google_web") === "true") {
                 localStorage.setItem("token", tokenURL);
-                localStorage.removeItem("forcar_lembrar_google_web"); // Limpa o aviso
+                localStorage.removeItem("forcar_lembrar_google_web");
             } else {
-                // Se não marcou, salva apenas para essa sessão (fecha a aba = desloga)
                 sessionStorage.setItem("token", tokenURL);
             }
-
-            // Limpa a barra de endereços do navegador para não ficar aparecendo o ?token=... gigante
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
@@ -539,25 +502,22 @@
                         const adminID = dados.usuario.ID;
                         document.getElementById('admin-nome').textContent = dados.usuario.Nome;
 
-                        // --- LÓGICA DO BANNER DO ADMIN-MOTORISTA ---
-                        // Verifica se o Admin assumiu alguma corrida aprovada (onde ele é o motorista)
-                        const minhaCorrida = (dados.aprovadas || []).find(c => c.Motorista && c.Motorista.ID === adminID);
-
-                        if (minhaCorrida) {
-                            idMinhaCorridaAtiva = minhaCorrida.ID;
-                            document.getElementById('banner-corrida-ativa').style.display = 'block';
+                        const temCorridaMinha = (dados.aprovadas || []).some(c => 
+                            c.motorista_id === adminID || 
+                            c.MotoristaID === adminID || 
+                            (c.Motorista && c.Motorista.ID === adminID)
+                        );
+                        if (temCorridaMinha) {
+                            document.getElementById('alerta-corridas-admin').style.display = 'block';
                         } else {
-                            document.getElementById('banner-corrida-ativa').style.display = 'none';
+                            document.getElementById('alerta-corridas-admin').style.display = 'none';
                         }
-                        // -------------------------------------------
+
+                        // REMOVIDO o filtro de "dataDeHoje" para as aprovadas. 
+                        // Agora a corrida fica na tela até ser concluída!
+                        const aprovadas = dados.aprovadas || [];
 
                         const dataDeHoje = new Date().toLocaleDateString('pt-BR');
-
-                        const aprovadasDeHoje = (dados.aprovadas || []).filter(c => {
-                            const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
-                            return d === dataDeHoje;
-                        });
-
                         const realizadasDeHoje = (dados.concluidas || []).filter(c => {
                             const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
                             return d === dataDeHoje;
@@ -567,14 +527,14 @@
                             document.getElementById('total-pendentes-opt').textContent = dados.pendentes ? dados.pendentes.length : 0;
                         }
                         if (document.getElementById('total-aprovadas-opt')) {
-                            document.getElementById('total-aprovadas-opt').textContent = aprovadasDeHoje.length;
+                            document.getElementById('total-aprovadas-opt').textContent = aprovadas.length;
                         }
                         if (document.getElementById('total-realizadas-opt')) {
                             document.getElementById('total-realizadas-opt').textContent = realizadasDeHoje.length;
                         }
 
                         renderizarPendentes(dados.pendentes);
-                        renderizarAprovadas(aprovadasDeHoje);
+                        renderizarAprovadas(aprovadas);
                         renderizarRealizadas(realizadasDeHoje);
                     } else {
                         alert("Erro ao carregar painel: " + dados.erro);
@@ -582,10 +542,50 @@
                 })
                 .catch(err => {
                     console.error(err);
-                    if (err.message === "Sessão expirada") {
-                        fazerLogout(false);
-                    }
+                    if (err.message === "Sessão expirada") fazerLogout(false);
                 });
+        }
+
+        // --- Renderizador das Aprovadas COM botão de rastreio ---
+        function renderizarAprovadas(aprovadas) {
+            const container = document.getElementById('lista-aprovadas-api');
+            if (!container) return;
+
+            if (aprovadas.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida em andamento.</div></div>';
+                return;
+            }
+
+            let html = '';
+            aprovadas.forEach(corrida => {
+                let dataObj = new Date(corrida.DataHoraAgendada || corrida.created_at || corrida.UpdatedAt);
+                let dataHoraFmt = dataObj.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+                let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
+
+                html += `
+            <div class="card list-card" style="border-left: 3px solid #3b82f6;">
+                <div class="row" style="margin-bottom: 8px;">
+                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'Avulso'}</div>
+                    <span class="badge-blue" style="background: rgba(59,130,246,0.15); color: #3b82f6;">Atribuída</span>
+                </div>
+                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                    ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
+                </div>
+                <div class="divl" style="margin: 10px 0;"></div>
+                <div class="row" style="align-items: flex-end;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 ${dataHoraFmt}</div>
+                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
+                    </div>
+                </div>
+                <button class="btn" style="font-size:12px; font-weight: 800; padding:12px; width:100%; box-sizing: border-box; margin-top: 14px; background: #3b82f6; border: none; color: white;" onclick="window.location.href='acompanhar_corrida.html?id=${corrida.ID}'">
+                    📍 Acompanhar ao Vivo
+                </button>
+            </div>`;
+            });
+
+            container.innerHTML = html;
         }
 
         function renderizarPendentes(pendentes) {
@@ -621,45 +621,6 @@
             container.innerHTML = html;
         }
 
-        function renderizarAprovadas(aprovadasDeHoje) {
-            const container = document.getElementById('lista-aprovadas-api');
-            if (!container) return;
-
-            if (aprovadasDeHoje.length === 0) {
-                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida confirmada para hoje.</div></div>';
-                return;
-            }
-
-            let html = '';
-            aprovadasDeHoje.forEach(corrida => {
-                let dataObj = new Date(corrida.DataHoraAgendada || corrida.created_at || corrida.UpdatedAt);
-                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-                let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
-                let valor = corrida.ValorEstimado ? corrida.ValorEstimado.toFixed(2) : "0.00";
-
-                html += `
-            <div class="card list-card" style="border-left: 3px solid #2ecc71;">
-                <div class="row" style="margin-bottom: 8px;">
-                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</div>
-                    <span class="badge-green">Confirmada</span>
-                </div>
-                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
-                    ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
-                </div>
-                <div class="divl" style="margin: 10px 0;"></div>
-                <div class="row" style="align-items: flex-end;">
-                    <div>
-                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 Hoje às ${horaFmt}</div>
-                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
-                    </div>
-                    <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ ${valor}</div>
-                </div>
-            </div>`;
-            });
-
-            container.innerHTML = html;
-        }
 
         function renderizarRealizadas(realizadasDeHoje) {
             const container = document.getElementById('lista-realizadas-api');

@@ -204,7 +204,7 @@ func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 
 	var localizacoes []structs.LocalizacaoMotorista
 
-	// Mantém o Preload original por segurança
+	// O GORM agora já vai trazer o CorridaAtivaID automaticamente!
 	if err := db.DB.Preload("Motorista").Find(&localizacoes).Error; err != nil {
 		http.Error(w, `{"erro": "Falha ao buscar localizações"}`, http.StatusInternalServerError)
 		return
@@ -216,20 +216,17 @@ func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 	var motoristas []structs.Usuario
 	db.DB.Where("papel = ?", "motorista").Find(&motoristas)
 
-	// Cria um dicionário rápido de ID -> Nome
 	mapaMotoristas := make(map[uint]string)
 	for _, m := range motoristas {
 		mapaMotoristas[m.ID] = m.Nome
 	}
 
-	// Converte para mapa dinâmico para podermos injetar dados livremente
 	dadosJSON, _ := json.Marshal(localizacoes)
 	var listaDinamica []map[string]interface{}
 	json.Unmarshal(dadosJSON, &listaDinamica)
 
 	for i, loc := range listaDinamica {
 		var id float64
-		// Tenta extrair o ID de diferentes formatos que o banco possa cuspir
 		if v, ok := loc["motorista_id"].(float64); ok {
 			id = v
 		} else if v, ok := loc["MotoristaID"].(float64); ok {
@@ -240,12 +237,12 @@ func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 			id = v
 		}
 
-		// Injeta o nome diretamente no objeto
 		if nome, existe := mapaMotoristas[uint(id)]; existe {
 			loc["nome_garantido"] = nome
 		} else {
 			loc["nome_garantido"] = "Motorista #" + fmt.Sprint(id)
 		}
+
 		listaDinamica[i] = loc
 	}
 
