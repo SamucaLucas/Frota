@@ -251,6 +251,10 @@
             <div class="label">Passageiro</div>
             <div class="value" id="txt-passageiro">...</div>
 
+            <!-- NOVA ABA: DATA E HORA AGENDADA -->
+            <div class="label" style="margin-top: 20px;">Data e Hora Agendada</div>
+            <div class="value" id="txt-data" >...</div>
+
             <div class="label" style="margin-top: 20px;">Valor Estimado</div>
             <div class="price-display" id="txt-valor">R$ 0,00</div>
         </div>
@@ -318,12 +322,19 @@
                 }
 
                 // 2. Busca os dados da corrida
-                const response = await fetch(`${window.API_URL}/api/corrida/detalhes?id=${corridaID}`);
+                const response = await fetch(`${window.API_URL}/api/corrida/detalhes?id=${corridaID}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
                 const dados = await response.json();
 
                 if (response.ok) {
                     // Preenche a tela
                     document.getElementById('txt-passageiro').innerText = dados.Usuario ? dados.Usuario.Nome : "Cliente";
+
+                    // FORMATANDO A NOVA DATA E HORA AGENDADA 
+                    const dataFmt = new Date(dados.DataHoraAgendada || dados.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                    document.getElementById('txt-data').innerText = dataFmt;
+
                     document.getElementById('txt-origem').innerText = dados.OrigemTexto;
                     document.getElementById('txt-destino').innerText = dados.DestinoTexto;
 

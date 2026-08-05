@@ -633,8 +633,30 @@
                     document.getElementById('txt-data').innerText = dataFormatada;
                     document.getElementById('txt-hora').innerText = horaFormatada;
                     document.getElementById('txt-motorista').innerText = dados.Motorista ? dados.Motorista.Nome : "Motorista";
-                    document.getElementById('txt-passageiro').innerText = dados.Usuario ? dados.Usuario.Nome : "Passageiro Avulso";
-                    document.getElementById('txt-origem').innerText = dados.OrigemTexto || "Embarque Livre";
+
+                    // ==========================================================
+                    // SEPARAÇÃO INTELIGENTE DE PASSAGEIRO E ORIGEM
+                    // ==========================================================
+                    let origemLimpa = dados.OrigemTexto || "Embarque Livre";
+                    let nomePassageiro = dados.Usuario && dados.Usuario.Nome ? dados.Usuario.Nome : "Passageiro Avulso";
+
+                    // Verifica se a string de origem possui a marcação inserida pelo Admin
+                    if (origemLimpa.includes("(Cliente:")) {
+                        const partes = origemLimpa.split("(Cliente:");
+
+                        origemLimpa = partes[0].trim(); // Pega apenas a primeira parte (o endereço)
+
+                        // Pega a segunda parte, limpa o ")" do final
+                        let infoExtraida = partes[1].replace(")", "").trim();
+
+                        // Separa pelo hífen e pega só o Nome (ignorando o telefone)
+                        nomePassageiro = infoExtraida.split("-")[0].trim();
+                    }
+
+                    document.getElementById('txt-passageiro').innerText = nomePassageiro;
+                    document.getElementById('txt-origem').innerText = origemLimpa;
+                    // ==========================================================
+
                     document.getElementById('txt-destino').innerText = dados.DestinoTexto || "Desembarque Livre";
                     document.getElementById('txt-valor').innerText = "R$ " + parseFloat(dados.ValorFinal || 0).toFixed(2).replace('.', ',');
                 }
@@ -649,22 +671,18 @@
         function voltarSeguro() {
             const paginaAnterior = document.referrer || "";
 
-            // 1. Descobrimos qual é a Home correta do usuário logado
-            let linkHome = "../Motorista/home_motorista.html"; // Fallback padrão (Motorista)
-            
+            let linkHome = "../Motorista/home_motorista.html";
+
             try {
                 const token = sessionStorage.getItem("token") || localStorage.getItem("token");
                 if (token) {
-                    // Decodifica o payload do JWT para saber quem está logado
                     const payload = JSON.parse(atob(token.split('.')[1]));
-                    
-                    // Se no seu banco/token o admin tiver a role "admin", "Admin" ou ID específico
+
                     if (payload.papel === "admin" || payload.role === "admin" || payload.tipo_usuario === "admin") {
                         linkHome = "../Admin/home_admin.html";
                     }
                 }
-                
-                // Backup: Se a página anterior tinha "admin" na URL (ex: despachar.html)
+
                 if (paginaAnterior.includes("admin") || paginaAnterior.includes("Admin")) {
                     linkHome = "../Admin/home_admin.html";
                 }
@@ -672,15 +690,11 @@
                 console.log("Modo de segurança ativado no redirecionamento.");
             }
 
-            // 2. Faz o redirecionamento baseado de onde ele veio
             if (paginaAnterior.includes("corrida_agendada.html") || paginaAnterior.includes("taximetro.html")) {
-                // Se veio de uma corrida ativa, joga para a Home CORRETA limpando o histórico
                 window.location.replace(linkHome);
             } else if (paginaAnterior !== "") {
-                // Se acessou pelo histórico normal (Admin, Extrato, etc), volta uma página naturalmente
                 window.history.back();
             } else {
-                // Fallback de segurança se abrir link direto
                 window.location.replace(linkHome);
             }
         }
@@ -689,7 +703,7 @@
             const elemento = document.getElementById('recibo-box');
 
             const opt = {
-                margin: [0.5, 1], // Centralizado
+                margin: [0.5, 1],
                 filename: `Recibo_Corrida_${corridaID}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: {
@@ -698,7 +712,6 @@
                     scrollY: 0
                 },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-                // ISSO IMPEDE O CORTE E MANTÉM EM UMA ÚNICA PÁGINA
                 pagebreak: { mode: 'avoid-all' }
             };
 

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minhas Corridas - Admin</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: var(--bg);
+            font-family: 'Sora', sans-serif;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg);
+            z-index: 50;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .back-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .sec-lbl {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            margin: 24px 20px 12px;
+        }
+
+        .list-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 0 20px 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .badge-green {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .badge-blue {
+            background: var(--acc-bg);
+            color: var(--acc);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .btn-iniciar-rota {
+            background: #10B981;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            transition: opacity 0.2s;
+            margin-top: 14px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-iniciar-rota:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode');
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+    <div class="header-top">
+        <button class="back-btn" onclick="window.location.href='home_admin.html'">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <div style="font-size: 16px; font-weight: 800; color: var(--t1); margin-left: 16px;">Modo Motorista</div>
+    </div>
+
+    <div style="padding-bottom: 40px;">
+        <div class="sec-lbl">Minhas Corridas Assumidas 📅</div>
+        <div id="lista-atribuidas">
+            <div class="list-card" style="text-align: center; padding: 20px 10px;">
+                <div style="font-size: 12px; color: var(--t3);">Buscando agenda...</div>
+            </div>
+        </div>
+
+        <div class="sec-lbl">Concluídas por mim hoje ✅</div>
+        <div id="lista-concluidas">
+            <div class="list-card" style="text-align: center; padding: 20px 10px;">
+                <div style="font-size: 12px; color: var(--t3);">Buscando histórico...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <!-- Necessário caso ele inicie a corrida -->
+    <script src="../static/gps_tracker.js"></script>
+
+    <script>
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+        if (!token) window.location.href = "../Usuario/login.html";
+
+        window.onload = () => {
+            // Alterado para buscar da rota de Admin, que nós sabemos que não será bloqueada
+            fetch(`${window.API_URL}/api/admin/home`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        const adminID = dados.usuario.ID;
+
+                        // Filtramos da lista GERAL de aprovadas apenas aquelas onde o admin é o motorista
+                        const minhasCorridasPendentes = (dados.aprovadas || []).filter(c =>
+                            c.motorista_id === adminID ||
+                            c.MotoristaID === adminID ||
+                            (c.Motorista && c.Motorista.ID === adminID)
+                        );
+
+                        // Filtramos da lista GERAL de concluídas apenas aquelas onde o admin foi o motorista
+                        const minhasCorridasConcluidas = (dados.concluidas || []).filter(c =>
+                            c.motorista_id === adminID ||
+                            c.MotoristaID === adminID ||
+                            (c.Motorista && c.Motorista.ID === adminID)
+                        );
+
+                        renderizarAtribuidas(minhasCorridasPendentes);
+                        renderizarConcluidas(minhasCorridasConcluidas);
+                    } else {
+                        alert("Erro ao carregar agenda: " + dados.erro);
+                    }
+                })
+                .catch(err => console.error(err));
+        };
+
+        function renderizarAtribuidas(corridas) {
+            const container = document.getElementById('lista-atribuidas');
+            if (!corridas || corridas.length === 0) {
+                container.innerHTML = '<div class="list-card" style="text-align: center;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida pendente.</div></div>';
+                return;
+            }
+
+            let html = "";
+            corridas.forEach(c => {
+                let dataFmt = new Date(c.DataHoraAgendada || c.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+                html += `
+                <div class="list-card" style="border-left: 4px solid #10B981;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+                        <div style="font-size: 13.5px; font-weight: 800; color: var(--t1); flex:1; padding-right:10px;">
+                            ${c.OrigemTexto} → ${c.DestinoTexto}
+                        </div>
+                        <span class="badge-green">Pendente</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--t3); margin-bottom: 6px;">📅 ${dataFmt}</div>
+                    <div style="font-size: 11.5px; color: var(--t2);">
+                        👤 Passageiro: <span style="color: var(--t1); font-weight: bold;">${c.Usuario ? c.Usuario.Nome : 'Avulso'}</span>
+                    </div>
+                    
+                    <button type="button" class="btn-iniciar-rota" onclick="abrirCorridaAgendada(${c.ID})">
+                        ▶ Iniciar Corrida
+                    </button>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderizarConcluidas(corridas) {
+            const container = document.getElementById('lista-concluidas');
+            const dataDeHoje = new Date().toLocaleDateString('pt-BR');
+
+            // Mantém a regra de filtrar para mostrar apenas as corridas que ocorreram hoje
+            const corridasDeHoje = (corridas || []).filter(c => {
+                const dataCorrida = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt || new Date()).toLocaleDateString('pt-BR');
+                return dataCorrida === dataDeHoje;
+            });
+
+            if (corridasDeHoje.length === 0) {
+                container.innerHTML = '<div class="list-card" style="text-align: center;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida concluída hoje.</div></div>';
+                return;
+            }
+
+            let html = "";
+            corridasDeHoje.forEach(c => {
+                let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
+                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                let nomePassageiro = c.Usuario ? c.Usuario.Nome : "Avulso";
+
+                html += `
+                <div class="list-card" style="border-left: 4px solid var(--acc); cursor: pointer;" onclick="window.location.href='../Dados/recibo.html?id=${c.ID}'">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 7px;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--t1); flex:1;">${c.OrigemTexto} → ${c.DestinoTexto}</div>
+                        <span class="badge-blue">Concluída</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--t3);">
+                        Hoje às ${horaFmt} · Passageiro: <span style="color:var(--t2); font-weight:600;">${nomePassageiro}</span>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function abrirCorridaAgendada(id) {
+            // O Admin usa a mesma tela de corrida do motorista para executar a viagem
+            window.location.href = `../Motorista/corrida_agendada.html?id=${id}`;
+        }
+    </script>
+</body>
+
+</html>
