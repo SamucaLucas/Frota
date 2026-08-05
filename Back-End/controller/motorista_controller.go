@@ -164,10 +164,11 @@ func ApiPostConcluirCorrida(w http.ResponseWriter, r *http.Request) {
 
 // Estrutura temporária para ler o JSON que vem do celular
 type PayloadLocalizacao struct {
-	MotoristaID uint    `json:"motorista_id"`
-	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longitude"`
-	Status      string  `json:"status"`
+	MotoristaID    uint    `json:"motorista_id"`
+	Latitude       float64 `json:"latitude"`
+	Longitude      float64 `json:"longitude"`
+	Status         string  `json:"status"`
+	CorridaAtivaID uint   `json:"corrida_ativa_id"` // NOVO CAMPO PARA SALVAR A CORRIDA ATIVA
 }
 
 // AtualizarLocalizacao recebe as coordenadas do Capacitor e salva no banco
@@ -187,11 +188,12 @@ func AtualizarLocalizacao(w http.ResponseWriter, r *http.Request) {
 
 	// Monta o objeto para o banco de dados
 	localizacao := structs.LocalizacaoMotorista{
-		MotoristaID: payload.MotoristaID,
-		Latitude:    payload.Latitude,
-		Longitude:   payload.Longitude,
-		Status:      payload.Status,
-		UpdatedAt:   time.Now(),
+		MotoristaID:    payload.MotoristaID,
+		Latitude:       payload.Latitude,
+		Longitude:      payload.Longitude,
+		Status:         payload.Status,
+		CorridaAtivaID: payload.CorridaAtivaID, // <--- NOVO CAMPO AQUI!
+		UpdatedAt:      time.Now(),
 	}
 
 	// Save() no GORM com a PK preenchida faz um "Upsert" (Salva se não existir, Atualiza se existir)
