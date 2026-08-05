@@ -607,13 +607,13 @@
                         if (data.routes && data.routes.length > 0) {
                             const distanciaKm = parseFloat((data.routes[0].distance / 1000).toFixed(1));
                             let valorFinal = 0;
-                            let tipoViagem = "Urbana";
+                            let tipoViagem = "padrao";
 
                             if (distanciaKm <= taxasAtuais.limite_urbano) {
                                 valorFinal = taxasAtuais.base_urbana;
                                 if (distanciaKm > 1) valorFinal += (distanciaKm - 1) * taxasAtuais.km_urbano;
                             } else {
-                                tipoViagem = "Intermunicipal";
+                                tipoViagem = "padrao";
                                 valorFinal = distanciaKm * taxasAtuais.km_inter;
                             }
 
@@ -826,7 +826,7 @@
                 data_hora: document.getElementById('data_hora').value,
                 km_rodado: parseFloat(document.getElementById('km_rodado').value) || 0,
                 valor_estimado: parseFloat(document.getElementById('valor_estimado').value) || 0,
-                tipo: document.getElementById('tipo_viagem').value || "Urbana",
+                tipo: document.getElementById('tipo_viagem').value || "padrao",
                 motorista_id: parseInt(motoristaRadio.value)
             };
 
