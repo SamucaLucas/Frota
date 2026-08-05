@@ -299,6 +299,7 @@
                         let aprovadas = dados.aprovadas || [];
                         let concluidas = dados.concluidas || [];
 
+
                         todasAsCorridas = [...pendentes, ...aprovadas, ...concluidas];
 
                         // Ordena da mais recente para a mais antiga
@@ -388,6 +389,7 @@
                     nomeMotorista = "Aguardando Despacho";
                 }
 
+
                 let valor = c.ValorFinal ? c.ValorFinal.toFixed(2) : (c.ValorEstimado ? c.ValorEstimado.toFixed(2) : "0.00");
 
                 // Roteamento inteligente: Se a corrida não foi concluída, o admin abre no despachar para poder editar!
@@ -430,6 +432,7 @@
                     
                     <div class="row" style="align-items: flex-end;">
                         <div>
+                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">#${c.ID}</div>
                             <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 ${dataFmt} às ${horaFmt}</div>
                             <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${nomeMotorista}</div>
                         </div>
