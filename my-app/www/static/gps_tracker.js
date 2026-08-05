@@ -5,6 +5,7 @@
 window.GPSGlobal = {
     watcherId: null,
     statusAtual: "Disponível", 
+    corridaAtivaId: 0, // <--- NOVO: Armazena o ID da corrida que ele está fazendo
     ultimaLat: null,
     ultimaLng: null,
     callbackTela: null,
@@ -127,7 +128,8 @@ window.GPSGlobal = {
                 motorista_id: parseInt(motoristaId),
                 latitude: lat,
                 longitude: lng,
-                status: this.statusAtual 
+                status: this.statusAtual,
+                corrida_ativa_id: parseInt(this.corridaAtivaId) // <--- NOVO: Enviando o ID!
             })
         }).catch(() => { });
 
@@ -149,8 +151,10 @@ window.GPSGlobal = {
         }
     },
 
-    mudarStatus: function (novoStatus) {
+    // <--- NOVO: Agora aceita o ID da corrida como segundo parâmetro opcional
+    mudarStatus: function (novoStatus, idDaCorrida = 0) {
         this.statusAtual = novoStatus;
+        this.corridaAtivaId = idDaCorrida;
         this.forcarEnvioStatus(novoStatus);
     },
 
@@ -167,7 +171,8 @@ window.GPSGlobal = {
             motorista_id: parseInt(motoristaId),
             latitude: lat,
             longitude: lng,
-            status: statusForcado
+            status: statusForcado,
+            corrida_ativa_id: parseInt(this.corridaAtivaId) // <--- NOVO: Enviando o ID!
         });
 
         fetch(`${baseUrl}/api/motorista/localizacao`, {

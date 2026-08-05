@@ -253,7 +253,7 @@
 
             <!-- NOVA ABA: DATA E HORA AGENDADA -->
             <div class="label" style="margin-top: 20px;">Data e Hora Agendada</div>
-            <div class="value" id="txt-data" >...</div>
+            <div class="value" id="txt-data">...</div>
 
             <div class="label" style="margin-top: 20px;">Valor Estimado</div>
             <div class="price-display" id="txt-valor">R$ 0,00</div>
@@ -316,9 +316,9 @@
 
         window.onload = async function () {
             try {
-                // 1. Informa ao servidor GPS que a corrida começou!
+                // 1. Informa ao servidor GPS que a corrida começou, ENVIANDO O ID DA CORRIDA
                 if (window.GPSGlobal) {
-                    window.GPSGlobal.mudarStatus("Em Corrida Agendada");
+                    window.GPSGlobal.mudarStatus("Em Corrida Agendada", parseInt(corridaID));
                 }
 
                 // 2. Busca os dados da corrida
@@ -328,15 +328,25 @@
                 const dados = await response.json();
 
                 if (response.ok) {
+                    // SEPARAÇÃO INTELIGENTE DE PASSAGEIRO E ORIGEM
+                    let origemLimpa = dados.OrigemTexto || "Embarque Livre";
+                    let nomePassageiro = dados.Usuario && dados.Usuario.Nome ? dados.Usuario.Nome : "Cliente Avulso";
+
+                    if (origemLimpa.includes("(Cliente:")) {
+                        const partes = origemLimpa.split("(Cliente:");
+                        origemLimpa = partes[0].trim();
+                        // Aqui mantemos o telefone visível, pois é útil para o motorista!
+                        nomePassageiro = partes[1].replace(")", "").trim();
+                    }
+
                     // Preenche a tela
-                    document.getElementById('txt-passageiro').innerText = dados.Usuario ? dados.Usuario.Nome : "Cliente";
+                    document.getElementById('txt-passageiro').innerText = nomePassageiro;
+                    document.getElementById('txt-origem').innerText = origemLimpa;
+                    document.getElementById('txt-destino').innerText = dados.DestinoTexto || "Desembarque Livre";
 
                     // FORMATANDO A NOVA DATA E HORA AGENDADA 
                     const dataFmt = new Date(dados.DataHoraAgendada || dados.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
                     document.getElementById('txt-data').innerText = dataFmt;
-
-                    document.getElementById('txt-origem').innerText = dados.OrigemTexto;
-                    document.getElementById('txt-destino').innerText = dados.DestinoTexto;
 
                     valorEstimadoOriginal = parseFloat(dados.ValorEstimado || dados.ValorFinal || 0);
                     document.getElementById('txt-valor').innerText = "R$ " + valorEstimadoOriginal.toFixed(2).replace('.', ',');
@@ -374,9 +384,9 @@
         }
 
         function voltarParaHome() {
-            // Se ele voltar pra home sem finalizar, o status do GPS volta para Disponível
+            // Se ele voltar pra home sem finalizar, o status do GPS volta para Disponível (ID 0)
             if (window.GPSGlobal) {
-                window.GPSGlobal.mudarStatus("Disponível");
+                window.GPSGlobal.mudarStatus("Disponível", 0);
             }
             window.history.back();
         }
@@ -408,8 +418,8 @@
                 .then(res => res.json())
                 .then(dados => {
                     if (dados.sucesso) {
-                        // Libera o motorista no Radar/GPS
-                        if (window.GPSGlobal) window.GPSGlobal.mudarStatus("Disponível");
+                        // Libera o motorista no Radar/GPS (ID volta a ser 0)
+                        if (window.GPSGlobal) window.GPSGlobal.mudarStatus("Disponível", 0);
 
                         alert("Corrida Finalizada com Sucesso!");
 

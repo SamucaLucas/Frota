@@ -502,28 +502,22 @@
                         const adminID = dados.usuario.ID;
                         document.getElementById('admin-nome').textContent = dados.usuario.Nome;
 
-                        // --- VERIFICAÇÃO INTELIGENTE DO BANNER ---
-                        // Procura na lista de todas as aprovadas se tem alguma associada ao ID do Admin
-                        const temCorridaMinha = (dados.aprovadas || []).some(c =>
-                            c.motorista_id === adminID ||
-                            c.MotoristaID === adminID ||
+                        const temCorridaMinha = (dados.aprovadas || []).some(c => 
+                            c.motorista_id === adminID || 
+                            c.MotoristaID === adminID || 
                             (c.Motorista && c.Motorista.ID === adminID)
                         );
-
                         if (temCorridaMinha) {
                             document.getElementById('alerta-corridas-admin').style.display = 'block';
                         } else {
                             document.getElementById('alerta-corridas-admin').style.display = 'none';
                         }
-                        // ------------------------------------------
+
+                        // REMOVIDO o filtro de "dataDeHoje" para as aprovadas. 
+                        // Agora a corrida fica na tela até ser concluída!
+                        const aprovadas = dados.aprovadas || [];
 
                         const dataDeHoje = new Date().toLocaleDateString('pt-BR');
-
-                        const aprovadasDeHoje = (dados.aprovadas || []).filter(c => {
-                            const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
-                            return d === dataDeHoje;
-                        });
-
                         const realizadasDeHoje = (dados.concluidas || []).filter(c => {
                             const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
                             return d === dataDeHoje;
@@ -533,14 +527,14 @@
                             document.getElementById('total-pendentes-opt').textContent = dados.pendentes ? dados.pendentes.length : 0;
                         }
                         if (document.getElementById('total-aprovadas-opt')) {
-                            document.getElementById('total-aprovadas-opt').textContent = aprovadasDeHoje.length;
+                            document.getElementById('total-aprovadas-opt').textContent = aprovadas.length;
                         }
                         if (document.getElementById('total-realizadas-opt')) {
                             document.getElementById('total-realizadas-opt').textContent = realizadasDeHoje.length;
                         }
 
                         renderizarPendentes(dados.pendentes);
-                        renderizarAprovadas(aprovadasDeHoje);
+                        renderizarAprovadas(aprovadas);
                         renderizarRealizadas(realizadasDeHoje);
                     } else {
                         alert("Erro ao carregar painel: " + dados.erro);
@@ -548,10 +542,50 @@
                 })
                 .catch(err => {
                     console.error(err);
-                    if (err.message === "Sessão expirada") {
-                        fazerLogout(false);
-                    }
+                    if (err.message === "Sessão expirada") fazerLogout(false);
                 });
+        }
+
+        // --- Renderizador das Aprovadas COM botão de rastreio ---
+        function renderizarAprovadas(aprovadas) {
+            const container = document.getElementById('lista-aprovadas-api');
+            if (!container) return;
+
+            if (aprovadas.length === 0) {
+                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida em andamento.</div></div>';
+                return;
+            }
+
+            let html = '';
+            aprovadas.forEach(corrida => {
+                let dataObj = new Date(corrida.DataHoraAgendada || corrida.created_at || corrida.UpdatedAt);
+                let dataHoraFmt = dataObj.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+                let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
+
+                html += `
+            <div class="card list-card" style="border-left: 3px solid #3b82f6;">
+                <div class="row" style="margin-bottom: 8px;">
+                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'Avulso'}</div>
+                    <span class="badge-blue" style="background: rgba(59,130,246,0.15); color: #3b82f6;">Atribuída</span>
+                </div>
+                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
+                    ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
+                </div>
+                <div class="divl" style="margin: 10px 0;"></div>
+                <div class="row" style="align-items: flex-end;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 ${dataHoraFmt}</div>
+                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
+                    </div>
+                </div>
+                <button class="btn" style="font-size:12px; font-weight: 800; padding:12px; width:100%; box-sizing: border-box; margin-top: 14px; background: #3b82f6; border: none; color: white;" onclick="window.location.href='acompanhar_corrida.html?id=${corrida.ID}'">
+                    📍 Acompanhar ao Vivo
+                </button>
+            </div>`;
+            });
+
+            container.innerHTML = html;
         }
 
         function renderizarPendentes(pendentes) {
@@ -587,45 +621,6 @@
             container.innerHTML = html;
         }
 
-        function renderizarAprovadas(aprovadasDeHoje) {
-            const container = document.getElementById('lista-aprovadas-api');
-            if (!container) return;
-
-            if (aprovadasDeHoje.length === 0) {
-                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida confirmada para hoje.</div></div>';
-                return;
-            }
-
-            let html = '';
-            aprovadasDeHoje.forEach(corrida => {
-                let dataObj = new Date(corrida.DataHoraAgendada || corrida.created_at || corrida.UpdatedAt);
-                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-                let motoristaNome = corrida.Motorista ? corrida.Motorista.Nome : 'Sem Motorista';
-                let valor = corrida.ValorEstimado ? corrida.ValorEstimado.toFixed(2) : "0.00";
-
-                html += `
-            <div class="card list-card" style="border-left: 3px solid #2ecc71;">
-                <div class="row" style="margin-bottom: 8px;">
-                    <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${corrida.Usuario ? corrida.Usuario.Nome : 'N/A'}</div>
-                    <span class="badge-green">Confirmada</span>
-                </div>
-                <div style="font-size: 11px; color: var(--t3); line-height: 1.4;">
-                    ${corrida.OrigemTexto} <span style="color:var(--t4);">→</span> ${corrida.DestinoTexto}
-                </div>
-                <div class="divl" style="margin: 10px 0;"></div>
-                <div class="row" style="align-items: flex-end;">
-                    <div>
-                        <div style="font-size: 11px; color: var(--t2); margin-bottom: 4px;">📅 Hoje às ${horaFmt}</div>
-                        <div style="font-size: 11px; color: var(--acc); font-weight: 700;">🚗 Motorista: ${motoristaNome}</div>
-                    </div>
-                    <div style="font-size: 13px; color: var(--t1); font-weight: 800;">R$ ${valor}</div>
-                </div>
-            </div>`;
-            });
-
-            container.innerHTML = html;
-        }
 
         function renderizarRealizadas(realizadasDeHoje) {
             const container = document.getElementById('lista-realizadas-api');
