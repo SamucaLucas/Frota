@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Detalhes da Viagem</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="stylesheet" href="../static/style.css">
+
+    <!-- LEAFLET CSS PARA O MAPA -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: var(--bg);
+            font-family: 'Sora', sans-serif;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* --- MAPA --- */
+        #mapa-tracker {
+            width: 100%;
+            flex: 1;
+            background: var(--card);
+            z-index: 1;
+        }
+
+        .header-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--t1);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            background: var(--card);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--t1);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- PAINEL INFERIOR (PASSAGEIRO) --- */
+        .bottom-panel {
+            background: var(--bg);
+            border-radius: 24px 24px 0 0;
+            padding: 24px 20px 30px;
+            z-index: 2;
+            position: relative;
+            margin-top: -24px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .status-pendente {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .status-andamento {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        .status-concluida {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+        }
+
+        .status-cancelada {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .driver-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--acc-bg);
+            border: 2px solid var(--acc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            color: var(--acc);
+        }
+
+        .driver-info {
+            flex: 1;
+        }
+
+        .driver-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--t1);
+            margin-bottom: 2px;
+        }
+
+        .driver-car {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--t3);
+        }
+
+        .price-box {
+            text-align: right;
+        }
+
+        .price-label {
+            font-size: 10px;
+            color: var(--t3);
+            font-weight: 700;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .price-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--acc);
+        }
+
+        .route-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+
+        .route-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .route-icon {
+            font-size: 16px;
+            margin-top: -2px;
+        }
+
+        .route-text {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--t1);
+            line-height: 1.4;
+        }
+
+        .route-label {
+            font-size: 10px;
+            color: var(--t3);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 12px 0;
+            width: 100%;
+        }
+
+        .btn-recibo {
+            background: var(--acc);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            font-family: 'Sora', sans-serif;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 16px;
+            display: none;
+            /* Só aparece se concluída */
+            text-align: center;
+        }
+
+        /* Ícones no mapa */
+        .car-label-inline {
+            background: rgba(10, 10, 12, 0.9);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 8px;
+            white-space: nowrap;
+            margin-bottom: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .light-mode .car-label-inline {
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'light' || document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode'); document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+    <div class="app-container">
+        <!-- HEADER SOBREPOSTO -->
+        <div class="header-overlay">
+            <button class="back-btn" onclick="window.history.back()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <div class="header-title">Minha Viagem</div>
+        </div>
+
+        <!-- MAPA -->
+        <div id="mapa-tracker"></div>
+
+        <!-- PAINEL DE INFORMAÇÕES -->
+        <div class="bottom-panel">
+            <div class="status-badge status-pendente" id="badge-container">
+                <span id="tracker-status-icon">⏳</span> <span id="tracker-status-text">Buscando Detalhes...</span>
+            </div>
+
+            <!-- MOTORISTA E VALOR -->
+            <div class="info-row">
+                <div class="driver-avatar" id="avatar-motorista">👤</div>
+                <div class="driver-info">
+                    <div class="driver-name" id="info-motorista">Aguardando motorista...</div>
+                    <div class="driver-car" id="info-carro">Buscando parceiro disponível</div>
+                </div>
+                <div class="price-box">
+                    <span class="price-label">Valor Estimado</span>
+                    <span class="price-value" id="info-valor">R$ 0,00</span>
+                </div>
+            </div>
+
+            <!-- DATA E HORA AGENDADA -->
+            <div class="info-row" style="margin-bottom: 12px;">
+                <div style="flex: 1;">
+                    <span class="price-label">Data e Hora Agendada</span>
+                    <span style="font-size: 13.5px; font-weight: 700; color: var(--t1);" id="info-data">--/--/----
+                        --:--</span>
+                </div>
+            </div>
+
+            <div class="route-box">
+                <div class="route-point">
+                    <div class="route-icon">🔵</div>
+                    <div>
+                        <div class="route-label">Local de Embarque (Origem)</div>
+                        <div class="route-text" id="info-origem">...</div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="route-point">
+                    <div class="route-icon">🏁</div>
+                    <div>
+                        <div class="route-label">Destino Final</div>
+                        <div class="route-text" id="info-destino">...</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-recibo" id="btn-ver-recibo" onclick="abrirRecibo()">🧾 Ver Recibo Completo</button>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+        if (!token) window.location.href = "../Usuario/login.html";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const corridaID = parseInt(urlParams.get('id'));
+        if (!corridaID) window.history.back();
+
+        let map;
+        let bounds = new L.LatLngBounds();
+        let carMarker = null;
+        let driverIdToTrack = null;
+        let corridaEstaFinalizada = false;
+
+        function inicializarMapa() {
+            map = L.map('mapa-tracker', { zoomControl: false }).setView([-6.0673, -49.9036], 13);
+            const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
+            const tileUrl = isLight ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            L.tileLayer(tileUrl, { attribution: '© OpenStreetMap' }).addTo(map);
+        }
+
+        function adicionarMarcadorFixo(lat, lng, tipo) {
+            if (!lat || !lng || lat === 0 || lng === 0) return;
+
+            let iconHtml = tipo === 'origem'
+                ? `<div style="background:#3b82f6; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.5);"></div>`
+                : `<div style="background:#e30613; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.5);"></div>`;
+
+            const customIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [22, 22], iconAnchor: [11, 11] });
+            L.marker([lat, lng], { icon: customIcon }).addTo(map);
+            bounds.extend([lat, lng]);
+        }
+
+        function criarIconeCarro(nome, statusMapa) {
+            let corShadow = "#3b82f6"; // Padrão Azul
+
+            // Se ele estiver finalizando outra viagem, mostra em Laranja para o passageiro ter paciência
+            if (statusMapa === "outra_corrida") corShadow = "#f59e0b";
+
+            return L.divIcon({
+                className: '',
+                html: `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                        <div class="car-label-inline">${nome}</div>
+                        <div style="font-size: 32px; line-height: 1; filter: drop-shadow(0px 0px 8px ${corShadow});">
+                            🚗
+                        </div>
+                    </div>
+                `,
+                iconSize: [60, 50],
+                iconAnchor: [30, 45]
+            });
+        }
+
+        async function carregarDetalhes() {
+            if (corridaEstaFinalizada) return;
+
+            try {
+                const response = await fetch(`${window.API_URL}/api/corrida/detalhes?id=${corridaID}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const dados = await response.json();
+
+                if (response.ok) {
+                    // PREENCHE DADOS DE ORIGEM E DESTINO
+                    let origemLimpa = dados.OrigemTexto || "Não informada";
+                    if (origemLimpa.includes("(Cliente:")) origemLimpa = origemLimpa.split("(Cliente:")[0].trim();
+
+                    document.getElementById('info-origem').innerText = origemLimpa;
+                    document.getElementById('info-destino').innerText = dados.DestinoTexto || "Não informado";
+
+                    // DATA E HORA DA VIAGEM
+                    if (dados.DataHoraAgendada || dados.created_at) {
+                        const dataFmt = new Date(dados.DataHoraAgendada || dados.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                        document.getElementById('info-data').innerText = dataFmt;
+                    }
+
+                    // VALOR
+                    let valorMostrado = dados.ValorFinal ? dados.ValorFinal : (dados.ValorEstimado || 0);
+                    document.getElementById('info-valor').innerText = "R$ " + parseFloat(valorMostrado).toFixed(2).replace('.', ',');
+
+                    // ATUALIZA STATUS VISUAL (Textos mais amigáveis para o cliente)
+                    atualizarStatusUI(dados.Status || dados.status);
+
+                    // VERIFICA SE TEM MOTORISTA ATRIBUÍDO
+                    if (dados.Motorista) {
+                        driverIdToTrack = dados.Motorista.ID;
+
+                        document.getElementById('info-motorista').innerText = dados.Motorista.Nome;
+                        document.getElementById('info-carro').innerText = "Motorista Parceiro";
+                        document.getElementById('avatar-motorista').innerText = "🚗";
+                        document.getElementById('avatar-motorista').style.border = "none";
+                        document.getElementById('avatar-motorista').style.background = "transparent";
+
+                        // Rastreia a posição do motorista APENAS SE a corrida não estiver concluída
+                        const statusSafe = (dados.Status || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                        if (statusSafe === "concluida" || statusSafe === "cancelada" || statusSafe === "realizada") {
+                            corridaEstaFinalizada = true;
+                        }
+                    }
+
+                    // PLOTA ORIGEM E DESTINO NO MAPA UMA VEZ
+                    if (!bounds.isValid()) {
+                        adicionarMarcadorFixo(dados.OrigemLat, dados.OrigemLng, 'origem');
+                        adicionarMarcadorFixo(dados.DestinoLat, dados.DestinoLng, 'destino');
+                        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+                    }
+
+                } else {
+                    alert("Erro ao buscar detalhes: " + dados.erro);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function atualizarStatusUI(statusOriginal) {
+            const badgeContainer = document.getElementById('badge-container');
+            const statusIcon = document.getElementById('tracker-status-icon');
+            const statusText = document.getElementById('tracker-status-text');
+            const btnRecibo = document.getElementById('btn-ver-recibo');
+
+            const statusSafe = (statusOriginal || "pendente").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+            badgeContainer.className = "status-badge"; // Reseta classes
+
+            if (statusSafe === "pendente" || statusSafe.includes("aguardando")) {
+                badgeContainer.classList.add("status-pendente");
+                statusIcon.innerText = "⏳";
+                statusText.innerText = "Procurando Motorista...";
+            }
+            else if (statusSafe === "aprovada" || statusSafe === "confirmada") {
+                badgeContainer.classList.add("status-andamento");
+                statusIcon.innerText = "🚙";
+                statusText.innerText = "Motorista Confirmado";
+            }
+            else if (statusSafe.includes("andamento") || statusSafe.includes("corrida")) {
+                badgeContainer.classList.add("status-andamento");
+                statusIcon.innerText = "📍";
+                statusText.innerText = "Sua viagem está em andamento";
+            }
+            else if (statusSafe === "concluida" || statusSafe === "realizada") {
+                badgeContainer.classList.add("status-concluida");
+                statusIcon.innerText = "🏁";
+                statusText.innerText = "Viagem Concluída";
+                btnRecibo.style.display = "block"; // Mostra botão do recibo
+                document.querySelector('.price-label').innerText = "Valor Final";
+            }
+            else if (statusSafe === "cancelada") {
+                badgeContainer.classList.add("status-cancelada");
+                statusIcon.innerText = "❌";
+                statusText.innerText = "Viagem Cancelada";
+            }
+            else {
+                badgeContainer.classList.add("status-pendente");
+                statusIcon.innerText = "📌";
+                statusText.innerText = statusOriginal;
+            }
+        }
+
+        // ==========================================
+        // RASTREIO AO VIVO DO MOTORISTA NO MAPA
+        // ==========================================
+        async function rastrearMotoristaAoVivo() {
+            if (!driverIdToTrack || corridaEstaFinalizada) return;
+
+            try {
+                const response = await fetch(`${window.API_URL}/api/admin/motoristas/localizacao`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const motoristas = await response.json();
+
+                if (Array.isArray(motoristas)) {
+                    const mot = motoristas.find(m => (m.motorista_id || m.MotoristaID || m.id || m.ID) === driverIdToTrack);
+
+                    if (mot) {
+                        const lat = mot.latitude || mot.Latitude;
+                        const lng = mot.longitude || mot.Longitude;
+                        const idCorridaDoMotorista = parseInt(mot.corrida_ativa_id || mot.CorridaAtivaID || 0);
+
+                        let flagCorIconeMapa = "nesta_corrida";
+
+                        // Se o motorista tem uma viagem ativa com ID diferente da viagem do usuário
+                        // Mostramos o carro laranja para indicar "Finalizando outra viagem"
+                        if (idCorridaDoMotorista > 0 && idCorridaDoMotorista !== corridaID) {
+                            flagCorIconeMapa = "outra_corrida";
+
+                            // Opcional: Atualiza o texto visual para acalmar o passageiro
+                            document.getElementById('tracker-status-icon').innerText = "⚠️";
+                            document.getElementById('tracker-status-text').innerText = "Finalizando outra viagem...";
+                        } else if (idCorridaDoMotorista === corridaID) {
+                            flagCorIconeMapa = "nesta_corrida";
+                        }
+
+                        // Atualiza a Placa no Mapa
+                        if (lat && lng && lat !== 0) {
+                            if (carMarker) {
+                                carMarker.setLatLng([lat, lng]);
+                                carMarker.setIcon(criarIconeCarro(mot.nome_garantido || mot.nome || "Motorista", flagCorIconeMapa));
+                            } else {
+                                carMarker = L.marker([lat, lng], { icon: criarIconeCarro(mot.nome_garantido || mot.nome || "Motorista", flagCorIconeMapa) }).addTo(map);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao rastrear:", err);
+            }
+        }
+
+        function abrirRecibo() {
+            window.location.href = `../Dados/recibo.html?id=${corridaID}`;
+        }
+
+        window.onload = () => {
+            inicializarMapa();
+            carregarDetalhes();
+
+            // Fica checando o status no banco a cada 10 segundos
+            setInterval(carregarDetalhes, 10000);
+
+            // Fica buscando o carrinho (radar) a cada 4 segundos
+            setInterval(rastrearMotoristaAoVivo, 4000);
+        };
+    </script>
+</body>
+
+</html>
