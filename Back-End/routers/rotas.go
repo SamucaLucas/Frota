@@ -51,34 +51,21 @@ func ConfigurarRotas() *http.ServeMux {
 	//Rota de anuncio do admin
 
 	// Rotas do Admin (Abaixo dos seus middlewares de proteção de Admin)
-	http.HandleFunc("/api/admin/anuncios", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			controller.CriarAnuncio(w, r)
-		} else if r.Method == http.MethodGet {
-			controller.ListarAnunciosAdmin(w, r)
-		} else if r.Method == http.MethodDelete {
-			controller.DeletarAnuncio(w, r) // Vai bater aqui caso venha o DELETE no /api/admin/anuncios/{id}
-		}
-	})
-
-	// Rota para o Toggle (PUT /api/admin/anuncios/{id}/toggle)
-	// Uma forma simples de interceptar rotas com ID dinâmico no mux padrão:
-	http.HandleFunc("/api/admin/anuncios/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPut && strings.HasSuffix(r.URL.Path, "/toggle") {
-			controller.ToggleAnuncio(w, r)
-		} else if r.Method == http.MethodDelete {
-			controller.DeletarAnuncio(w, r)
-		}
-	})
+	r.HandleFunc("/api/admin/anuncios", controller.GerenciarAnunciosAdmin)  // GET e POST
+	r.HandleFunc("/api/admin/anuncios/", controller.GerenciarAnunciosAdmin) // GET e POST
 
 	// Rotas do Passageiro / Públicas
-	http.HandleFunc("/api/anuncios/ativos", controller.ListarAnunciosAtivos)
+	r.HandleFunc("/api/anuncios/ativos", controller.ListarAnunciosAtivos)
 
-	http.HandleFunc("/api/anuncios/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/api/anuncios/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/clique") {
 			controller.RegistrarClique(w, r)
 		}
 	})
+
+	// Libera o acesso público às imagens dos anúncios
+	fsUploads := http.FileServer(http.Dir("./uploads"))
+	r.Handle("/uploads/", http.StripPrefix("/uploads/", fsUploads))
 
 	return r
 }

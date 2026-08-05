@@ -156,3 +156,31 @@ func RegistrarClique(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+// GerenciarAnunciosAdmin (Dispatcher) - Coloque isso no seu controller de anúncios
+func GerenciarAnunciosAdmin(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+
+	// 1. Se tiver um ID na URL (Ex: /api/admin/anuncios/5/toggle)
+	if strings.HasPrefix(path, "/api/admin/anuncios/") && len(path) > len("/api/admin/anuncios/") {
+		if r.Method == http.MethodPut && strings.HasSuffix(path, "/toggle") {
+			ToggleAnuncio(w, r)
+			return
+		} else if r.Method == http.MethodDelete {
+			DeletarAnuncio(w, r)
+			return
+		}
+	}
+
+	// 2. Se for a rota raiz (/api/admin/anuncios)
+	switch r.Method {
+	case http.MethodPost:
+		CriarAnuncio(w, r) // Vai cadastrar
+		return
+	case http.MethodGet:
+		ListarAnunciosAdmin(w, r) // Vai listar
+		return
+	}
+
+	http.Error(w, `{"erro": "Método não permitido"}`, http.StatusMethodNotAllowed)
+}

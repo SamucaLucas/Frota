@@ -80,9 +80,7 @@ func main() {
 	// 3. Aqui carregaremos as rotas (pasta routers)
 	r := routers.ConfigurarRotas()
 
-	// Libera o acesso público às imagens dos anúncios
-	fsUploads := http.FileServer(http.Dir("./uploads"))
-	http.Handle("/uploads/", http.StripPrefix("/uploads/", fsUploads))
+	
 
 	IniciarMonitoramentoMotoristas()
 
