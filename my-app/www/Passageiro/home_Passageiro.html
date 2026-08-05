@@ -207,6 +207,7 @@
         .sb-theme-btn:active {
             background: var(--border);
         }
+
     </style>
 </head>
 
@@ -323,6 +324,14 @@
                 </div>
             </div>
 
+            <!-- CARROSSEL DE ANÚNCIOS (PATROCINADORES) -->
+            <div id="ad-container" class="ad-container" style="display: none;">
+                <div class="ad-badge">Patrocinado</div>
+                <a id="ad-link" href="#" target="_blank" onclick="registrarCliqueAd(event)">
+                    <img id="ad-image" src="" alt="Patrocinador">
+                </a>
+            </div>
+
             <div class="sec-lbl">Próximas Viagens</div>
             <div id="lista-proximas">
                 <div class="card list-card" style="text-align: center; padding: 30px 10px;">
@@ -341,6 +350,7 @@
     </div>
 
     <script src="../static/app.js"></script>
+    <script src="../static/anuncios.js"></script>
 
     <script>
         function toggleMenu() {
@@ -407,6 +417,7 @@
                         // Renderiza as listas
                         renderizarProximas(dados.proximas);
                         renderizarHistorico(dados.historico);
+                        carregarAnuncios();
                     } else {
                         alert("Erro ao carregar dados: " + dados.erro);
                     }
@@ -432,7 +443,7 @@
                     : `<span style="color: var(--acc); font-style: italic;">Aguardando...</span>`;
 
                 html += `
-                <div class="card list-card" onclick="window.location.href='../Em dev/contrucao.html'">
+                <div class="card list-card" onclick="window.location.href='../Passageiro/detalhes_corrida.html?id=${v.ID}'">
                     <div class="row" style="margin-bottom: 8px;">
                         <div style="font-size: 14px; font-weight: 800; color: var(--t1);">
                             ${v.OrigemTexto} → ${v.DestinoTexto}

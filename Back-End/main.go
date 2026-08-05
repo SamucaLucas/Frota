@@ -80,6 +80,8 @@ func main() {
 	// 3. Aqui carregaremos as rotas (pasta routers)
 	r := routers.ConfigurarRotas()
 
+	
+
 	IniciarMonitoramentoMotoristas()
 
 	// Subindo o servidor
@@ -96,5 +98,4 @@ func main() {
 		fmt.Println("Erro ao iniciar servidor:", err)
 	}
 
-	
 }

@@ -198,3 +198,17 @@ type ConfiguracaoApp struct {
 func (ConfiguracaoApp) TableName() string {
 	return "configuracoes_app"
 }
+
+type Anuncio struct {
+    ID          uint      `gorm:"primaryKey" json:"id"`
+    Empresa     string    `json:"empresa"`
+    ImagemURL   string    `json:"imagem_url"` // Caminho da imagem salva no servidor ou nuvem
+    LinkDestino string    `json:"link_destino"` // Para onde o usuário vai se clicar
+    Ativo       bool      `json:"ativo" gorm:"default:true"`
+    Cliques     int       `json:"cliques" gorm:"default:0"` // Ótimo para mostrar métricas ao patrocinador!
+    CreatedAt   time.Time `json:"created_at"`
+}
+
+func (Anuncio) TableName() string {
+	return "anuncio"
+}

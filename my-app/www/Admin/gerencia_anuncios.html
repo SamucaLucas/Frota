@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gerenciar Anúncios</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="stylesheet" href="../static/style.css">
+
+    <!-- IMPORTANDO O CROPPER.JS PARA RECORTE DE IMAGEM -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            font-family: 'Sora', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-voltar {
+            background: transparent;
+            border: none;
+            color: var(--t1);
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--t1);
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .content {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .form-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--t1);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .styled-input {
+            width: 100%;
+            background-color: var(--bg);
+            border: 1.5px solid var(--border);
+            color: var(--t1);
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .styled-input:focus {
+            border-color: var(--acc);
+        }
+
+        .file-upload-wrapper {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            cursor: pointer;
+            overflow: hidden;
+            transition: 0.2s;
+        }
+
+        .file-upload-wrapper:hover {
+            border-color: var(--acc);
+        }
+
+        .file-upload-wrapper input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .file-upload-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--t2);
+            z-index: 1;
+        }
+
+        .image-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            display: none;
+        }
+
+        .btn-submit {
+            background: var(--acc);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        /* --- ESTILOS DO MODAL DE CORTE --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 16px;
+            text-align: center;
+            font-weight: 800;
+            color: var(--t1);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .crop-container {
+            width: 100%;
+            max-height: 50vh;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .crop-container img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .modal-footer {
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-confirm {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 800;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: var(--t3);
+            border: 1px solid var(--border);
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 800;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        /* --- LISTA DE ANÚNCIOS --- */
+        .ad-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ad-header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .ad-banner-img {
+            width: 90px;
+            height: 30px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+
+        .ad-info {
+            flex: 1;
+        }
+
+        .ad-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--t1);
+            margin-bottom: 4px;
+        }
+
+        .ad-clicks {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--t3);
+        }
+
+        .ad-actions {
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            border: none;
+            text-transform: uppercase;
+        }
+
+        .btn-toggle-on {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+        }
+
+        .btn-toggle-off {
+            background: rgba(149, 165, 166, 0.15);
+            color: #95a5a6;
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--t3);
+            font-size: 13px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-bar">
+        <button class="btn-voltar" onclick="window.location.href='home_admin.html'">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <div class="page-title">Patrocinadores</div>
+    </div>
+
+    <div class="content">
+        <!-- FORMULÁRIO DE CADASTRO -->
+        <div class="form-section">
+            <div class="section-title">📢 Novo Anúncio</div>
+            <form id="form-anuncio" onsubmit="salvarAnuncio(event)">
+                <div class="input-group">
+                    <label class="input-label">Empresa / Título</label>
+                    <input type="text" id="input-empresa" class="styled-input" placeholder="Ex: Pizzaria do Zé"
+                        required>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Link de Destino (Site/WhatsApp)</label>
+                    <input type="url" id="input-link" class="styled-input" placeholder="https://wa.me/559999999999"
+                        required>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Imagem do Banner (Retangular)</label>
+                    <div class="file-upload-wrapper">
+                        <span class="file-upload-text" id="upload-text">📸 Toque para escolher e recortar</span>
+                        <img id="image-preview" class="image-preview" alt="Preview">
+                        <input type="file" id="input-imagem" accept="image/*" onchange="abrirRecortador(event)">
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit" id="btn-submit">➕ Cadastrar Patrocinador</button>
+            </form>
+        </div>
+
+        <div class="section-title" style="margin-top: 30px;">Anúncios Atuais</div>
+        <div id="lista-anuncios">
+            <div class="empty-state">Carregando anúncios...</div>
+        </div>
+    </div>
+
+    <!-- MODAL DO CROPPER (RECORTADOR) -->
+    <div id="modal-crop" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">✂️ Ajuste a Imagem</div>
+            <div class="crop-container">
+                <img id="image-to-crop" src="">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="fecharRecortador()">Cancelar</button>
+                <button class="btn-confirm" onclick="confirmarRecorte()">Salvar Corte</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <script>
+        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+        if (!token) window.location.href = "../Usuario/login.html";
+
+        let cropper = null;
+        let arquivoRecortadoFinal = null; // Guardamos o arquivo pronto para enviar aqui
+
+        window.onload = carregarAnuncios;
+
+        // ==========================================
+        // LÓGICA DE RECORTE (CROPPER.JS)
+        // ==========================================
+        function abrirRecortador(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Se o arquivo for válido, cria a URL para o visualizador
+            const url = URL.createObjectURL(file);
+            document.getElementById('image-to-crop').src = url;
+            document.getElementById('modal-crop').style.display = 'flex';
+
+            // Reseta a imagem de fundo do formulário
+            document.getElementById('image-preview').style.display = 'none';
+            document.getElementById('upload-text').style.display = 'block';
+
+            // Aguarda o HTML carregar a imagem para iniciar o Cropper
+            setTimeout(() => {
+                const imageElement = document.getElementById('image-to-crop');
+
+                // Se já tinha um cropper aberto antes, a gente destroi ele
+                if (cropper) cropper.destroy();
+
+                // Inicializa o recortador obrigando a proporção de 3:1 (Ex: 600x200 ou 900x300)
+                cropper = new Cropper(imageElement, {
+                    aspectRatio: 3 / 1,
+                    viewMode: 2,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    background: false,
+                    guides: true
+                });
+            }, 100);
+        }
+
+        function fecharRecortador() {
+            document.getElementById('modal-crop').style.display = 'none';
+            document.getElementById('input-imagem').value = ""; // Limpa o input
+            if (cropper) { cropper.destroy(); cropper = null; }
+        }
+
+        function confirmarRecorte() {
+            if (!cropper) return;
+
+            // Pega o Canvas do recorte (Forçamos uma saída em boa qualidade, máx 900x300)
+            const canvas = cropper.getCroppedCanvas({
+                width: 900,
+                height: 300,
+                imageSmoothingQuality: 'high'
+            });
+
+            // Transforma o Canvas em um arquivo WebP comprimido (Super leve, excelente para internet móvel)
+            canvas.toBlob((blob) => {
+                // Guarda o blob gerado na nossa variável global
+                arquivoRecortadoFinal = new File([blob], "banner.webp", { type: "image/webp" });
+
+                // Mostra o resultado final bonito lá na caixinha do formulário
+                const urlPreview = URL.createObjectURL(blob);
+                const imgPreview = document.getElementById('image-preview');
+                imgPreview.src = urlPreview;
+                imgPreview.style.display = 'block';
+                document.getElementById('upload-text').style.display = 'none';
+
+                // Fecha o Modal
+                fecharRecortador();
+            }, 'image/webp', 0.8); // 0.8 é 80% de qualidade, ótimo equilíbrio!
+        }
+
+
+        // ==========================================
+        // COMUNICAÇÃO COM O BACK-END
+        // ==========================================
+        async function salvarAnuncio(event) {
+            event.preventDefault();
+
+            if (!arquivoRecortadoFinal) {
+                alert("Por favor, selecione e recorte uma imagem do patrocinador.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "⏳ Enviando...";
+            btn.disabled = true;
+
+            const empresa = document.getElementById('input-empresa').value;
+            const link = document.getElementById('input-link').value;
+
+            // Anexamos a imagem recortada ao formulário em vez da imagem original pesada!
+            const formData = new FormData();
+            formData.append("empresa", empresa);
+            formData.append("link_destino", link);
+            formData.append("imagem", arquivoRecortadoFinal);
+
+            try {
+                const res = await fetch(`${window.API_URL}/api/admin/anuncios`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` },
+                    body: formData
+                });
+
+                const dados = await res.json();
+
+                if (res.ok && dados.sucesso) {
+                    alert("Patrocinador cadastrado com sucesso!");
+
+                    // Limpeza pesada
+                    event.target.reset();
+                    arquivoRecortadoFinal = null;
+                    document.getElementById('image-preview').style.display = 'none';
+                    document.getElementById('upload-text').style.display = 'block';
+
+                    carregarAnuncios();
+                } else {
+                    alert(dados.erro || "Falha ao cadastrar anúncio.");
+                }
+            } catch (err) {
+                alert("Erro de conexão ao salvar anúncio.");
+            } finally {
+                btn.innerText = "➕ Cadastrar Patrocinador";
+                btn.disabled = false;
+            }
+        }
+
+        async function carregarAnuncios() {
+            try {
+                const res = await fetch(`${window.API_URL}/api/admin/anuncios`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Falha");
+                const anuncios = await res.json();
+                renderizarAnuncios(anuncios);
+            } catch (err) {
+                document.getElementById('lista-anuncios').innerHTML = '<div class="empty-state">Ainda não há anúncios cadastrados ou erro de conexão.</div>';
+            }
+        }
+
+        function renderizarAnuncios(anuncios) {
+            const container = document.getElementById('lista-anuncios');
+            if (!anuncios || anuncios.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhum patrocinador cadastrado.</div>';
+                return;
+            }
+
+            let html = "";
+            anuncios.forEach(ad => {
+                const btnToggleClass = ad.ativo ? "btn-toggle-on" : "btn-toggle-off";
+                const btnToggleText = ad.ativo ? "Pausar" : "Ativar";
+
+                let imgUrl = ad.imagem_url;
+                if (!imgUrl.startsWith("http")) imgUrl = `${window.API_URL}${imgUrl}`;
+
+                html += `
+                <div class="ad-card">
+                    <div class="ad-header">
+                        <img src="${imgUrl}" class="ad-banner-img" alt="Banner" onerror="this.src='../static/img/Logo-icon.png'">
+                        <div class="ad-info">
+                            <div class="ad-title">${ad.empresa}</div>
+                            <div class="ad-clicks">👆 ${ad.cliques || 0} acessos</div>
+                        </div>
+                    </div>
+                    <div class="ad-actions">
+                        <button class="btn-action ${btnToggleClass}" onclick="alternarStatus(${ad.id}, ${ad.ativo})">${btnToggleText}</button>
+                        <button class="btn-action btn-delete" onclick="deletarAnuncio(${ad.id})">Excluir</button>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function alternarStatus(id, statusAtual) {
+            try {
+                const res = await fetch(`${window.API_URL}/api/admin/anuncios/${id}/toggle`, {
+                    method: "PUT",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) carregarAnuncios();
+            } catch (err) { console.error(err); }
+        }
+
+        async function deletarAnuncio(id) {
+            if (!confirm("Tem certeza que deseja excluir permanentemente este anúncio?")) return;
+            try {
+                const res = await fetch(`${window.API_URL}/api/admin/anuncios/${id}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) carregarAnuncios();
+            } catch (err) { console.error(err); }
+        }
+    </script>
+</body>
+
+</html>

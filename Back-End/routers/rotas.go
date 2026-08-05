@@ -2,6 +2,7 @@ package routers
 
 import (
 	"net/http"
+	"strings"
 
 	"Frota/controller"
 )
@@ -35,7 +36,7 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/api/admin/atribuir", controller.ApiPostAtribuir)   // POST salvando os dados
 	r.HandleFunc("/api/admin/motoristas/localizacao", controller.BuscarLocalizacoesAdmin)
 	r.HandleFunc("/api/admin/nova-chamada", controller.NovaChamada)
-	
+
 	// Rotas de API - Motorista
 	r.HandleFunc("/api/motorista/home", controller.ApiHomeMotorista)
 	r.HandleFunc("/api/motorista/concluir", controller.ApiPostConcluirCorrida)
@@ -46,6 +47,25 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/auth/google/login", controller.GoogleLogin)
 	r.HandleFunc("/auth/google/callback", controller.GoogleCallback)
 	r.HandleFunc("/auth/google/completar", controller.CompletarCadastroGoogle)
+
+	//Rota de anuncio do admin
+
+	// Rotas do Admin (Abaixo dos seus middlewares de proteção de Admin)
+	r.HandleFunc("/api/admin/anuncios", controller.GerenciarAnunciosAdmin)  // GET e POST
+	r.HandleFunc("/api/admin/anuncios/", controller.GerenciarAnunciosAdmin) // GET e POST
+
+	// Rotas do Passageiro / Públicas
+	r.HandleFunc("/api/anuncios/ativos", controller.ListarAnunciosAtivos)
+
+	r.HandleFunc("/api/anuncios/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/clique") {
+			controller.RegistrarClique(w, r)
+		}
+	})
+
+	// Libera o acesso público às imagens dos anúncios
+	fsUploads := http.FileServer(http.Dir("./uploads"))
+	r.Handle("/uploads/", http.StripPrefix("/uploads/", fsUploads))
 
 	return r
 }

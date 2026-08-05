@@ -295,61 +295,6 @@
         }
     </script>
 
-    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-    <div class="sidebar" id="sidebar">
-        <div class="sb-header">
-            Painel Admin
-            <button class="sb-close" onclick="toggleMenu()">×</button>
-        </div>
-        <button id="theme-toggle" class="sb-theme-btn">☀️ Alternar Tema</button>
-        <button class="sb-link" onclick="window.location.href='home_admin.html'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
-            </svg>
-            Despacho
-        </button>
-        <button class="sb-link active" onclick="window.location.href='mapa_admin.html'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                stroke-linejoin="round">
-                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-                <line x1="9" y1="3" x2="9" y2="18" />
-                <line x1="15" y1="6" x2="15" y2="21" />
-            </svg>
-            Mapa da Frota
-        </button>
-        <button class="sb-link" onclick="window.location.href='sorteio_admin.html'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                stroke-linejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-            Sorteio
-        </button>
-        <button class="sb-link" onclick="window.location.href='../Em dev/contrucao.html'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                <path d="M16 3.13a4 4 0 010 7.75" />
-            </svg>
-            Motoristas
-        </button>
-        <button class="sb-link" onclick="fazerLogout()"
-            style="margin-top: auto; color: #EF4444; border-bottom: none; border-top: 1px solid var(--border);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            Sair da Conta
-        </button>
-    </div>
 
     <div class="app-container">
 
@@ -361,14 +306,7 @@
                 </svg>
             </button>
             <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Radar da Frota</div>
-            <button class="menu-btn" onclick="toggleMenu()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                    stroke-linejoin="round" width="22" height="22">
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-            </button>
+    
         </div>
 
         <div class="map-wrapper">

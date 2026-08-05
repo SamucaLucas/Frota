@@ -290,3 +290,43 @@ body::before {
 .light-mode .sb-theme-btn svg {
     color: #111111 !important;
 }
+
+/* ========================================== */
+/* ESTILOS GLOBAIS DO CARROSSEL DE ANÚNCIOS   */
+/* ========================================== */
+.ad-container {
+    margin: 16px 18px; 
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    height: 110px;
+}
+
+.ad-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+}
+
+.ad-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    transition: opacity 0.4s ease-in-out;
+}
