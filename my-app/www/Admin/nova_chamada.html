@@ -9,7 +9,6 @@
     <link rel="manifest" href="../manifest.json">
     <link rel="stylesheet" href="../static/style.css">
 
-    <!-- LEAFLET CSS PARA O MAPA -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 
     <style>
@@ -129,6 +128,10 @@
             transition: all 0.2s;
         }
 
+        .btn-util:active {
+            transform: scale(0.95);
+        }
+
         .btn-util.active {
             background: var(--acc-bg);
             border-color: var(--acc-border);
@@ -173,7 +176,9 @@
             text-align: center;
         }
 
-        /* MAPA */
+        /* ========================================= */
+        /* MÁGICA DO CENTER PIN (ESTILO 99/UBER)     */
+        /* ========================================= */
         .map-wrapper {
             margin-bottom: 20px;
             border-radius: 16px;
@@ -185,38 +190,124 @@
 
         #mapa {
             width: 100%;
-            height: 260px;
+            height: 280px;
             z-index: 1;
+        }
+
+        .center-pin-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 1000;
+            pointer-events: none;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .center-pin-container.is-dragging {
+            transform: translate(-50%, -130%);
+        }
+
+        .pin-visual {
+            width: 32px;
+            height: 32px;
+            border: 4px solid #fff;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s;
+        }
+
+        .pin-visual.origem {
+            background: #2ecc71;
+        }
+
+        .pin-visual.destino {
+            background: #e74c3c;
+        }
+
+        .pin-shadow {
+            width: 10px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            margin-top: 6px;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .center-pin-container.is-dragging .pin-shadow {
+            opacity: 0.3;
+            transform: scale(0.6);
         }
 
         .map-instruction {
             position: absolute;
-            bottom: 8px;
+            top: 12px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(10, 10, 12, 0.85);
             color: #fff;
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
-            z-index: 99;
+            z-index: 999;
             pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             display: none;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
-        .pin-origem-visual {
-            width: 20px;
-            height: 20px;
+        .btn-confirmar-pin {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--t1);
+            color: var(--bg);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 800;
+            z-index: 1000;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+        }
+
+        .btn-confirmar-pin:active {
+            transform: translateX(-50%) scale(0.96);
+        }
+
+        .light-mode .map-instruction {
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+        }
+
+        .light-mode .btn-confirmar-pin {
+            background: var(--t1);
+            color: var(--bg);
+        }
+
+        /* Marcadores Definitivos do Mapa */
+        .pin-fixed-origem {
+            width: 16px;
+            height: 16px;
             background: #2ecc71;
             border: 3px solid #fff;
             border-radius: 50%;
             box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
         }
 
-        .pin-destino-visual {
-            width: 20px;
-            height: 20px;
+        .pin-fixed-destino {
+            width: 16px;
+            height: 16px;
             background: #e74c3c;
             border: 3px solid #fff;
             border-radius: 50%;
@@ -281,7 +372,6 @@
             color: var(--acc) !important;
         }
 
-        /* --- CORES DO LABEL DO CARRO NO MAPA (mesmo padrão do Mapa da Frota / Despacho) --- */
         .light-mode .car-label-inline {
             background: rgba(255, 255, 255, 0.95) !important;
             color: #000 !important;
@@ -313,7 +403,6 @@
             <form id="form-nova-chamada">
                 <div id="mensagem-erro" class="toast-msg toast-error" style="display: none; margin-bottom: 16px;"></div>
 
-                <!-- DADOS DO CLIENTE -->
                 <div class="card-secao">
                     <div style="font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 12px;">👤 Dados do
                         Cliente</div>
@@ -327,7 +416,6 @@
                     </div>
                 </div>
 
-                <!-- MAPA E ROTAS -->
                 <div class="card-secao">
                     <div style="font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 12px;">📍 Trajeto e
                         Mapa</div>
@@ -345,7 +433,7 @@
                                 </svg>
                             </button>
                             <button type="button" id="pin-origem" class="btn-util"
-                                onclick="ativarInsercaoMapa('origem')" title="Marcar no mapa">
+                                onclick="ativarModoCenterPin('origem')" title="Marcar no mapa">
                                 <span style="color: #2ecc71;">📍</span>
                             </button>
                         </div>
@@ -360,7 +448,7 @@
                             <input type="text" id="destino_texto" class="form-control"
                                 placeholder="Endereço de destino..." autocomplete="off" required>
                             <button type="button" id="pin-destino" class="btn-util"
-                                onclick="ativarInsercaoMapa('destino')" title="Marcar no mapa">
+                                onclick="ativarModoCenterPin('destino')" title="Marcar no mapa">
                                 <span style="color: #e74c3c;">📍</span>
                             </button>
                         </div>
@@ -371,7 +459,14 @@
 
                     <div class="map-wrapper">
                         <div id="mapa"></div>
-                        <div id="instrucao-mapa" class="map-instruction">Toque no mapa para fixar o ponto</div>
+
+                        <div id="center-pin" class="center-pin-container">
+                            <div id="pin-visual" class="pin-visual"></div>
+                            <div class="pin-shadow"></div>
+                        </div>
+                        <div id="instrucao-mapa" class="map-instruction">Arrastar para escolher</div>
+                        <button type="button" id="btn-confirmar-pin" class="btn-confirmar-pin"
+                            onclick="confirmarCenterPin()">Confirmar Local</button>
                     </div>
 
                     <div class="form-group">
@@ -384,7 +479,6 @@
                                 style="text-transform:none; font-weight:500; color:var(--t3);">(0 km)</span></label>
                         <div class="preco-input-wrapper">
                             <span class="preco-prefix">R$</span>
-                            <!-- O valor calcula automático, mas o admin pode apagar e digitar outro -->
                             <input type="number" step="0.01" id="valor_estimado" class="form-control preco-input"
                                 placeholder="0.00" required>
                         </div>
@@ -393,7 +487,6 @@
                     <input type="hidden" id="tipo_viagem">
                 </div>
 
-                <!-- ATRIBUIR MOTORISTA -->
                 <div class="card-secao" style="border-top: 3px solid var(--acc);">
                     <div style="font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 12px;">🚗 Atribuir a
                         um Motorista</div>
@@ -412,33 +505,30 @@
 
     <script src="../static/app.js"></script>
 
-    <!-- LEAFLET JS PARA O MAPA -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         const token = sessionStorage.getItem("token") || localStorage.getItem("token");
         if (!token) window.location.href = "../Usuario/login.html";
 
         // ==========================================
-        // VARIÁVEIS GLOBAIS (MAPA E TAXAS)
+        // VARIÁVEIS GLOBAIS
         // ==========================================
         let mapa, origemMarker, destinoMarker;
         let marcadoresMotoristas = {};
         let modoSelecaoMapa = null;
+        let timerGeocoding = null;
         let timeoutBusca;
         let taxasAtuais = null;
         let meuAdminId = null;
-        let listaRenderizada = false; // Controle para criar os botões da lista apenas uma vez
+        let listaRenderizada = false;
 
-        const iconeOrigem = L.divIcon({ className: 'custom-icon', html: '<div class="pin-origem-visual"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
-        const iconeDestino = L.divIcon({ className: 'custom-icon', html: '<div class="pin-destino-visual"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+        const iconeOrigem = L.divIcon({ className: 'custom-icon', html: '<div class="pin-fixed-origem"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+        const iconeDestino = L.divIcon({ className: 'custom-icon', html: '<div class="pin-fixed-destino"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
 
-        // =========================================================
-        // IDÊNTICO AO MAPA DA FROTA E À TELA DE DESPACHO
-        // =========================================================
         function criarIconeCarro(nome, statusSafe) {
-            let corShadow = "rgba(255,255,255,0.5)"; // Cinza/Offline
-            if (statusSafe === "disponivel") corShadow = "#2ecc71"; // Verde
-            else if (statusSafe === "em corrida" || statusSafe === "ocupado") corShadow = "#f39c12"; // Laranja
+            let corShadow = "rgba(255,255,255,0.5)";
+            if (statusSafe === "disponivel") corShadow = "#2ecc71";
+            else if (statusSafe === "em corrida" || statusSafe === "ocupado") corShadow = "#f39c12";
 
             return L.divIcon({
                 className: '',
@@ -447,9 +537,7 @@
                         <div class="car-label-inline" style="background: rgba(0,0,0,0.85); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; margin-bottom: 2px; border: 1px solid rgba(255,255,255,0.2); font-family: 'Sora', sans-serif;">
                             ${nome}
                         </div>
-                        <div style="font-size: 28px; line-height: 1; filter: drop-shadow(0px 0px 6px ${corShadow});">
-                            🚗
-                        </div>
+                        <div style="font-size: 28px; line-height: 1; filter: drop-shadow(0px 0px 6px ${corShadow});">🚗</div>
                     </div>
                 `,
                 iconSize: [60, 50],
@@ -458,23 +546,40 @@
             });
         }
 
-        // Seta a data/hora atual como padrão no input
+        // Configura Data Atual Padrão
         const now = new Date();
-        const localDateTime = (new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString()).slice(0, 16);
-        document.getElementById('data_hora').value = localDateTime;
+        document.getElementById('data_hora').value = (new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString()).slice(0, 16);
 
         // ==========================================
         // INICIALIZAÇÃO
         // ==========================================
         document.addEventListener("DOMContentLoaded", function () {
-            mapa = L.map('mapa', { zoomControl: false }).setView([-6.4975, -49.8794], 13);
+            mapa = L.map('mapa', { zoomControl: false }).setView([-6.4975, -49.8794], 14);
+            L.control.zoom({ position: 'bottomright' }).addTo(mapa);
+
             const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
             const tileUrl = isLight ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
             L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(mapa);
 
-            mapa.on('click', function (e) {
+            // EVENTOS DO CENTER PIN
+            mapa.on('dragstart', function () {
                 if (!modoSelecaoMapa) return;
-                atualizarPosicaoPorPino(modoSelecaoMapa, e.latlng.lat, e.latlng.lng);
+                document.getElementById('center-pin').classList.add('is-dragging');
+                document.getElementById(`${modoSelecaoMapa}_texto`).value = "Lendo coordenadas...";
+                clearTimeout(timerGeocoding);
+            });
+
+            mapa.on('dragend', function () {
+                if (!modoSelecaoMapa) return;
+                document.getElementById('center-pin').classList.remove('is-dragging');
+
+                const centro = mapa.getCenter();
+                document.getElementById(`${modoSelecaoMapa}_lat`).value = centro.lat;
+                document.getElementById(`${modoSelecaoMapa}_lng`).value = centro.lng;
+
+                timerGeocoding = setTimeout(() => {
+                    buscarEnderecoReverso(modoSelecaoMapa, centro.lat, centro.lng);
+                }, 500);
             });
 
             carregarTaxas();
@@ -482,9 +587,6 @@
             setInterval(atualizarMapaTempoReal, 5000);
         });
 
-        // ==========================================
-        // LÓGICA DE ROTAS E OSRM (PASSAGEIRO)
-        // ==========================================
         async function carregarTaxas() {
             try {
                 const response = await fetch(`${window.API_URL}/api/configuracoes`);
@@ -492,67 +594,93 @@
             } catch (err) { console.error("Erro taxas:", err); }
         }
 
-        function ativarInsercaoMapa(tipo) {
-            const btnOrigem = document.getElementById('pin-origem');
-            const btnDestino = document.getElementById('pin-destino');
+        // ==========================================
+        // LÓGICA DO CENTER PIN E BUSCA
+        // ==========================================
+        function ativarModoCenterPin(tipo) {
+            const centerPin = document.getElementById('center-pin');
+            const pinVisual = document.getElementById('pin-visual');
+            const btnConfirmar = document.getElementById('btn-confirmar-pin');
             const instrucao = document.getElementById('instrucao-mapa');
+            const btnModo = document.getElementById(`pin-${tipo}`);
 
             if (modoSelecaoMapa === tipo) {
-                modoSelecaoMapa = null;
-                btnOrigem.classList.remove('active'); btnDestino.classList.remove('active');
-                instrucao.style.display = 'none';
+                desativarModoCenterPin();
+                return;
+            }
+
+            document.getElementById('pin-origem').classList.remove('active');
+            document.getElementById('pin-destino').classList.remove('active');
+            btnModo.classList.add('active');
+
+            modoSelecaoMapa = tipo;
+            pinVisual.className = `pin-visual ${tipo}`;
+            centerPin.style.display = 'flex';
+            btnConfirmar.style.display = 'block';
+            instrucao.style.display = 'block';
+
+            btnConfirmar.innerText = `Confirmar ${tipo === 'origem' ? 'Origem' : 'Destino'}`;
+
+            const latAtual = document.getElementById(`${tipo}_lat`).value;
+            const lngAtual = document.getElementById(`${tipo}_lng`).value;
+            if (latAtual && lngAtual) {
+                mapa.setView([latAtual, lngAtual], 16);
+            }
+
+            if (tipo === 'origem' && origemMarker) mapa.removeLayer(origemMarker);
+            if (tipo === 'destino' && destinoMarker) mapa.removeLayer(destinoMarker);
+        }
+
+        function confirmarCenterPin() {
+            if (!modoSelecaoMapa) return;
+            const tipo = modoSelecaoMapa;
+            const centro = mapa.getCenter();
+
+            fixarMarcadorNoMapa(tipo, centro.lat, centro.lng);
+            buscarEnderecoReverso(tipo, centro.lat, centro.lng);
+            calcularEstimativa();
+            desativarModoCenterPin();
+        }
+
+        function desativarModoCenterPin() {
+            modoSelecaoMapa = null;
+            document.getElementById('pin-origem').classList.remove('active');
+            document.getElementById('pin-destino').classList.remove('active');
+            document.getElementById('center-pin').style.display = 'none';
+            document.getElementById('btn-confirmar-pin').style.display = 'none';
+            document.getElementById('instrucao-mapa').style.display = 'none';
+
+            if (document.getElementById('origem_lat').value) fixarMarcadorNoMapa('origem', document.getElementById('origem_lat').value, document.getElementById('origem_lng').value);
+            if (document.getElementById('destino_lat').value) fixarMarcadorNoMapa('destino', document.getElementById('destino_lat').value, document.getElementById('destino_lng').value);
+        }
+
+        function fixarMarcadorNoMapa(tipo, lat, lng) {
+            const coord = [lat, lng];
+            if (tipo === 'origem') {
+                if (origemMarker) mapa.removeLayer(origemMarker);
+                origemMarker = L.marker(coord, { icon: iconeOrigem }).addTo(mapa);
             } else {
-                modoSelecaoMapa = tipo;
-                btnOrigem.classList.toggle('active', tipo === 'origem');
-                btnDestino.classList.toggle('active', tipo === 'destino');
-                instrucao.innerText = `Toque no mapa para fixar a ${tipo === 'origem' ? 'Origem (Verde)' : 'Destino (Vermelho)'}`;
-                instrucao.style.display = 'block';
+                if (destinoMarker) mapa.removeLayer(destinoMarker);
+                destinoMarker = L.marker(coord, { icon: iconeDestino }).addTo(mapa);
+            }
+            if (!modoSelecaoMapa && origemMarker && destinoMarker) {
+                mapa.fitBounds(new L.featureGroup([origemMarker, destinoMarker]).getBounds().pad(0.3));
             }
         }
 
-        function atualizarPosicaoPorPino(tipo, lat, lng) {
-            document.getElementById(`${tipo}_lat`).value = lat;
-            document.getElementById(`${tipo}_lng`).value = lng;
+        function buscarEnderecoReverso(tipo, lat, lng) {
             const inputTexto = document.getElementById(`${tipo}_texto`);
-            inputTexto.value = "Buscando endereço...";
-
-            atualizarMarcadorNoMapa(tipo, lat, lng);
-
+            inputTexto.value = "Traduzindo local...";
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                 .then(res => res.json())
                 .then(data => {
                     let endereco = data.address.road || data.address.suburb || "Local no mapa";
                     if (data.address.house_number) endereco += ", " + data.address.house_number;
+                    if (data.address.suburb && data.address.road) endereco += " - " + data.address.suburb;
                     inputTexto.value = endereco;
-                    ativarInsercaoMapa(tipo);
-                    calcularEstimativa();
                 }).catch(() => {
-                    inputTexto.value = `Ponto (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-                    ativarInsercaoMapa(tipo);
-                    calcularEstimativa();
+                    inputTexto.value = `Ponto (${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)})`;
                 });
-        }
-
-        function atualizarMarcadorNoMapa(tipo, lat, lng) {
-            const coord = [lat, lng];
-            if (tipo === 'origem') {
-                if (origemMarker) { origemMarker.setLatLng(coord); }
-                else {
-                    origemMarker = L.marker(coord, { icon: iconeOrigem, draggable: true }).addTo(mapa);
-                    origemMarker.on('dragend', function () { const p = origemMarker.getLatLng(); atualizarPosicaoPorPino('origem', p.lat, p.lng); });
-                }
-            } else {
-                if (destinoMarker) { destinoMarker.setLatLng(coord); }
-                else {
-                    destinoMarker = L.marker(coord, { icon: iconeDestino, draggable: true }).addTo(mapa);
-                    destinoMarker.on('dragend', function () { const p = destinoMarker.getLatLng(); atualizarPosicaoPorPino('destino', p.lat, p.lng); });
-                }
-            }
-            if (origemMarker && destinoMarker) {
-                mapa.fitBounds(new L.featureGroup([origemMarker, destinoMarker]).getBounds().pad(0.3));
-            } else {
-                mapa.setView(coord, 15);
-            }
         }
 
         function configurarBuscaEnderecos(inputId, listId, latId, lngId, tipo) {
@@ -575,7 +703,9 @@
                                     input.value = local.display_name.split(',').slice(0, 3).join(', ');
                                     document.getElementById(latId).value = local.lat; document.getElementById(lngId).value = local.lon;
                                     list.style.display = 'none';
-                                    atualizarMarcadorNoMapa(tipo, parseFloat(local.lat), parseFloat(local.lon));
+
+                                    mapa.setView([local.lat, local.lon], 16);
+                                    fixarMarcadorNoMapa(tipo, parseFloat(local.lat), parseFloat(local.lon));
                                     calcularEstimativa();
                                 };
                                 list.appendChild(div);
@@ -586,13 +716,38 @@
             document.addEventListener('click', (e) => { if (e.target !== input && e.target !== list) list.style.display = 'none'; });
         }
 
+        configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng', 'origem');
+        configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng', 'destino');
+
         async function pegarLocalizacao() {
             const btnGps = document.querySelector('.btn-util');
-            document.getElementById('origem_texto').value = "Buscando satélite..."; btnGps.style.opacity = "0.5";
-            navigator.geolocation.getCurrentPosition(pos => {
-                atualizarPosicaoPorPino('origem', pos.coords.latitude, pos.coords.longitude);
+            const inputOrigem = document.getElementById('origem_texto');
+            inputOrigem.value = "Buscando satélite..."; btnGps.style.opacity = "0.5";
+
+            try {
+                let lat, lng;
+                if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                    const permission = await Capacitor.Plugins.Geolocation.checkPermissions();
+                    if (permission.location !== 'granted') await Capacitor.Plugins.Geolocation.requestPermissions();
+                    const coordinates = await Capacitor.Plugins.Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+                    lat = coordinates.coords.latitude; lng = coordinates.coords.longitude;
+                } else {
+                    if (!navigator.geolocation) throw new Error("Sem GPS");
+                    const pos = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true }));
+                    lat = pos.coords.latitude; lng = pos.coords.longitude;
+                }
+
+                document.getElementById('origem_lat').value = lat;
+                document.getElementById('origem_lng').value = lng;
+                mapa.setView([lat, lng], 16);
+                fixarMarcadorNoMapa('origem', lat, lng);
+                buscarEnderecoReverso('origem', lat, lng);
                 btnGps.style.opacity = "1";
-            }, err => { alert("Ative o GPS."); btnGps.style.opacity = "1"; document.getElementById('origem_texto').value = ""; });
+                calcularEstimativa();
+            } catch (error) {
+                inputOrigem.value = ""; btnGps.style.opacity = "1";
+                alert("Ative seu GPS.");
+            }
         }
 
         function calcularEstimativa() {
@@ -606,8 +761,7 @@
                     .then(data => {
                         if (data.routes && data.routes.length > 0) {
                             const distanciaKm = parseFloat((data.routes[0].distance / 1000).toFixed(1));
-                            let valorFinal = 0;
-                            let tipoViagem = "padrao";
+                            let valorFinal = 0; let tipoViagem = "padrao";
 
                             if (distanciaKm <= taxasAtuais.limite_urbano) {
                                 valorFinal = taxasAtuais.base_urbana;
@@ -649,13 +803,9 @@
             try {
                 const urlBase = window.API_URL;
                 const tokenAdmin = localStorage.getItem("token") || sessionStorage.getItem("token");
+                const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, { headers: { "Authorization": `Bearer ${tokenAdmin}` } });
 
-                const response = await fetch(`${urlBase}/api/admin/motoristas/localizacao`, {
-                    headers: { "Authorization": `Bearer ${tokenAdmin}` }
-                });
-
-                if (!response.ok) throw new Error('Erro na rede');
-
+                if (!response.ok) return;
                 const motoristas = await response.json();
                 if (!Array.isArray(motoristas)) return;
 
@@ -665,18 +815,15 @@
                 }
 
                 const idsOnlineDaVez = [];
-
-                // MÁGICA: Puxa a origem não importa em qual tela o Admin esteja!
                 const inputLat = document.getElementById('origem_lat');
                 const inputLng = document.getElementById('origem_lng');
-                const latOrigem = inputLat && inputLat.value ? parseFloat(inputLat.value) : (typeof corridaLatG !== 'undefined' ? corridaLatG : null);
-                const lngOrigem = inputLng && inputLng.value ? parseFloat(inputLng.value) : (typeof corridaLngG !== 'undefined' ? corridaLngG : null);
+                const latOrigem = inputLat && inputLat.value ? parseFloat(inputLat.value) : null;
+                const lngOrigem = inputLng && inputLng.value ? parseFloat(inputLng.value) : null;
 
                 motoristas.forEach(mot => {
                     try {
                         const id = mot.motorista_id || mot.MotoristaID;
                         if (!id) return;
-
                         idsOnlineDaVez.push(id);
 
                         const lat = mot.latitude || mot.Latitude;
@@ -685,7 +832,6 @@
                         const statusOriginal = mot.status || mot.Status || "Disponível";
                         const statusSafe = statusOriginal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-                        // 1. ATUALIZA O MAPA (Apenas Disponíveis)
                         if (statusSafe === "disponivel" && lat && lng && typeof mapa !== 'undefined') {
                             const iconeDinamico = criarIconeCarro(nome, statusSafe);
                             if (marcadoresMotoristas[id]) {
@@ -699,7 +845,6 @@
                             delete marcadoresMotoristas[id];
                         }
 
-                        // 2. ATUALIZA A LISTA EM TEMPO REAL
                         const statusDiv = document.getElementById(`drv-status-label-${id}`);
                         if (statusDiv) {
                             let distTexto = "";
@@ -707,7 +852,6 @@
                                 const dist = calcularDistanciaKmHaversine(latOrigem, lngOrigem, lat, lng);
                                 if (dist) distTexto = `· ${dist.toFixed(1)} km`;
                             }
-
                             let corStatus = "#94a3b8";
                             if (statusSafe === "disponivel") corStatus = "#22C55E";
                             else if (statusSafe === "em corrida" || statusSafe === "ocupado") corStatus = "#F59E0B";
@@ -716,10 +860,9 @@
                             statusDiv.style.color = corStatus;
                             statusDiv.innerHTML = `● ${statusOriginal} <span style="color:var(--t3)">${distTexto}</span>`;
                         }
-                    } catch (e) { console.log("Erro ao processar um motorista", e); }
+                    } catch (e) { }
                 });
 
-                // 3. LIMPEZA DOS OFFLINES
                 document.querySelectorAll('[id^="drv-status-label-"]').forEach(el => {
                     const idCard = parseInt(el.id.replace('drv-status-label-', ''));
                     if (!idsOnlineDaVez.includes(idCard)) {
@@ -727,18 +870,13 @@
                         el.innerHTML = `● Offline`;
                     }
                 });
-
-            } catch (error) {
-                console.error("Erro no tempo real:", error);
-            }
+            } catch (error) { }
         }
 
         function renderizarMotoristasNaLista(motoristasNaBase, adminId) {
             const container = document.getElementById('lista-motoristas');
             let html = "";
-
             if (motoristasNaBase && motoristasNaBase.length > 0) {
-                // A LISTA EXIBE TODOS (SEM FILTRO DE MAPA)
                 motoristasNaBase.forEach(m => {
                     const id = m.motorista_id || m.MotoristaID;
                     const nome = (m.motorista && m.motorista.Nome) ? m.motorista.Nome : `Motorista #${id}`;
@@ -771,7 +909,6 @@
                 </div>
                 <div class="dchk"></div>
             </label>
-            
             <label class="driver-card" onclick="selDrv(this)">
                 <input type="radio" name="motorista_id" value="0" required>
                 <div style="display:flex; align-items:center; gap: 12px; flex: 1;">
@@ -783,9 +920,7 @@
                 </div>
                 <div class="dchk"></div>
             </label>`;
-
             container.innerHTML = html;
-            atualizarMapaTempoReal();
         }
 
         function selDrv(element) {
@@ -796,7 +931,7 @@
         }
 
         // ==========================================
-        // SUBMIT DO FORMULÁRIO PARA O BACKEND
+        // SUBMIT
         // ==========================================
         document.getElementById('form-nova-chamada').addEventListener('submit', function (e) {
             e.preventDefault();
