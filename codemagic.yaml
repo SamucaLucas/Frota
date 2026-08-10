@@ -45,4 +45,4 @@ workflows:
           zip -r meu-app-frota.ipa Payload
 
     artifacts:
-      - build/meu-app-frota.ipa
+      - build/Sousa-LT.ipa
