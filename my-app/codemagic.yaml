@@ -4,14 +4,11 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      vars:
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
-        XCODE_SCHEME: "App"
       node: latest
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Instalar dependências do Node
+      - name: Instalar dependências Web (Node)
         script: |
           npm install
 
@@ -19,29 +16,35 @@ workflows:
         script: |
           npx cap sync ios
 
-      - name: Instalar Pods nativos do iOS (CocoaPods)
+      - name: Instalar dependências Nativas do iOS (CocoaPods)
         script: |
           cd ios/App
           pod install
 
-      - name: Compilar App iOS (Unsigned para Testes)
+      - name: Compilar App iOS sem Assinatura (Unsigned)
         script: |
+          cd ios/App
           xcodebuild build \
-            -workspace "$XCODE_WORKSPACE" \
-            -scheme "$XCODE_SCHEME" \
+            -workspace App.xcworkspace \
+            -scheme App \
             -configuration Release \
             -sdk iphoneos \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Gerar pacote Arquivo (.xcarchive)
+      - name: Gerar o arquivo .ipa para o AltStore/Sideloadly
         script: |
-          cd ios/App
-          mkdir -p build/Unsigned
-          xcrun xcodebuild -a -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos archive -archivePath build/App.xcarchive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+          # Procura onde o Xcode jogou o arquivo .app compilado
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "App.app" -path "*/Build/Products/Release-iphoneos/*" | head -n 1)
+          
+          # Cria a estrutura de pastas exigida para um arquivo .ipa
+          mkdir -p build/Payload
+          cp -r "$APP_PATH" build/Payload/
+          
+          # Compacta tudo no formato .ipa pronto para você baixar
+          cd build
+          zip -r meu-app-frota.ipa Payload
 
     artifacts:
-      - ios/App/build/**/*.xcarchive
-      - ios/App/build/**/*.app
-      - build/ios/ipa/*.ipa
+      - build/meu-app-frota.ipa
