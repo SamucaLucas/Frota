@@ -19,11 +19,6 @@ workflows:
           npx cap add ios
           npx cap sync ios
 
-      - name: Instalar dependências Nativas do iOS (CocoaPods)
-        script: |
-          cd ios/App
-          pod install
-
       - name: Compilar App iOS sem Assinatura (Unsigned)
         script: |
           cd ios/App
