@@ -15,6 +15,7 @@ workflows:
 
       - name: Sincronizar o Capacitor com a pasta iOS
         script: |
+          npx cap add ios
           npx cap sync ios
 
       - name: Instalar dependências Nativas do iOS (CocoaPods)
