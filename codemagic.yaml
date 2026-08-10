@@ -15,6 +15,7 @@ workflows:
 
       - name: Sincronizar o Capacitor com a pasta iOS
         script: |
+          npm install @capacitor/ios --legacy-peer-deps
           npx cap add ios
           npx cap sync ios
 
