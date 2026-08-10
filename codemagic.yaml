@@ -11,7 +11,7 @@ workflows:
     scripts:
       - name: Instalar dependências Web (Node)
         script: |
-          npm install
+          npm install --legacy-peer-deps
 
       - name: Sincronizar o Capacitor com a pasta iOS
         script: |
