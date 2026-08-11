@@ -42,7 +42,7 @@ workflows:
           
           # Compacta tudo no formato .ipa pronto para você baixar
           cd build
-          zip -r meu-app-frota.ipa Payload
+          zip -r Sousa-LT.ipa Payload
 
     artifacts:
       - build/Sousa-LT.ipa
