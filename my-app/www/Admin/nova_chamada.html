@@ -412,7 +412,8 @@
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Telefone / WhatsApp (Opcional)</label>
-                        <input type="tel" id="cli-tel" class="form-control" placeholder="(00) 00000-0000">
+                        <input type="tel" id="cli-tel" class="form-control" placeholder="(00) 00000-0000" maxlength="15"
+                            oninput="this.value = mascaraWhatsApp(this.value)">
                     </div>
                 </div>
 
@@ -550,6 +551,14 @@
         const now = new Date();
         document.getElementById('data_hora').value = (new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString()).slice(0, 16);
 
+
+        function mascaraWhatsApp(v) {
+            v = v.replace(/\D/g, "");
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 2) v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+            if (v.length > 7) v = v.replace(/(\d{5})(\d)/, "$1-$2");
+            return v;
+        }
         // ==========================================
         // INICIALIZAÇÃO
         // ==========================================
@@ -557,8 +566,7 @@
             mapa = L.map('mapa', { zoomControl: false }).setView([-6.4975, -49.8794], 14);
             L.control.zoom({ position: 'bottomright' }).addTo(mapa);
 
-            const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
-            const tileUrl = isLight ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
             L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(mapa);
 
             // EVENTOS DO CENTER PIN
@@ -585,6 +593,9 @@
             carregarTaxas();
             carregarFrotaAdmin();
             setInterval(atualizarMapaTempoReal, 5000);
+
+            // 👇 CHAMA O GPS AUTOMATICAMENTE AQUI 👇
+            pegarLocalizacao(true);
         });
 
         async function carregarTaxas() {
@@ -719,10 +730,16 @@
         configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng', 'origem');
         configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng', 'destino');
 
-        async function pegarLocalizacao() {
+        async function pegarLocalizacao(silencioso = false) {
             const btnGps = document.querySelector('.btn-util');
             const inputOrigem = document.getElementById('origem_texto');
-            inputOrigem.value = "Buscando satélite..."; btnGps.style.opacity = "0.5";
+
+            if (!silencioso) {
+                inputOrigem.value = "Buscando satélite...";
+            } else {
+                inputOrigem.value = "Localizando...";
+            }
+            btnGps.style.opacity = "0.5";
 
             try {
                 let lat, lng;
@@ -745,8 +762,13 @@
                 btnGps.style.opacity = "1";
                 calcularEstimativa();
             } catch (error) {
-                inputOrigem.value = ""; btnGps.style.opacity = "1";
-                alert("Ative seu GPS.");
+                btnGps.style.opacity = "1";
+                if (!silencioso) {
+                    inputOrigem.value = "";
+                    alert("Ative seu GPS.");
+                } else {
+                    inputOrigem.value = ""; // Falha silenciosamente
+                }
             }
         }
 
@@ -931,20 +953,33 @@
         }
 
         // ==========================================
-        // SUBMIT
+        // SUBMIT RIGOROSO DA CENTRAL
         // ==========================================
         document.getElementById('form-nova-chamada').addEventListener('submit', function (e) {
             e.preventDefault();
             const msgErro = document.getElementById('mensagem-erro');
             msgErro.style.display = 'none';
 
+            // TRAVA 1: Exige que exista uma coordenada real no mapa
             if (!document.getElementById('origem_lat').value || !document.getElementById('destino_lat').value) {
                 msgErro.textContent = "Selecione as localizações exatas de origem e destino na busca ou no mapa.";
                 msgErro.style.display = 'block'; window.scrollTo(0, 0); return;
             }
 
+            // TRAVA 2: Valida se a viagem tem um valor (mesmo que o Admin tenha digitado na mão)
+            const valorFinal = parseFloat(document.getElementById('valor_estimado').value) || 0;
+            const kmFinal = parseFloat(document.getElementById('km_rodado').value) || 0;
+
+            if (valorFinal <= 0 || kmFinal <= 0) {
+                msgErro.textContent = "Aguarde o cálculo da rota ou insira um valor válido maior que zero para a corrida.";
+                msgErro.style.display = 'block';
+                window.scrollTo(0, 0);
+                return;
+            }
+
+            // TRAVA 3: Exige que o motorista seja selecionado
             const motoristaRadio = document.querySelector('input[name="motorista_id"]:checked');
-            if (!motoristaRadio) { alert("Selecione um motorista ou deixe pendente."); return; }
+            if (!motoristaRadio) { alert("Selecione um motorista ou escolha 'Deixar Pendente'."); return; }
 
             const btn = document.getElementById('btn-submit');
             btn.innerHTML = 'Processando...'; btn.disabled = true;
@@ -959,8 +994,8 @@
                 destino_lat: parseFloat(document.getElementById('destino_lat').value),
                 destino_lng: parseFloat(document.getElementById('destino_lng').value),
                 data_hora: document.getElementById('data_hora').value,
-                km_rodado: parseFloat(document.getElementById('km_rodado').value) || 0,
-                valor_estimado: parseFloat(document.getElementById('valor_estimado').value) || 0,
+                km_rodado: kmFinal,
+                valor_estimado: valorFinal,
                 tipo: document.getElementById('tipo_viagem').value || "padrao",
                 motorista_id: parseInt(motoristaRadio.value)
             };

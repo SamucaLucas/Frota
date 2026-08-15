@@ -452,10 +452,8 @@
         function inicializarMapa() {
             map = L.map('mapa-despacho', { zoomControl: false }).setView([-6.0673, -49.9036], 13);
 
-            const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
-            const tileUrl = isLight ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-
-            L.tileLayer(tileUrl, { attribution: '© OpenStreetMap' }).addTo(map);
+            const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+            L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(mapa);
         }
 
         function adicionarPin(lat, lng, tipo, nome) {

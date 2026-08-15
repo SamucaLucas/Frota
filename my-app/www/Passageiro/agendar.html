@@ -442,8 +442,7 @@
             mapa = L.map('mapa', { zoomControl: false }).setView([latPadrao, lngPadrao], 14);
             L.control.zoom({ position: 'bottomright' }).addTo(mapa);
 
-            const isLight = document.body.classList.contains('light-mode') || document.documentElement.classList.contains('light-mode');
-            const tileUrl = isLight ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
             L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(mapa);
 
             // 1. EVENTO DE MOVER: Faz o pino "pular" para mostrar que está arrastando
@@ -468,6 +467,7 @@
                     buscarEnderecoReverso(modoSelecaoMapa, centro.lat, centro.lng);
                 }, 500);
             });
+            pegarLocalizacao(true);
         });
 
         // Função que liga ou desliga o Center Pin
@@ -632,18 +632,24 @@
         configurarBuscaEnderecos('origem_texto', 'lista-origem', 'origem_lat', 'origem_lng', 'origem');
         configurarBuscaEnderecos('destino_texto', 'lista-destino', 'destino_lat', 'destino_lng', 'destino');
 
-        async function pegarLocalizacao() {
+        async function pegarLocalizacao(silencioso = false) {
             const btnGps = document.querySelector('.btn-util');
             const inputOrigem = document.getElementById('origem_texto');
 
-            inputOrigem.value = "Buscando satélite...";
+            if (!silencioso) {
+                inputOrigem.value = "Buscando satélite...";
+            } else {
+                inputOrigem.value = "Localizando...";
+            }
             btnGps.style.opacity = "0.5";
 
             try {
                 let lat, lng;
                 if (window.Capacitor && window.Capacitor.isNativePlatform()) {
                     const permission = await Capacitor.Plugins.Geolocation.checkPermissions();
-                    if (permission.location !== 'granted') await Capacitor.Plugins.Geolocation.requestPermissions();
+                    if (permission.location !== 'granted') {
+                        await Capacitor.Plugins.Geolocation.requestPermissions();
+                    }
                     const coordinates = await Capacitor.Plugins.Geolocation.getCurrentPosition({ enableHighAccuracy: true });
                     lat = coordinates.coords.latitude;
                     lng = coordinates.coords.longitude;
@@ -665,9 +671,13 @@
                 calcularEstimativa();
 
             } catch (error) {
-                inputOrigem.value = "";
                 btnGps.style.opacity = "1";
-                alert("Ative seu GPS.");
+                if (!silencioso) {
+                    inputOrigem.value = "";
+                    alert("Não foi possível obter a localização. Ative seu GPS.");
+                } else {
+                    inputOrigem.value = ""; // Apenas apaga o "Localizando..." sem alertar o usuário
+                }
             }
         }
 
@@ -712,7 +722,7 @@
         }
 
         // ==========================================
-        // SUBMIT
+        // SUBMIT E VALIDAÇÃO RIGOROSA
         // ==========================================
         document.getElementById('form-agendar').addEventListener('submit', function (e) {
             e.preventDefault();
@@ -720,8 +730,20 @@
             const msgErro = document.getElementById('mensagem-erro');
             msgErro.style.display = 'none';
 
+            // TRAVA 1: Verifica se os pontos do mapa foram realmente selecionados
             if (!document.getElementById('origem_lat').value || !document.getElementById('destino_lat').value) {
-                msgErro.textContent = "Selecione as localizações de origem e destino na busca ou pelo mapa.";
+                msgErro.textContent = "Por favor, selecione as localizações exatas de origem e destino na busca ou no mapa.";
+                msgErro.style.display = 'block';
+                window.scrollTo(0, 0);
+                return;
+            }
+
+            // TRAVA 2: Verifica se o cálculo de distância/valor foi concluído com sucesso
+            const valorCalculado = parseFloat(document.getElementById('valor_estimado').value) || 0;
+            const kmCalculado = parseFloat(document.getElementById('km_rodado').value) || 0;
+
+            if (valorCalculado <= 0 || kmCalculado <= 0) {
+                msgErro.textContent = "Confirme a origem e/ou destino e Aguarde o cálculo da rota e do valor estimado antes de prosseguir. Se o erro persistir, verifique a conexão.";
                 msgErro.style.display = 'block';
                 window.scrollTo(0, 0);
                 return;
@@ -739,8 +761,8 @@
                 destino_lat: parseFloat(document.getElementById('destino_lat').value),
                 destino_lng: parseFloat(document.getElementById('destino_lng').value),
                 data_hora: document.getElementById('data_hora').value,
-                km_rodado: parseFloat(document.getElementById('km_rodado').value) || 0,
-                valor_estimado: parseFloat(document.getElementById('valor_estimado').value) || 0
+                km_rodado: kmCalculado,
+                valor_estimado: valorCalculado
             };
 
             fetch(`${window.API_URL}/api/passageiro/agendar`, {
