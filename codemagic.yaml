@@ -15,19 +15,15 @@ workflows:
 
       - name: Sincronizar o Capacitor com a pasta iOS
         script: |
+          npm install @capacitor/ios --legacy-peer-deps
           npx cap add ios
           npx cap sync ios
-
-      - name: Instalar dependências Nativas do iOS (CocoaPods)
-        script: |
-          cd ios/App
-          pod install
 
       - name: Compilar App iOS sem Assinatura (Unsigned)
         script: |
           cd ios/App
           xcodebuild build \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
@@ -46,7 +42,7 @@ workflows:
           
           # Compacta tudo no formato .ipa pronto para você baixar
           cd build
-          zip -r meu-app-frota.ipa Payload
+          zip -r Sousa-LT.ipa Payload
 
     artifacts:
-      - build/meu-app-frota.ipa
+      - build/Sousa-LT.ipa
