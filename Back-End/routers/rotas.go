@@ -43,7 +43,7 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/api/motorista/localizacao", controller.AtualizarLocalizacao)
 	r.HandleFunc("/api/motorista/corrida-livre", controller.SalvarCorridaLivre)
 	r.HandleFunc("/api/motorista/buscar-passageiro", controller.BuscarPassageiroAvulso)
-	r.HandleFunc("/api/motorista/atualizar-status",controller.AtualizarStatusCorrida)
+	r.HandleFunc("/api/motorista/atualizar-status", controller.AtualizarStatusCorrida)
 	// Rotas do Google
 	r.HandleFunc("/auth/google/login", controller.GoogleLogin)
 	r.HandleFunc("/auth/google/callback", controller.GoogleCallback)

@@ -346,7 +346,7 @@
         function inicializarMapa() {
             map = L.map('mapa-tracker', { zoomControl: false }).setView([-6.0673, -49.9036], 13);
             const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-            L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(mapa);
+            L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap' }).addTo(map);
         }
 
         function adicionarMarcadorFixo(lat, lng, tipo) {

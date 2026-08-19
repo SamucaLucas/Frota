@@ -290,25 +290,34 @@ func BuscarPassageiroAvulso(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(usuarios)
 }
 
+// AtualizarStatusCorrida muda o status da corrida quando o motorista chega ao local
 func AtualizarStatusCorrida(w http.ResponseWriter, r *http.Request) {
-	// Validação do Token e Extração do MotoristaID omitidas para brevidade
+    // 1. Trava de segurança para aceitar apenas POST
+    if r.Method != http.MethodPost {
+        http.Error(w, `{"erro": "Método não permitido"}`, http.StatusMethodNotAllowed)
+        return
+    }
 
-	var req struct {
-		CorridaID uint   `json:"corrida_id"`
-		Status    string `json:"status"`
-	}
+    // 2. Estrutura para ler o JSON que o celular mandou
+    var req struct {
+        CorridaID uint   `json:"corrida_id"`
+        Status    string `json:"status"`
+    }
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"erro": "Dados inválidos"}`, http.StatusBadRequest)
-		return
-	}
+    // 3. Decodifica o JSON
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w, `{"erro": "Dados inválidos"}`, http.StatusBadRequest)
+        return
+    }
 
-	// Atualiza o status da corrida para "Em Corrida"
-	if err := db.DB.Model(&structs.Corrida{}).Where("id = ?", req.CorridaID).Update("status", req.Status).Error; err != nil {
-		http.Error(w, `{"erro": "Falha ao atualizar status"}`, http.StatusInternalServerError)
-		return
-	}
+    // 4. Atualiza a corrida no banco de dados
+    errDb := db.DB.Model(&structs.Corrida{}).Where("id = ?", req.CorridaID).Update("status", req.Status).Error
+    if errDb != nil {
+        http.Error(w, `{"erro": "Falha ao atualizar status no banco"}`, http.StatusInternalServerError)
+        return
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]bool{"sucesso": true})
+    // 5. Devolve o sucesso para o aplicativo liberar a Etapa 2
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]bool{"sucesso": true})
 }
