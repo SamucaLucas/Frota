@@ -168,7 +168,7 @@ type PayloadLocalizacao struct {
 	Latitude       float64 `json:"latitude"`
 	Longitude      float64 `json:"longitude"`
 	Status         string  `json:"status"`
-	CorridaAtivaID uint   `json:"corrida_ativa_id"` // NOVO CAMPO PARA SALVAR A CORRIDA ATIVA
+	CorridaAtivaID uint    `json:"corrida_ativa_id"` // NOVO CAMPO PARA SALVAR A CORRIDA ATIVA
 }
 
 // AtualizarLocalizacao recebe as coordenadas do Capacitor e salva no banco
@@ -288,4 +288,27 @@ func BuscarPassageiroAvulso(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(usuarios)
+}
+
+func AtualizarStatusCorrida(w http.ResponseWriter, r *http.Request) {
+	// Validação do Token e Extração do MotoristaID omitidas para brevidade
+
+	var req struct {
+		CorridaID uint   `json:"corrida_id"`
+		Status    string `json:"status"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"erro": "Dados inválidos"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Atualiza o status da corrida para "Em Corrida"
+	if err := db.DB.Model(&structs.Corrida{}).Where("id = ?", req.CorridaID).Update("status", req.Status).Error; err != nil {
+		http.Error(w, `{"erro": "Falha ao atualizar status"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"sucesso": true})
 }

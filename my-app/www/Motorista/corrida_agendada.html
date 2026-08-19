@@ -100,26 +100,22 @@
             margin: 10px 0;
         }
 
-        .actions-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
         .btn-map {
             background: #334155;
             color: #f8fafc;
             border: 1px solid #475569;
-            padding: 16px 10px;
+            padding: 16px;
             border-radius: 12px;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             transition: 0.2s;
+            width: 100%;
         }
 
         .btn-map:active {
@@ -149,12 +145,70 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(227, 6, 19, 0.3);
             transition: 0.2s;
-            margin-top: auto;
+            margin-top: 0;
         }
 
         .btn-finalizar:active {
             transform: scale(0.98);
             opacity: 0.9;
+        }
+
+        /* === ESTILOS BOTÃO DE ARRASTAR (SWIPE TO CONFIRM) === */
+        .swipe-container {
+            position: relative;
+            width: 100%;
+            height: 56px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            touch-action: none;
+            /* Previne scroll acidental na tela ao arrastar */
+        }
+
+        .swipe-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0;
+            background: #3b82f6;
+            z-index: 1;
+        }
+
+        .swipe-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 14px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .swipe-knob {
+            position: absolute;
+            left: 4px;
+            width: 48px;
+            height: 48px;
+            background: #f8fafc;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 3;
+            cursor: grab;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            color: #000;
+        }
+
+        .swipe-knob:active {
+            cursor: grabbing;
         }
 
         /* MODAL FINALIZAÇÃO */
@@ -268,19 +322,29 @@
             <div class="value" id="txt-destino">...</div>
         </div>
 
-        <!-- Botões de Ação do Mapa -->
-        <div class="actions-grid">
+        <!-- ETAPA 1: Deslocamento até o cliente -->
+        <div id="etapa-1" style="display: none; flex-direction: column; gap: 12px; margin-top: auto;">
             <button class="btn-map" id="btn-gps-origem" onclick="">
-                <span style="font-size: 24px;">📍</span>
-                Buscar Cliente
+                <span style="font-size: 20px;">📍</span> Navegar até o Cliente
             </button>
-            <button class="btn-map blue" id="btn-gps-destino" onclick="">
-                <span style="font-size: 24px;">🏁</span>
-                Ir p/ Destino
-            </button>
+
+            <!-- Substituído pelo Botão de Arrastar -->
+            <div class="swipe-container" id="swipe-chegada">
+                <div class="swipe-bg" id="swipe-bg"></div>
+                <div class="swipe-text" id="swipe-text">Deslize p/ confirmar chegada ➔</div>
+                <div class="swipe-knob" id="swipe-knob">🚕</div>
+            </div>
         </div>
 
-        <button class="btn-finalizar" onclick="abrirModalFinalizar()">Finalizar Corrida</button>
+        <!-- ETAPA 2: Corrida em andamento (Inicialmente Oculta) -->
+        <div id="etapa-2" style="display: none; flex-direction: column; gap: 12px; margin-top: auto;">
+            <button class="btn-map blue" id="btn-gps-destino" onclick="">
+                <span style="font-size: 20px;">🏁</span> Navegar até o Destino
+            </button>
+            <button class="btn-finalizar" onclick="abrirModalFinalizar()">
+                ✓ Finalizar Corrida
+            </button>
+        </div>
 
     </div>
 
@@ -309,59 +373,67 @@
         const urlParams = new URLSearchParams(window.location.search);
         const corridaID = urlParams.get('id');
 
-        // Impede de abrir a tela sem um ID de corrida
         if (!corridaID) window.history.back();
 
         let valorEstimadoOriginal = 0;
 
         window.onload = async function () {
             try {
-                // 1. Informa ao servidor GPS que a corrida começou, ENVIANDO O ID DA CORRIDA
-                if (window.GPSGlobal) {
-                    window.GPSGlobal.mudarStatus("Em Corrida Agendada", parseInt(corridaID));
-                }
+                // Inicia Botão Swipe
+                initSwipeButton('swipe-chegada', 'swipe-knob', 'swipe-bg', 'swipe-text', marcarChegada);
 
-                // 2. Busca os dados da corrida
+                // Busca os dados da corrida
                 const response = await fetch(`${window.API_URL}/api/corrida/detalhes?id=${corridaID}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 const dados = await response.json();
 
                 if (response.ok) {
-                    // SEPARAÇÃO INTELIGENTE DE PASSAGEIRO E ORIGEM
                     let origemLimpa = dados.OrigemTexto || "Embarque Livre";
                     let nomePassageiro = dados.Usuario && dados.Usuario.Nome ? dados.Usuario.Nome : "Cliente Avulso";
 
                     if (origemLimpa.includes("(Cliente:")) {
                         const partes = origemLimpa.split("(Cliente:");
                         origemLimpa = partes[0].trim();
-                        // Aqui mantemos o telefone visível, pois é útil para o motorista!
                         nomePassageiro = partes[1].replace(")", "").trim();
                     }
 
-                    // Preenche a tela
                     document.getElementById('txt-passageiro').innerText = nomePassageiro;
                     document.getElementById('txt-origem').innerText = origemLimpa;
                     document.getElementById('txt-destino').innerText = dados.DestinoTexto || "Desembarque Livre";
 
-                    // FORMATANDO A NOVA DATA E HORA AGENDADA 
                     const dataFmt = new Date(dados.DataHoraAgendada || dados.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
                     document.getElementById('txt-data').innerText = dataFmt;
 
                     valorEstimadoOriginal = parseFloat(dados.ValorEstimado || dados.ValorFinal || 0);
                     document.getElementById('txt-valor').innerText = "R$ " + valorEstimadoOriginal.toFixed(2).replace('.', ',');
 
-                    // Configura os links do Maps
                     const linkOrigem = `https://maps.google.com/?q=${dados.OrigemLat},${dados.OrigemLng}`;
                     const linkDestino = `https://maps.google.com/?q=${dados.DestinoLat},${dados.DestinoLng}`;
 
                     document.getElementById('btn-gps-origem').setAttribute("onclick", `window.open('${linkOrigem}', '_blank')`);
                     document.getElementById('btn-gps-destino').setAttribute("onclick", `window.open('${linkDestino}', '_blank')`);
 
-                    // Atualiza Badge Visual
-                    const badge = document.getElementById('status-badge');
-                    badge.className = "status-badge";
-                    badge.innerHTML = "🟢 Em Corrida";
+                    // LÓGICA DE EXIBIÇÃO EM DUAS TELAS BASEADA NO STATUS
+                    if (dados.Status === "Em Corrida") {
+                        document.getElementById('etapa-1').style.display = 'none';
+                        document.getElementById('etapa-2').style.display = 'flex';
+                        document.getElementById('status-badge').innerHTML = "🟢 Em Corrida";
+                        document.getElementById('status-badge').className = "status-badge";
+
+                        if (window.GPSGlobal) {
+                            window.GPSGlobal.mudarStatus("Em Corrida Agendada", parseInt(corridaID));
+                        }
+                    } else {
+                        document.getElementById('etapa-1').style.display = 'flex';
+                        document.getElementById('etapa-2').style.display = 'none';
+                        document.getElementById('status-badge').innerHTML = "🟡 A Caminho";
+                        document.getElementById('status-badge').className = "status-badge loading";
+
+                        if (window.GPSGlobal) {
+                            window.GPSGlobal.mudarStatus("A Caminho do Cliente", parseInt(corridaID));
+                        }
+                    }
 
                 } else {
                     alert("Erro ao buscar detalhes da corrida.");
@@ -373,8 +445,118 @@
             }
         };
 
+        // ==========================================
+        // LÓGICA DO BOTÃO SWIPE TO CONFIRM
+        // ==========================================
+        function initSwipeButton(containerId, knobId, bgId, textId, onConfirm) {
+            const container = document.getElementById(containerId);
+            const knob = document.getElementById(knobId);
+            const bg = document.getElementById(bgId);
+            const text = document.getElementById(textId);
+
+            if (!container || !knob) return;
+
+            let isDragging = false;
+            let startX = 0;
+            let maxDrag = 0;
+            let currentX = 0;
+
+            const startDrag = (e) => {
+                isDragging = true;
+                startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+
+                // Extrai o X atual do transform para permitir pegar do meio se necessário
+                const match = knob.style.transform.match(/translateX\((.*)px\)/);
+                currentX = match ? parseFloat(match[1]) : 0;
+
+                knob.style.transition = 'none';
+                bg.style.transition = 'none';
+            };
+
+            const onDrag = (e) => {
+                if (!isDragging) return;
+                let eventX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+                let moveX = currentX + (eventX - startX);
+
+                maxDrag = container.clientWidth - knob.clientWidth - 8; // 4px padding de cada lado
+
+                if (moveX < 0) moveX = 0;
+                if (moveX > maxDrag) moveX = maxDrag;
+
+                knob.style.transform = `translateX(${moveX}px)`;
+                bg.style.width = `${moveX + knob.clientWidth / 2}px`;
+                text.style.opacity = 1 - (moveX / maxDrag);
+            };
+
+            const endDrag = (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+
+                knob.style.transition = 'transform 0.3s ease';
+                bg.style.transition = 'width 0.3s ease';
+                text.style.transition = 'opacity 0.3s ease';
+
+                const match = knob.style.transform.match(/translateX\((.*)px\)/);
+                const finalX = match ? parseFloat(match[1]) : 0;
+
+                if (finalX >= maxDrag * 0.85) { // 85% do percurso para confirmar
+                    knob.style.transform = `translateX(${maxDrag}px)`;
+                    bg.style.width = '100%';
+                    text.innerText = "Confirmado!";
+                    text.style.opacity = 1;
+                    text.style.color = "#fff";
+                    text.style.zIndex = 4;
+
+                    // Desabilita drag futuro
+                    knob.removeEventListener('mousedown', startDrag);
+                    knob.removeEventListener('touchstart', startDrag);
+
+                    // Aciona a função de negócio
+                    setTimeout(() => {
+                        onConfirm();
+                    }, 400);
+                } else {
+                    knob.style.transform = `translateX(0px)`;
+                    bg.style.width = '0px';
+                    text.style.opacity = 1;
+                }
+            };
+
+            knob.addEventListener('mousedown', startDrag);
+            knob.addEventListener('touchstart', startDrag, { passive: true });
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('touchmove', onDrag, { passive: true });
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+        }
+
+        // FUNÇÃO DA ETAPA 1: Oculta a ida até a origem, exibe ida ao destino e atualiza o backend
+        function marcarChegada() {
+            document.getElementById('etapa-1').style.display = 'none';
+            document.getElementById('etapa-2').style.display = 'flex';
+
+            const badge = document.getElementById('status-badge');
+            badge.innerHTML = "🟢 Em Corrida";
+            badge.className = "status-badge";
+
+            if (window.GPSGlobal) {
+                window.GPSGlobal.mudarStatus("Em Corrida Agendada", parseInt(corridaID));
+            }
+
+            fetch(`${window.API_URL}/api/motorista/atualizar-status`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    corrida_id: parseInt(corridaID),
+                    status: "Em Corrida"
+                })
+            }).catch(err => console.error("Erro ao atualizar status da corrida:", err));
+        }
+
         function abrirModalFinalizar() {
-            // Injeta o valor estimado como sugestão no input para facilitar a vida do motorista
             document.getElementById('input-valor-final').value = valorEstimadoOriginal.toFixed(2);
             document.getElementById('modal-fechamento').style.display = 'flex';
         }
@@ -384,7 +566,6 @@
         }
 
         function voltarParaHome() {
-            // Se ele voltar pra home sem finalizar, o status do GPS volta para Disponível (ID 0)
             if (window.GPSGlobal) {
                 window.GPSGlobal.mudarStatus("Disponível", 0);
             }
@@ -403,7 +584,6 @@
             btnConfirmar.innerText = "Salvando...";
             btnConfirmar.disabled = true;
 
-            // Envia para o Backend que a corrida foi concluída, e informa o valor REAL que o motorista recebeu
             fetch(`${window.API_URL}/api/motorista/concluir`, {
                 method: "POST",
                 headers: {
@@ -418,12 +598,8 @@
                 .then(res => res.json())
                 .then(dados => {
                     if (dados.sucesso) {
-                        // Libera o motorista no Radar/GPS (ID volta a ser 0)
                         if (window.GPSGlobal) window.GPSGlobal.mudarStatus("Disponível", 0);
-
                         alert("Corrida Finalizada com Sucesso!");
-
-                        // Joga o motorista direto pro recibo pra ele poder compartilhar!
                         window.location.href = `../Dados/recibo.html?id=${corridaID}`;
                     } else {
                         alert("Erro ao finalizar: " + dados.erro);
