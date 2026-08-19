@@ -342,6 +342,7 @@
         let carMarker = null;
         let driverIdToTrack = null;
         let corridaEstaFinalizada = false;
+        let statusAnterior = ""
 
         function inicializarMapa() {
             map = L.map('mapa-tracker', { zoomControl: false }).setView([-6.0673, -49.9036], 13);
@@ -412,6 +413,14 @@
                     // ATUALIZA STATUS VISUAL (Textos mais amigáveis para o cliente)
                     atualizarStatusUI(dados.Status || dados.status);
 
+                    const statusAtualSafe = (dados.Status || dados.status || "pendente").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+                    // Verifica se houve a transição para "Em Corrida" (que é o que o botão 'Cheguei' define no backend)
+                    if (statusAnterior && statusAnterior !== "em corrida" && statusAtualSafe === "em corrida") {
+                        dispararNotificacaoChegada();
+                    }
+                    statusAnterior = statusAtualSafe;
+
                     // VERIFICA SE TEM MOTORISTA ATRIBUÍDO
                     if (dados.Motorista) {
                         driverIdToTrack = dados.Motorista.ID;
@@ -480,6 +489,10 @@
                 badgeContainer.classList.add("status-cancelada");
                 statusIcon.innerText = "❌";
                 statusText.innerText = "Viagem Cancelada";
+            } else if (statusSafe === "em corrida") {
+                badgeContainer.classList.add("status-andamento");
+                statusIcon.innerText = "📍";
+                statusText.innerText = "O motorista chegou ao local!";
             }
             else {
                 badgeContainer.classList.add("status-pendente");
@@ -540,6 +553,37 @@
 
         function abrirRecibo() {
             window.location.href = `../Dados/recibo.html?id=${corridaID}`;
+        }
+
+        async function dispararNotificacaoChegada() {
+            // 1. Vibra o celular (se o navegador/aparelho suportar)
+            if (navigator.vibrate) {
+                navigator.vibrate([300, 100, 300]);
+            }
+
+            // 2. Dispara a Notificação
+            if (window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins.LocalNotifications) {
+                // App Nativo: Usa o Capacitor Local Notifications
+                await window.Capacitor.Plugins.LocalNotifications.schedule({
+                    notifications: [{
+                        title: "Seu motorista chegou! 🚕",
+                        body: "Ele já está no local de embarque aguardando por você.",
+                        id: Math.floor(Math.random() * 10000),
+                        schedule: { at: new Date(Date.now() + 1000) }
+                    }]
+                });
+            } else {
+                // Web PWA: Usa a API do Navegador
+                if (Notification.permission === "granted") {
+                    new Notification("Seu motorista chegou! 🚕", {
+                        body: "Ele já está no local de embarque aguardando por você.",
+                        icon: "../static/img/Logo-icon.png"
+                    });
+                } else {
+                    // Fallback elegante se ele não deu permissão
+                    alert("🚕 O motorista chegou ao local de embarque!");
+                }
+            }
         }
 
         window.onload = () => {

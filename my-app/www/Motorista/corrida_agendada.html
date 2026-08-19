@@ -389,6 +389,35 @@
                 const dados = await response.json();
 
                 if (response.ok) {
+                    // ========================================================
+                    // GATILHO AUTOMÁTICO TURBINADO: Aprovada -> A Caminho
+                    // ========================================================
+                    let statusAtual = dados.Status || dados.status || "";
+                    let statusLimpo = statusAtual.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+                    // Se o status for qualquer variação de aprovada, confirmada ou pendente
+                    if (statusLimpo === "aprovada" || statusLimpo === "confirmada" || statusLimpo === "pendente") {
+                        try {
+                            await fetch(`${window.API_URL}/api/motorista/atualizar-status`, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${token}`
+                                },
+                                body: JSON.stringify({
+                                    corrida_id: parseInt(corridaID),
+                                    status: "A Caminho"
+                                })
+                            });
+                            // Atualiza a variável local para exibir a etapa certa
+                            dados.Status = "A Caminho";
+                        } catch (e) {
+                            console.log("Erro no gatilho A Caminho:", e);
+                        }
+                    }
+                    // ========================================================
+
+                    // Limpeza de textos
                     let origemLimpa = dados.OrigemTexto || "Embarque Livre";
                     let nomePassageiro = dados.Usuario && dados.Usuario.Nome ? dados.Usuario.Nome : "Cliente Avulso";
 
@@ -415,7 +444,7 @@
                     document.getElementById('btn-gps-destino').setAttribute("onclick", `window.open('${linkDestino}', '_blank')`);
 
                     // LÓGICA DE EXIBIÇÃO EM DUAS TELAS BASEADA NO STATUS
-                    if (dados.Status === "Em Corrida") {
+                    if (dados.Status === "Em Corrida" || dados.status === "Em Corrida") {
                         document.getElementById('etapa-1').style.display = 'none';
                         document.getElementById('etapa-2').style.display = 'flex';
                         document.getElementById('status-badge').innerHTML = "🟢 Em Corrida";
@@ -465,7 +494,6 @@
                 isDragging = true;
                 startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
 
-                // Extrai o X atual do transform para permitir pegar do meio se necessário
                 const match = knob.style.transform.match(/translateX\((.*)px\)/);
                 currentX = match ? parseFloat(match[1]) : 0;
 
@@ -478,7 +506,7 @@
                 let eventX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
                 let moveX = currentX + (eventX - startX);
 
-                maxDrag = container.clientWidth - knob.clientWidth - 8; // 4px padding de cada lado
+                maxDrag = container.clientWidth - knob.clientWidth - 8;
 
                 if (moveX < 0) moveX = 0;
                 if (moveX > maxDrag) moveX = maxDrag;
@@ -499,7 +527,7 @@
                 const match = knob.style.transform.match(/translateX\((.*)px\)/);
                 const finalX = match ? parseFloat(match[1]) : 0;
 
-                if (finalX >= maxDrag * 0.85) { // 85% do percurso para confirmar
+                if (finalX >= maxDrag * 0.85) {
                     knob.style.transform = `translateX(${maxDrag}px)`;
                     bg.style.width = '100%';
                     text.innerText = "Confirmado!";
@@ -507,11 +535,9 @@
                     text.style.color = "#fff";
                     text.style.zIndex = 4;
 
-                    // Desabilita drag futuro
                     knob.removeEventListener('mousedown', startDrag);
                     knob.removeEventListener('touchstart', startDrag);
 
-                    // Aciona a função de negócio
                     setTimeout(() => {
                         onConfirm();
                     }, 400);
@@ -530,7 +556,9 @@
             document.addEventListener('touchend', endDrag);
         }
 
-        // FUNÇÃO DA ETAPA 1: Oculta a ida até a origem, exibe ida ao destino e atualiza o backend
+        // ==========================================
+        // FLUXO DE BOTÕES DA CORRIDA
+        // ==========================================
         function marcarChegada() {
             document.getElementById('etapa-1').style.display = 'none';
             document.getElementById('etapa-2').style.display = 'flex';

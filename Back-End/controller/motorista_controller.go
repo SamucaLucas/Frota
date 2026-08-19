@@ -48,7 +48,7 @@ func ApiHomeMotorista(w http.ResponseWriter, r *http.Request) {
 	// 1. Busca as corridas que o Dudu despachou para este motorista
 	var atribuidas []structs.Corrida
 	db.DB.Preload("Usuario").
-		Where("status = ? AND motorista_id = ?", "Aprovada", usuarioID).
+		Where("status = ? OR status = ? AND motorista_id = ?", "Aprovada", "Em Corrida", usuarioID).
 		Order("data_hora_agendada ASC").
 		Find(&atribuidas)
 
