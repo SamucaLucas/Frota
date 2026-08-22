@@ -17,6 +17,7 @@ type Usuario struct {
 	Genero        string `gorm:"size:50;default:'Não Informado'"`
 	Tokens        int    `gorm:"default:0"`        // Saldo atual para facilitar a visualização
 	FCMToken      string `gorm:"size:255"`         // Token do Firebase para Push Notifications
+	FotoPerfil    string `gorm:"size:500"`         // URL ou Base64 da Foto do Perfil
 	AceitouTermos bool   `gorm:"default:false"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
@@ -25,6 +26,24 @@ type Usuario struct {
 
 func (Usuario) TableName() string {
 	return "usuarios"
+}
+
+// 1.5. Veículos do Motorista
+type Veiculo struct {
+	ID          uint    `gorm:"primaryKey"`
+	MotoristaID uint    `gorm:"not null"`
+	Motorista   Usuario `gorm:"foreignKey:MotoristaID"`
+	Placa       string  `gorm:"size:20;not null"`
+	Modelo      string  `gorm:"size:100;not null"`
+	Cor         string  `gorm:"size:50;not null"`
+	Marca       string  `gorm:"size:100"`
+	Ativo       bool    `gorm:"default:false"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (Veiculo) TableName() string {
+	return "veiculos"
 }
 
 // 2. Corridas (O coração operacional)

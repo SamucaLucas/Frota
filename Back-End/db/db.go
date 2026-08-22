@@ -39,6 +39,7 @@ func ConectarBanco() {
 	// O GORM vai ler nossas structs e criar/atualizar as tabelas no banco automaticamente
 	err = database.AutoMigrate(
 		&structs.Usuario{},
+		&structs.Veiculo{},
 		&structs.Corrida{},
 		&structs.Recibo{},
 		&structs.HistoricoToken{},
@@ -56,7 +57,7 @@ func ConectarBanco() {
 		log.Fatal("❌ Erro ao rodar as migrações (AutoMigrate):\n", err)
 	}
 
-	fmt.Println("🚀 Todas as 12 tabelas foram criadas/sincronizadas com sucesso!")
+	fmt.Println("🚀 Todas as tabelas (incluindo Veiculos) foram criadas/sincronizadas com sucesso!")
 
 	// 5. Atribuindo a conexão aberta à nossa variável global
 	DB = database

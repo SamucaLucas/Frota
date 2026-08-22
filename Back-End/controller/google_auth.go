@@ -74,14 +74,19 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	email := strings.ToLower(strings.TrimSpace(dadosGoogle["email"].(string)))
 	nome := dadosGoogle["name"].(string)
+	
+	foto := ""
+	if p, ok := dadosGoogle["picture"].(string); ok {
+		foto = p
+	}
 
 	// 1. Tenta buscar o usuário no banco de dados
 	usuario, err := models.BuscarUsuarioPorEmail(email)
 
 	// 2. Se NÃO encontrou (Usuário Novo): manda para a tela de Completar Cadastro no Live Server!
 	if err != nil {
-		// Passa o e-mail e nome via URL para a tela estática capturar
-		urlCompletar := fmt.Sprintf("%s/Usuario/completar_cadastro.html?email=%s&nome=%s", frontendWebURL, url.QueryEscape(email), url.QueryEscape(nome))
+		// Passa o e-mail, nome e foto via URL para a tela estática capturar
+		urlCompletar := fmt.Sprintf("%s/Usuario/completar_cadastro.html?email=%s&nome=%s&foto=%s", frontendWebURL, url.QueryEscape(email), url.QueryEscape(nome), url.QueryEscape(foto))
 		http.Redirect(w, r, urlCompletar, http.StatusSeeOther)
 		return
 	}
@@ -152,6 +157,7 @@ func CompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 type ReqGoogleLogin struct {
 	Email string `json:"email"`
 	Nome  string `json:"nome"`
+	Foto  string `json:"foto"`
 }
 
 type ReqGoogleCompletar struct {
@@ -159,6 +165,7 @@ type ReqGoogleCompletar struct {
 	Nome     string `json:"nome"`
 	Whatsapp string `json:"whatsapp"`
 	Genero   string `json:"genero"`
+	Foto     string `json:"foto"`
 }
 
 // ApiGoogleLogin recebe os dados do Google capturados pelo celular
@@ -182,6 +189,7 @@ func ApiGoogleLogin(w http.ResponseWriter, r *http.Request) {
 			"precisa_completar": true, // A MÁGICA: O JS vai ler isso e trocar de tela
 			"email":             req.Email,
 			"nome":              req.Nome,
+			"foto":              req.Foto,
 		})
 		return
 	}
@@ -224,6 +232,7 @@ func ApiCompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 		Whatsapp:      req.Whatsapp,
 		Papel:         "passageiro",
 		Genero:        genero,
+		FotoPerfil:    req.Foto,
 		AceitouTermos: true,
 	}
 

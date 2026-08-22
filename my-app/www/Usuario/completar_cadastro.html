@@ -98,15 +98,17 @@
             const urlParams = new URLSearchParams(window.location.search);
             const emailTemporario = urlParams.get('email') || localStorage.getItem("email_temp_google") || "";
             const nomeTemporario = urlParams.get('nome') || localStorage.getItem("nome_temp_google") || "";
+            const fotoTemporaria = urlParams.get('foto') || localStorage.getItem("foto_temp_google") || "";
 
             fetch(`${window.API_URL}/api/google/completar`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     email: emailTemporario,
-                    nome: nomeTemporario, // <-- AQUI ESTAVA FALTANDO O NOME!
+                    nome: nomeTemporario,
                     whatsapp: whatsappInput,
-                    genero: generoInput
+                    genero: generoInput,
+                    foto: fotoTemporaria
                 })
             })
                 .then(res => res.json())
@@ -115,6 +117,7 @@
                         // Limpa os dados temporários e salva o token oficial
                         localStorage.removeItem("email_temp_google");
                         localStorage.removeItem("nome_temp_google");
+                        localStorage.removeItem("foto_temp_google");
                         localStorage.setItem("token", dados.token);
 
                         // Vai direto para a Home!

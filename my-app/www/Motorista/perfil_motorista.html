@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meu Perfil - Motorista</title>
+    <link rel="icon" href="../static/img/Logo-icon.png" type="image/png">
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            font-family: 'Sora', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-voltar {
+            background: transparent;
+            border: none;
+            color: var(--t1);
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--t1);
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .content {
+            padding: 20px;
+            flex: 1;
+        }
+
+        /* Avatar */
+        .avatar-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--acc);
+            background: var(--bg2);
+        }
+
+        .edit-avatar-btn {
+            position: absolute;
+            bottom: 0;
+            margin-left: 70px;
+            background: var(--acc);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Forms */
+        .form-section {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--t1);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Veiculos */
+        .veiculo-card {
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+
+        .veiculo-card.ativo {
+            border-color: var(--acc);
+            background: var(--acc-bg);
+        }
+
+        .veiculo-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .veiculo-placa {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--t1);
+            text-transform: uppercase;
+        }
+
+        .veiculo-desc {
+            font-size: 12px;
+            color: var(--t3);
+        }
+
+        .veiculo-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .radio-ativo {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--acc);
+            cursor: pointer;
+        }
+
+        .btn-excluir {
+            background: transparent;
+            border: none;
+            color: var(--t3);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .btn-excluir:hover {
+            color: var(--acc);
+        }
+
+        /* Modal Novo Veiculo */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            padding: 24px;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-bar">
+        <button class="btn-voltar" onclick="window.location.href='home_motorista.html'">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <div class="page-title">Meu Perfil</div>
+        <button id="theme-toggle" class="theme-btn" style="position:static; margin:0; padding:6px 12px;">☀️</button>
+    </div>
+
+    <div class="content">
+        <!-- Foto do Perfil -->
+        <div class="avatar-container">
+            <img id="img-avatar" src="../static/img/avatar-default.png" alt="Perfil" class="avatar"
+                onerror="this.src='../static/img/avatar-default.png'">
+            <button class="edit-avatar-btn" onclick="document.getElementById('input-foto').click()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+            </button>
+            <input type="file" id="input-foto" accept="image/*" style="display: none;" onchange="uploadFoto(event)">
+        </div>
+
+        <div id="msg-geral" class="toast-msg" style="display:none; margin-bottom:16px;"></div>
+
+        <!-- Meus Dados -->
+        <div class="form-section">
+            <div class="section-title">Meus Dados</div>
+            <form id="form-perfil">
+                <div class="inp-group">
+                    <div class="inp-lbl">Nome Completo</div>
+                    <div class="inp-wrap">
+                        <input class="inp" type="text" id="perfil-nome" required>
+                    </div>
+                </div>
+
+                <div class="inp-group">
+                    <div class="inp-lbl">E-mail</div>
+                    <div class="inp-wrap">
+                        <input class="inp" type="email" id="perfil-email" required readonly
+                            style="opacity: 0.6; cursor: not-allowed;">
+                    </div>
+                </div>
+
+                <div class="inp-group">
+                    <div class="inp-lbl">WhatsApp</div>
+                    <div class="inp-wrap">
+                        <input class="inp" type="tel" id="perfil-whatsapp" required maxlength="15"
+                            oninput="this.value = mascaraWhatsApp(this.value)">
+                    </div>
+                </div>
+
+                <div class="inp-group">
+                    <div class="inp-lbl">Gênero</div>
+                    <div class="inp-wrap">
+                        <select class="inp" id="perfil-genero" required
+                            style="width: 100%; border: none; outline: none; background: transparent; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: var(--t1); cursor: pointer;">
+                            <option value="Não Informado" style="background-color: var(--bg2); color: var(--t1);">Não
+                                Informado</option>
+                            <option value="Feminino" style="background-color: var(--bg2); color: var(--t1);">Feminino
+                            </option>
+                            <option value="Masculino" style="background-color: var(--bg2); color: var(--t1);">Masculino
+                            </option>
+                            <option value="Não-binário" style="background-color: var(--bg2); color: var(--t1);">
+                                Não-binário</option>
+                            <option value="Prefiro não informar"
+                                style="background-color: var(--bg2); color: var(--t1);">Prefiro não informar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%; padding: 12px; font-size: 14px;">Salvar
+                    Alterações</button>
+            </form>
+        </div>
+
+        <!-- Meus Veículos -->
+        <div class="form-section">
+            <div class="section-title">
+                Meus Veículos
+                <button class="btn" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;"
+                    onclick="abrirModalVeiculo()">+ Adicionar</button>
+            </div>
+
+            <div id="lista-veiculos">
+                <div style="text-align:center; color:var(--t3); font-size:12px; padding: 20px;">Carregando veículos...
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Novo Veículo -->
+    <div id="modal-veiculo" class="modal-overlay">
+        <div class="modal-content">
+            <div class="section-title" style="margin-top:0">
+                Cadastrar Veículo
+                <button onclick="fecharModalVeiculo()"
+                    style="background:transparent; border:none; color:var(--t1); cursor:pointer; font-size: 20px;">×</button>
+            </div>
+            <form id="form-veiculo">
+                <div class="inp-group">
+                    <div class="inp-lbl">Placa</div>
+                    <div class="inp-wrap">
+                        <input class="inp" type="text" id="veic-placa" required placeholder="AAA-1234"
+                            style="text-transform: uppercase;">
+                    </div>
+                </div>
+                <div class="inp-group">
+                    <div class="inp-lbl">Marca</div>
+                    <div class="inp-wrap">
+                        <input class="inp" type="text" id="veic-marca" placeholder="Ex: Chevrolet">
+                    </div>
+                </div>
+                <div class="inp-group">
+                    <div class="inp-lbl">Modelo</div>
+                    <div class="inp-wrap">
+                        <input class="inp" type="text" id="veic-modelo" required placeholder="Ex: Onix 1.0">
+                    </div>
+                </div>
+                <div class="inp-group">
+                    <div class="inp-lbl">Cor</div>
+                    <div class="inp-wrap">
+                        <input class="inp" type="text" id="veic-cor" required placeholder="Ex: Branco">
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; padding: 12px; margin-top: 10px;">Salvar
+                    Veículo</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../static/app.js"></script>
+    <script>
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+        function mascaraWhatsApp(v) {
+            v = v.replace(/\D/g, "");
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 2) v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+            if (v.length > 7) v = v.replace(/(\d{5})(\d)/, "$1-$2");
+            return v;
+        }
+
+        function mostrarMensagem(texto, erro = false) {
+            const msg = document.getElementById("msg-geral");
+            msg.textContent = texto;
+            msg.className = erro ? "toast-msg toast-error" : "toast-msg toast-success";
+            msg.style.display = "block";
+            setTimeout(() => msg.style.display = "none", 4000);
+        }
+
+        // CARREGAR DADOS INICIAIS
+        function carregarPerfil() {
+            fetch(`${window.API_URL}/api/perfil`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        const u = dados.usuario;
+                        document.getElementById('perfil-nome').value = u.Nome || "";
+                        document.getElementById('perfil-email').value = u.Email || "";
+                        document.getElementById('perfil-whatsapp').value = u.Whatsapp || "";
+                        if (u.Genero) document.getElementById('perfil-genero').value = u.Genero;
+
+                        if (u.FotoPerfil) {
+                            const avatar = document.getElementById('img-avatar');
+                            // Se for url HTTP, usa direto, senao junta com API_URL
+                            if (u.FotoPerfil.startsWith("http")) {
+                                avatar.src = u.FotoPerfil;
+                            } else {
+                                avatar.src = window.API_URL + u.FotoPerfil;
+                            }
+                        }
+
+                        renderizarVeiculos(dados.veiculos || []);
+                    }
+                })
+                .catch(console.error);
+        }
+
+        // ATUALIZAR PERFIL (Texto)
+        document.getElementById('form-perfil').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.innerHTML = "Salvando...";
+            btn.disabled = true;
+
+            const payload = {
+                nome: document.getElementById('perfil-nome').value,
+                email: document.getElementById('perfil-email').value,
+                whatsapp: document.getElementById('perfil-whatsapp').value,
+                genero: document.getElementById('perfil-genero').value
+            };
+
+            fetch(`${window.API_URL}/api/perfil`, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        mostrarMensagem("Perfil atualizado com sucesso!");
+                    } else {
+                        mostrarMensagem(dados.erro || "Erro ao salvar", true);
+                    }
+                })
+                .finally(() => {
+                    btn.innerHTML = "Salvar Alterações";
+                    btn.disabled = false;
+                });
+        });
+
+        // UPLOAD FOTO
+        function uploadFoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append("foto", file);
+
+            fetch(`${window.API_URL}/api/perfil/foto`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: formData
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        const avatar = document.getElementById('img-avatar');
+                        avatar.src = window.API_URL + dados.foto + "?t=" + new Date().getTime(); // Anti-cache
+                        mostrarMensagem("Foto atualizada!");
+                    } else {
+                        mostrarMensagem(dados.erro || "Erro no upload", true);
+                    }
+                });
+        }
+
+        // ================== VEÍCULOS ==================
+
+        function renderizarVeiculos(veiculos) {
+            const container = document.getElementById('lista-veiculos');
+            if (veiculos.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:var(--t3); font-size:12px; padding: 20px;">Nenhum veículo cadastrado.</div>`;
+                return;
+            }
+
+            container.innerHTML = veiculos.map(v => `
+                <div class="veiculo-card ${v.Ativo ? 'ativo' : ''}">
+                    <div class="veiculo-info">
+                        <div class="veiculo-placa">${v.Placa}</div>
+                        <div class="veiculo-desc">${v.Marca} ${v.Modelo} - ${v.Cor}</div>
+                    </div>
+                    <div class="veiculo-actions">
+                        <div style="font-size:10px; color:var(--t3); text-align:center;">
+                            Ativo<br>
+                            <input type="radio" class="radio-ativo" name="veiculo_ativo" ${v.Ativo ? 'checked' : ''} onchange="definirAtivo(${v.ID})">
+                        </div>
+                        <button class="btn-excluir" onclick="excluirVeiculo(${v.ID})">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function abrirModalVeiculo() { document.getElementById('modal-veiculo').style.display = 'flex'; }
+        function fecharModalVeiculo() { document.getElementById('modal-veiculo').style.display = 'none'; document.getElementById('form-veiculo').reset(); }
+
+        document.getElementById('form-veiculo').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const payload = {
+                Placa: document.getElementById('veic-placa').value,
+                Marca: document.getElementById('veic-marca').value,
+                Modelo: document.getElementById('veic-modelo').value,
+                Cor: document.getElementById('veic-cor').value
+            };
+
+            fetch(`${window.API_URL}/api/veiculos`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(res => res.json())
+                .then(dados => {
+                    if (dados.sucesso) {
+                        fecharModalVeiculo();
+                        carregarPerfil(); // Recarrega lista
+                        mostrarMensagem("Veículo adicionado!");
+                    } else {
+                        alert(dados.erro);
+                    }
+                });
+        });
+
+        function definirAtivo(id) {
+            fetch(`${window.API_URL}/api/veiculos/ativo/${id}`, {
+                method: "PUT",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(() => carregarPerfil());
+        }
+
+        function excluirVeiculo(id) {
+            if (!confirm("Deseja realmente excluir este veículo?")) return;
+            fetch(`${window.API_URL}/api/veiculos/excluir/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(() => carregarPerfil());
+        }
+
+        window.onload = carregarPerfil;
+    </script>
+</body>
+
+</html>

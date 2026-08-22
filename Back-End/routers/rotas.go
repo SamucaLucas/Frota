@@ -27,6 +27,22 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/api/usuario/deletar", controller.DeletarUsuario)
 	r.HandleFunc("/api/usuario/fcm-token", controller.AtualizarFCMToken)
 
+	// Rotas de API - Perfil e Veículos
+	r.HandleFunc("/api/perfil", func(w http.ResponseWriter, req *http.Request) {
+		if req.Method == http.MethodGet {
+			controller.ObterPerfil(w, req)
+		} else if req.Method == http.MethodPut {
+			controller.AtualizarPerfil(w, req)
+		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
+	r.HandleFunc("/api/perfil/foto", controller.UploadFotoPerfil)
+
+	r.HandleFunc("/api/veiculos", controller.AdicionarVeiculo)
+	r.HandleFunc("/api/veiculos/ativo/", controller.DefinirVeiculoAtivo)
+	r.HandleFunc("/api/veiculos/excluir/", controller.ExcluirVeiculo)
+
 	//Rotas de API - Passageiro
 	r.HandleFunc("/api/passageiro/home", controller.HomePassageiro)
 	r.HandleFunc("/api/passageiro/agendar", controller.AgendarViagem)
