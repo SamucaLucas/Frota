@@ -35,6 +35,26 @@
                 </div>
             </div>
 
+            <div class="inp-group">
+                <div class="inp-lbl">Gênero</div>
+                <div class="inp-wrap">
+                    <span class="inp-icon">🚻</span>
+                    <select class="inp" id="genero" name="genero" required
+                        style="width: 100%; border: none; outline: none; background: transparent; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: var(--t1); cursor: pointer;">
+                        <option value="" disabled selected style="background-color: var(--bg2); color: var(--t1);">
+                            Selecione seu gênero</option>
+                        <option value="Feminino" style="background-color: var(--bg2); color: var(--t1);">Feminino
+                        </option>
+                        <option value="Masculino" style="background-color: var(--bg2); color: var(--t1);">Masculino
+                        </option>
+                        <option value="Não-binário" style="background-color: var(--bg2); color: var(--t1);">Não-binário
+                        </option>
+                        <option value="Prefiro não informar" style="background-color: var(--bg2); color: var(--t1);">
+                            Prefiro não informar</option>
+                    </select>
+                </div>
+            </div>
+
             <div
                 style="display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; background:var(--bg3); border-radius:12px; padding:12px; border:1px solid var(--border)">
                 <input type="checkbox" name="aceitou" value="true" required
@@ -65,6 +85,7 @@
             event.preventDefault();
 
             const whatsappInput = document.getElementById('whatsapp').value;
+            const generoInput = document.getElementById('genero').value;
             const msgErro = document.getElementById('mensagem-erro');
             const btn = this.querySelector('button[type="submit"]');
 
@@ -84,7 +105,8 @@
                 body: JSON.stringify({
                     email: emailTemporario,
                     nome: nomeTemporario, // <-- AQUI ESTAVA FALTANDO O NOME!
-                    whatsapp: whatsappInput
+                    whatsapp: whatsappInput,
+                    genero: generoInput
                 })
             })
                 .then(res => res.json())

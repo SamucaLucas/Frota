@@ -145,8 +145,9 @@ func LoginUsuario(w http.ResponseWriter, r *http.Request) {
 type RequisicaoCadastro struct {
 	Nome     string `json:"nome"`
 	Email    string `json:"email"`
-	Whatsapp string `json:"whatsapp"`
 	Senha    string `json:"senha"`
+	Whatsapp string `json:"whatsapp"`
+	Genero   string `json:"genero"`
 }
 
 func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +161,7 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. Ler o JSON enviado pelo App
+	// 3. Ler the JSON enviado pelo App
 	var req RequisicaoCadastro
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -173,6 +174,10 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 	senha := req.Senha
 	whatsapp := strings.TrimSpace(req.Whatsapp)
+	genero := strings.TrimSpace(req.Genero)
+	if genero == "" {
+		genero = "Não Informado"
+	}
 
 	// 5. Validação simples
 	if nome == "" || email == "" || senha == "" || whatsapp == "" {
@@ -196,6 +201,7 @@ func CadastrarUsuario(w http.ResponseWriter, r *http.Request) {
 		Senha:         senhaHash,
 		Whatsapp:      whatsapp,
 		Papel:         "passageiro", // Todo cadastro novo nasce como passageiro
+		Genero:        genero,
 		AceitouTermos: true,         // Como já validamos no front, podemos assumir true aqui
 	}
 

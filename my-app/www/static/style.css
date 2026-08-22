@@ -213,6 +213,15 @@ body::before {
     background-color: transparent !important;
 }
 
+input:focus, textarea:focus, select:focus {
+    background: transparent !important;
+}
+
+select option {
+    background-color: var(--bg2);
+    color: var(--t1);
+}
+
 .logo-dark {
     display: block;
 }

@@ -109,6 +109,24 @@
                     </div>
                 </div>
 
+                <div class="inp-wrap">
+                    <span class="inp-icon">🚻</span>
+                    <div style="flex:1">
+                        <div class="inp-lbl">Gênero</div>
+                        <select class="inp" id="genero" name="genero" required
+                            style="width: 100%; border: none; outline: none; background: transparent; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: var(--t1); cursor: pointer;">
+                            <option value="" disabled selected style="background-color: var(--bg2); color: var(--t1);">
+                                Selecione seu gênero</option>
+                            <option value="Feminino" style="background-color: var(--bg2); color: var(--t1);">Feminino
+                            </option>
+                            <option value="Masculino" style="background-color: var(--bg2); color: var(--t1);">Masculino
+                            </option>
+                            <option value="Prefiro não informar"
+                                style="background-color: var(--bg2); color: var(--t1);">Prefiro não informar</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="inp-wrap" style="margin-bottom:12px">
                     <span class="inp-icon">🔒</span>
                     <div style="flex:1">
@@ -207,6 +225,7 @@
             const emailInput = document.getElementById('email').value;
             const whatsappInput = document.getElementById('whatsapp').value;
             const senhaInput = document.getElementById('senha').value;
+            const generoInput = document.getElementById('genero').value;
 
             const msgErro = document.getElementById('mensagem-erro');
             const btn = this.querySelector('button[type="submit"]');
@@ -223,7 +242,8 @@
                     nome: nomeInput,
                     email: emailInput,
                     whatsapp: whatsappInput,
-                    senha: senhaInput
+                    senha: senhaInput,
+                    genero: generoInput
                 })
             })
                 .then(res => res.json())

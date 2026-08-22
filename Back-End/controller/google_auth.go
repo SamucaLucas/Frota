@@ -158,6 +158,7 @@ type ReqGoogleCompletar struct {
 	Email    string `json:"email"`
 	Nome     string `json:"nome"`
 	Whatsapp string `json:"whatsapp"`
+	Genero   string `json:"genero"`
 }
 
 // ApiGoogleLogin recebe os dados do Google capturados pelo celular
@@ -212,11 +213,17 @@ func ApiCompletarCadastroGoogle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	genero := strings.TrimSpace(req.Genero)
+	if genero == "" {
+		genero = "Não Informado"
+	}
+
 	novoUsuario := structs.Usuario{
 		Nome:          req.Nome,
 		Email:         req.Email,
 		Whatsapp:      req.Whatsapp,
 		Papel:         "passageiro",
+		Genero:        genero,
 		AceitouTermos: true,
 	}
 

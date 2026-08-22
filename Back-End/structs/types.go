@@ -14,6 +14,7 @@ type Usuario struct {
 	Senha         string `gorm:"size:255;not null"`
 	Whatsapp      string `gorm:"size:20;not null"`
 	Papel         string `gorm:"size:20;not null"` // passageiro, motorista, admin
+	Genero        string `gorm:"size:50;default:'Não Informado'"`
 	Tokens        int    `gorm:"default:0"`        // Saldo atual para facilitar a visualização
 	FCMToken      string `gorm:"size:255"`         // Token do Firebase para Push Notifications
 	AceitouTermos bool   `gorm:"default:false"`
