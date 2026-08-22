@@ -129,3 +129,65 @@ function fecharBannerPWA() {
 
 // Inicia a verificação do PWA automaticamente
 iniciarPWA();
+
+// ==========================================
+// REGISTRO DE PUSH NOTIFICATIONS (FIREBASE FCM)
+// ==========================================
+async function registrarPushNotifications() {
+    // Só tenta registrar se estiver rodando no Capacitor NATIVO e o token de login já existir
+    const tokenUser = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!window.Capacitor || !window.Capacitor.isNativePlatform() || !tokenUser) {
+        return;
+    }
+
+    try {
+        const { PushNotifications } = capacitorPushNotifications; // Importado via plugin
+        
+        // 1. Pede permissão para o usuário (Aparece o popup "Deseja receber notificações?")
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+            permStatus = await PushNotifications.requestPermissions();
+        }
+
+        if (permStatus.receive !== 'granted') {
+            console.log('Permissão para Push Notifications negada.');
+            return;
+        }
+
+        // 2. Registra o aparelho no Google/Apple
+        await PushNotifications.register();
+
+        // 3. Ouvinte: Quando o Firebase devolve o Token do Aparelho
+        PushNotifications.addListener('registration', (tokenData) => {
+            console.log('FCM Token recebido:', tokenData.value);
+            
+            // 4. Envia o token para o nosso Back-end em Go
+            fetch(`${window.API_URL}/api/usuario/fcm-token`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${tokenUser}`
+                },
+                body: JSON.stringify({ token: tokenData.value })
+            }).catch(err => console.error("Erro ao salvar token FCM no back-end:", err));
+        });
+
+        PushNotifications.addListener('registrationError', (error) => {
+            console.error('Erro ao registrar Push:', error);
+        });
+
+        // 5. Ouvinte: Quando chega notificação e o app está ABERTO na tela
+        PushNotifications.addListener('pushNotificationReceived', (notification) => {
+            console.log('Push recebido com o app aberto:', notification);
+            // Poderíamos exibir um Toast nativo ou alerta aqui, mas o celular também avisa por padrão
+        });
+
+    } catch (error) {
+        console.log("PushNotifications plugin não disponível ou erro:", error);
+    }
+}
+
+// Inicia o registro assim que o app carrega
+document.addEventListener("DOMContentLoaded", () => {
+    registrarPushNotifications();
+});

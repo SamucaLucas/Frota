@@ -20,6 +20,7 @@
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/geolocation": "^8.2.0",
     "@capacitor/local-notifications": "^8.2.1",
+    "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "latest",
     "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4"

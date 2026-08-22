@@ -15,6 +15,7 @@ type Usuario struct {
 	Whatsapp      string `gorm:"size:20;not null"`
 	Papel         string `gorm:"size:20;not null"` // passageiro, motorista, admin
 	Tokens        int    `gorm:"default:0"`        // Saldo atual para facilitar a visualização
+	FCMToken      string `gorm:"size:255"`         // Token do Firebase para Push Notifications
 	AceitouTermos bool   `gorm:"default:false"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

@@ -11,6 +11,7 @@ import (
 	"Frota/controller"
 	"Frota/db"
 	"Frota/routers"
+	"Frota/services"
 	"Frota/structs"
 
 	"github.com/joho/godotenv"
@@ -72,6 +73,7 @@ func main() {
 	}
 
 	controller.ConfigurarGoogleOAuth()
+	services.InicializarFirebase()
 
 	// 2. Inicializar a conexão com o PostgreSQL e rodar o AutoMigrate
 	fmt.Println("⏳ Iniciando o Sistema de Frota - Dudu...")

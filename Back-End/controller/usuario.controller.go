@@ -316,3 +316,31 @@ func DeletarUsuario(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"mensagem": "Usuário excluído com sucesso"}`))
 }
+
+// AtualizarFCMToken salva o token de push do aparelho do usuário
+func AtualizarFCMToken(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"erro": "Método não permitido"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	usuarioID, err := services.ExtrairUsuarioID(r)
+	if err != nil {
+		http.Error(w, `{"erro": "Sessão expirada"}`, http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		Token string `json:"token"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Token == "" {
+		http.Error(w, `{"erro": "Token inválido"}`, http.StatusBadRequest)
+		return
+	}
+
+	db.DB.Model(&structs.Usuario{}).Where("id = ?", usuarioID).Update("fcm_token", req.Token)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"sucesso": true})
+}

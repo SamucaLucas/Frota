@@ -318,6 +318,27 @@ func AtualizarStatusCorrida(w http.ResponseWriter, r *http.Request) {
     }
 
     // 5. Devolve o sucesso para o aplicativo liberar a Etapa 2
+	// 5. MÁGICA: Disparar Notificação Push para o Passageiro!
+	var corridaAtualizada structs.Corrida
+	if err := db.DB.Preload("Usuario").First(&corridaAtualizada, req.CorridaID).Error; err == nil {
+		if corridaAtualizada.Usuario.FCMToken != "" {
+			titulo := "Atualização da Viagem"
+			corpo := "Status: " + req.Status
+			
+			if req.Status == "A Caminho" {
+				titulo = "O motorista está a caminho! 🚗"
+				corpo = "Prepare-se, seu motorista está indo até você."
+			} else if req.Status == "Em Corrida" {
+				titulo = "O motorista chegou! 📍"
+				corpo = "O motorista já está no local de embarque aguardando."
+			}
+
+			// Dispara a notificação sem travar a resposta HTTP
+			go services.EnviarPushNotification(corridaAtualizada.Usuario.FCMToken, titulo, corpo)
+		}
+	}
+
+    // 6. Devolve o sucesso para o aplicativo liberar a Etapa 2
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]bool{"sucesso": true})
 }

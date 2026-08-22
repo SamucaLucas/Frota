@@ -25,6 +25,7 @@ func ConfigurarRotas() *http.ServeMux {
 	r.HandleFunc("/api/corrida/detalhes", controller.ObterDetalhesCorrida)
 	r.HandleFunc("/api/configuracoes", controller.ObterConfiguracoes)
 	r.HandleFunc("/api/usuario/deletar", controller.DeletarUsuario)
+	r.HandleFunc("/api/usuario/fcm-token", controller.AtualizarFCMToken)
 
 	//Rotas de API - Passageiro
 	r.HandleFunc("/api/passageiro/home", controller.HomePassageiro)
