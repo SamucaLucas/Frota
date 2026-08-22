@@ -1,28 +1,36 @@
-# Fix for Login Error in Native App (Mixed Content and CORS)
+# Plano de Correção: Notificações Push e Conectividade
 
-The app works in the mobile browser because it's likely being accessed via the same IP/Origin as the API, or the browser is less strict with `http` to `http` requests. In the native app, Capacitor uses `https://localhost` as the origin, which causes two problems when calling an `http` API:
-1. **Mixed Content**: HTTPS pages cannot call HTTP APIs (Blocked by Chromium).
-2. **CORS**: The server might not be configured to allow requests from `https://localhost`.
+O aplicativo não está recebendo notificações e provavelmente está com problemas de conexão devido a reversões em arquivos de configuração e erros na implementação do plugin de notificações.
 
-## Proposed Changes
+## Análise de Problemas
+
+1. **AndroidManifest.xml Revertido**: O arquivo atual bloqueia tráfego HTTP (`usesCleartextTraffic="false"`) e não referencia a configuração de segurança de rede, o que impede a comunicação com o servidor local e possivelmente com o Firebase.
+2. **Capacitor Config Revertido**: As configurações que permitiam o esquema `http` e o plugin `CapacitorHttp` foram removidas, voltando ao padrão `https` que causa erro de "Mixed Content".
+3. **Erro no Código JS (`app.js`)**: A variável `capacitorPushNotifications` não existe no escopo global do Capacitor. O correto é acessar via `Capacitor.Plugins.PushNotifications`.
+4. **Canais de Notificação**: No Android 8+, as notificações só aparecem se houver um canal (channel) criado. Isso está faltando no JS.
+
+## Mudanças Propostas
 
 ### [Capacitor Config] (file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/capacitor.config.json)
 
-#### [MODIFY] [capacitor.config.json](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/capacitor.config.json)
+- Restaurar o bloco `server` com `androidScheme: "http"` para evitar bloqueios de segurança em ambiente de teste.
+- Reativar o plugin `CapacitorHttp` para facilitar requisições que ignoram CORS.
 
-- Change the `androidScheme` to `http`. This converts the app's origin to `http://localhost`, eliminating the "Mixed Content" security block when calling your `http://192.168.3.38` API.
-- Enable `CapacitorHttp` plugin. This will automatically intercept `fetch` calls and run them through native Android code, which bypasses CORS restrictions.
+### [Android Manifest] (file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/AndroidManifest.xml)
 
-### [Frontend Code] (file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/Usuario/login.html)
+- Reativar `android:usesCleartextTraffic="true"`.
+- Vincular `android:networkSecurityConfig="@xml/network_security_config"`.
+- Adicionar metadados do Firebase para ícone e cor padrão das notificações.
 
-#### [MODIFY] [login.html](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/Usuario/login.html)
+### [Frontend - app.js] (file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/static/app.js)
 
-- Prevent Service Worker registration when running in a native environment. Service Workers have extremely strict security and often block non-HTTPS traffic regardless of WebView settings.
+- Corrigir o acesso ao plugin para `Capacitor.Plugins.PushNotifications`.
+- Adicionar a criação de um canal de notificação padrão ("default") logo após o registro.
+- Garantir que o Service Worker não seja registrado no ambiente nativo (já que ele bloqueia tráfego HTTP).
 
-## Verification Plan
+## Plano de Verificação
 
-### Manual Verification
-- Rebuild the app: `npm run build` and then `npx cap copy android`.
-- Run the app on the device.
-- Try to login.
-- Check logcat for any remaining `chromium` errors.
+1. **Sincronização**: Executar `npx cap copy android` (solicitar ao usuário).
+2. **Build**: Reconstruir o app.
+3. **Logs**: Verificar no Logcat se o "FCM Token" é impresso no console.
+4. **Teste de Envio**: Enviar uma notificação de teste pelo Console do Firebase.

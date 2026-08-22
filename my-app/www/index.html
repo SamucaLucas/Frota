@@ -60,8 +60,8 @@
                 });
         }
 
-        // Registra o PWA apenas se estiver no Navegador (Web) usando HTTPS
-        if ('serviceWorker' in navigator && (!window.Capacitor || !window.Capacitor.isNativePlatform())) {
+        // Registra o PWA apenas se estiver no Navegador (Web) e NÃO for Capacitor
+        if ('serviceWorker' in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform())) {
             navigator.serviceWorker.register('sw.js')
                 .then(() => console.log('[PWA] Service Worker Registrado com Sucesso!'))
                 .catch(err => console.log('[PWA] Falha ao registrar Service Worker:', err));

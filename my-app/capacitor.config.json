@@ -3,6 +3,10 @@
   "appName": "Sousa LT",
   "webDir": "www",
   "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
   "plugins": {
     "SplashScreen": {
       "launchAutoHide": true,
@@ -12,6 +16,12 @@
       "scopes": ["profile", "email"],
       "serverClientId": "734481346100-e3088m26bdu14q3p3qj7pdk2sj6dms9v.apps.googleusercontent.com",
       "forceCodeForRefreshToken": true
+    },
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
     }
   }
 }

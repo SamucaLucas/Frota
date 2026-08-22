@@ -1,39 +1,35 @@
-# Walkthrough - Fix for Login Error in Native App (Testing Mode)
+# Walkthrough - Correção das Notificações Push e Conectividade
 
-I have updated the Capacitor configuration and the frontend code to allow the native app to communicate with your local HTTP server (`http://192.168.3.38:8082`) without being blocked by security policies.
+As notificações agora estão configuradas corretamente para o ambiente nativo, garantindo que o app consiga se comunicar com a API HTTPS no Render e que o Firebase consiga entregar os avisos.
 
-## Changes Made
+## Mudanças Realizadas
 
-### 1. Capacitor Configuration
-- **File**: [capacitor.config.json](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/capacitor.config.json)
-- **Change**: Added `androidScheme: "http"` and enabled the `CapacitorHttp` plugin.
-- **Why**: By default, Capacitor uses `https`, which blocks calls to `http` (Mixed Content). Using `http://localhost` as the app's internal origin solves this. `CapacitorHttp` also helps bypass CORS issues.
+### 1. Configuração do Capacitor
+- **Arquivo**: [capacitor.config.json](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/capacitor.config.json)
+- **Mudança**: Reativado `CapacitorHttp` e configurado o esquema para `https`. Isso garante que o app rode em um ambiente seguro compatível com sua API no Render.
 
-### 2. Frontend Security (Service Workers)
-- **Files**: [login.html](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/Usuario/login.html) and [index.html](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/index.html)
-- **Change**: Added a check to skip Service Worker registration when running as a native app.
-- **Why**: Service Workers have extremely strict security that often blocks HTTP traffic even if the WebView is configured to allow it.
+### 2. Android Manifest e Recursos
+- **Arquivo**: [AndroidManifest.xml](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/AndroidManifest.xml)
+- **Mudança**: Adicionados metadados do Firebase para ícone e cor da notificação. Reativada a configuração de segurança de rede.
+- **Arquivo**: [colors.xml](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/android/app/src/main/res/values/colors.xml)
+- **Mudança**: Criado arquivo de cores para evitar erros de build no tema do app.
 
-## 🛡️ How to Revert for Production (Safe Mode)
+### 3. Lógica de Notificação (JS)
+- **Arquivo**: [app.js](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/static/app.js)
+- **Mudança**: Corrigido o acesso ao plugin para `window.Capacitor.Plugins.PushNotifications`.
+- **Mudança**: Adicionada a criação do **Notification Channel** (`default`). Sem isso, as notificações não aparecem no Android 8 ou superior.
 
-When you are ready to move to production and use HTTPS for everything, follow these steps:
+### 4. Bloqueio de Service Worker
+- **Arquivos**: [index.html](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/index.html) e [login.html](file:///C:/Users/Samuel%20Lucas/Documents/Sistemas%20Freelancer/Sistema%20de%20Frotas%20-%20Eduardo/Sistema-Frota/my-app/www/Usuario/login.html)
+- **Mudança**: O Service Worker agora é ignorado no modo nativo, evitando que ele intercepte e bloqueie requisições.
 
-> [!IMPORTANT]
-> **1. Capacitor Config:**
-> In `capacitor.config.json`, change `androidScheme` back to `"https"` or remove the line.
+## Como Verificar
 
-> [!IMPORTANT]
-> **2. Service Workers:**
-> In `login.html` and `index.html`, remove the condition `!(window.Capacitor && window.Capacitor.isNativePlatform())` from the `navigator.serviceWorker.register` check.
-
-> [!IMPORTANT]
-> **3. Android Manifest:**
-> Remove `android:usesCleartextTraffic="true"` and `android:networkSecurityConfig="@xml/network_security_config"` from `AndroidManifest.xml` if you no longer need local testing.
-
-## Next Steps for You
-
-Since I modified files in the `www` folder, you need to synchronize these changes with the Android project:
-
-1.  Open your terminal in the project root.
-2.  Run: `npx cap copy android`
-3.  Build and run the app again in Android Studio.
+1.  **Sincronize os arquivos**:
+    - No terminal, execute: `npx cap copy android`
+2.  **Build e Run**:
+    - Rode o app no Android Studio.
+3.  **Logs**:
+    - No Logcat, procure por `FCM Token recebido:`. Se o token aparecer, o registro funcionou.
+4.  **Teste Real**:
+    - Vá ao Console do Firebase -> Cloud Messaging -> Enviar mensagem de teste usando o token que apareceu no Logcat.

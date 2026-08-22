@@ -141,7 +141,7 @@ async function registrarPushNotifications() {
     }
 
     try {
-        const { PushNotifications } = capacitorPushNotifications; // Importado via plugin
+        const PushNotifications = window.Capacitor.Plugins.PushNotifications;
         
         // 1. Pede permissão para o usuário (Aparece o popup "Deseja receber notificações?")
         let permStatus = await PushNotifications.checkPermissions();
@@ -157,11 +157,23 @@ async function registrarPushNotifications() {
         // 2. Registra o aparelho no Google/Apple
         await PushNotifications.register();
 
-        // 3. Ouvinte: Quando o Firebase devolve o Token do Aparelho
+        // 3. Cria o canal de notificação (Obrigatório para Android 8+)
+        // Isso garante que a notificação tenha um canal padrão para aparecer
+        await PushNotifications.createChannel({
+            id: 'default',
+            name: 'Notificações Gerais',
+            description: 'Canal padrão para avisos e alertas do sistema',
+            importance: 5, // Importância máxima
+            visibility: 1,
+            sound: 'default',
+            vibration: true
+        });
+
+        // 4. Ouvinte: Quando o Firebase devolve o Token do Aparelho
         PushNotifications.addListener('registration', (tokenData) => {
             console.log('FCM Token recebido:', tokenData.value);
             
-            // 4. Envia o token para o nosso Back-end em Go
+            // 5. Envia o token para o nosso Back-end em Go
             fetch(`${window.API_URL}/api/usuario/fcm-token`, {
                 method: "POST",
                 headers: {
@@ -176,14 +188,13 @@ async function registrarPushNotifications() {
             console.error('Erro ao registrar Push:', error);
         });
 
-        // 5. Ouvinte: Quando chega notificação e o app está ABERTO na tela
+        // 6. Ouvinte: Quando chega notificação e o app está ABERTO na tela
         PushNotifications.addListener('pushNotificationReceived', (notification) => {
             console.log('Push recebido com o app aberto:', notification);
-            // Poderíamos exibir um Toast nativo ou alerta aqui, mas o celular também avisa por padrão
         });
 
     } catch (error) {
-        console.log("PushNotifications plugin não disponível ou erro:", error);
+        console.log("Erro no plugin PushNotifications:", error);
     }
 }
 
