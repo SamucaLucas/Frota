@@ -1,15 +1,18 @@
-self.addEventListener('fetch', (event) => {
-    // NOVA REGRA: Se for uma chamada para a API, o Service Worker não se mete!
-    if (event.request.url.includes('/api/')) {
-        return; // Deixa o navegador seguir o fluxo normal pela internet
-    }
-});
-
 // my-app/www/sw.js
-self.addEventListener('install', (e) => {
-  console.log('[Service Worker] Instalado');
+self.addEventListener('install', (event) => {
+    console.log('[Service Worker] Instalado');
+    self.skipWaiting();
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(fetch(e.request));
+self.addEventListener('activate', (event) => {
+    event.waitUntil(clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+    // Se for uma chamada para a API ou método não-GET, deixa o navegador seguir o fluxo normal direto pela rede
+    if (event.request.url.includes('/api/') || event.request.method !== 'GET') {
+        return;
+    }
+
+    event.respondWith(fetch(event.request));
 });
