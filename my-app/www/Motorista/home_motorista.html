@@ -582,7 +582,7 @@
             const corridasDeHoje = (corridas || []).filter(c => {
                 const dataCorrida = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt || new Date()).toLocaleDateString('pt-BR');
                 return dataCorrida === dataDeHoje;
-            });
+            }).sort((a, b) => new Date(b.DataHoraAgendada || b.created_at || b.UpdatedAt) - new Date(a.DataHoraAgendada || a.created_at || a.UpdatedAt));
 
             if (corridasDeHoje.length === 0) {
                 container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida concluída hoje.</div></div>';

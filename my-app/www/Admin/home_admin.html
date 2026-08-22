@@ -298,6 +298,14 @@
             </svg>
             Mapa da Frota
         </button>
+        <button class="sb-link" onclick="window.location.href='../Motorista/taximetro.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+            </svg>
+            Taxímetro Livre
+        </button>
         <button class="sb-link" onclick="window.location.href='sorteio_admin.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
@@ -534,7 +542,7 @@
                         const realizadasDeHoje = (dados.concluidas || []).filter(c => {
                             const d = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt).toLocaleDateString('pt-BR');
                             return d === dataDeHoje;
-                        });
+                        }).sort((a, b) => new Date(b.DataHoraAgendada || b.created_at || b.UpdatedAt) - new Date(a.DataHoraAgendada || a.created_at || a.UpdatedAt));
 
                         if (document.getElementById('total-pendentes-opt')) {
                             document.getElementById('total-pendentes-opt').textContent = dados.pendentes ? dados.pendentes.length : 0;

@@ -485,7 +485,7 @@
             const viagensDeHoje = (viagens || []).filter(v => {
                 const dataViagem = new Date(v.DataHoraAgendada || v.created_at || v.UpdatedAt || new Date()).toLocaleDateString('pt-BR');
                 return dataViagem === dataDeHoje;
-            });
+            }).sort((a, b) => new Date(b.DataHoraAgendada || b.created_at || b.UpdatedAt) - new Date(a.DataHoraAgendada || a.created_at || a.UpdatedAt));
 
             // 3. Verifica se a lista DE HOJE está vazia
             if (viagensDeHoje.length === 0) {
