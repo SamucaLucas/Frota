@@ -426,10 +426,23 @@
                         driverIdToTrack = dados.Motorista.ID;
 
                         document.getElementById('info-motorista').innerText = dados.Motorista.Nome;
-                        document.getElementById('info-carro').innerText = "Motorista Parceiro";
-                        document.getElementById('avatar-motorista').innerText = "🚗";
-                        document.getElementById('avatar-motorista').style.border = "none";
-                        document.getElementById('avatar-motorista').style.background = "transparent";
+
+                        if (dados.veiculo_ativo) {
+                            let v = dados.veiculo_ativo;
+                            document.getElementById('info-carro').innerText = `${v.Placa} • ${v.Marca} ${v.Modelo} ${v.Cor}`;
+                        } else {
+                            document.getElementById('info-carro').innerText = "Motorista Parceiro";
+                        }
+
+                        if (dados.Motorista.FotoPerfil) {
+                            const foto = dados.Motorista.FotoPerfil.startsWith("http") ? dados.Motorista.FotoPerfil : window.API_URL + dados.Motorista.FotoPerfil;
+                            document.getElementById('avatar-motorista').innerHTML = `<img src="${foto}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                            document.getElementById('avatar-motorista').style.border = "2px solid var(--acc)";
+                        } else {
+                            document.getElementById('avatar-motorista').innerText = "🚗";
+                            document.getElementById('avatar-motorista').style.border = "none";
+                            document.getElementById('avatar-motorista').style.background = "transparent";
+                        }
 
                         // Rastreia a posição do motorista APENAS SE a corrida não estiver concluída
                         const statusSafe = (dados.Status || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();

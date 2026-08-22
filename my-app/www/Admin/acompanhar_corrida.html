@@ -220,9 +220,10 @@
             </div>
 
             <div class="info-row">
-                <div class="driver-avatar">🚗</div>
+                <div class="driver-avatar" id="avatar-motorista">🚗</div>
                 <div class="driver-info">
                     <div class="driver-name" id="info-motorista">Carregando...</div>
+                    <div class="driver-car" id="info-carro" style="color: var(--t1); margin-bottom: 2px;"></div>
                     <div class="driver-car" id="info-passageiro">Passageiro: ...</div>
                 </div>
             </div>
@@ -322,6 +323,18 @@
 
                     document.getElementById('info-motorista').innerText = dados.Motorista.Nome;
                     document.getElementById('info-passageiro').innerText = `Passageiro: ${dados.Usuario ? dados.Usuario.Nome : 'Avulso'}`;
+
+                    if (dados.veiculo_ativo) {
+                        let v = dados.veiculo_ativo;
+                        document.getElementById('info-carro').innerText = `${v.Placa} • ${v.Marca} ${v.Modelo} ${v.Cor}`;
+                    }
+
+                    if (dados.Motorista.FotoPerfil) {
+                        const foto = dados.Motorista.FotoPerfil.startsWith("http") ? dados.Motorista.FotoPerfil : window.API_URL + dados.Motorista.FotoPerfil;
+                        document.getElementById('avatar-motorista').innerHTML = `<img src="${foto}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                        document.getElementById('avatar-motorista').style.border = "2px solid var(--acc)";
+                        document.getElementById('avatar-motorista').style.background = "transparent";
+                    }
 
                     // Limpa a string de origem se tiver tag de Admin inserindo passageiro avulso
                     let origemLimpa = dados.OrigemTexto || "Não informada";

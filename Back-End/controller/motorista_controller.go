@@ -60,12 +60,26 @@ func ApiHomeMotorista(w http.ResponseWriter, r *http.Request) {
 		Limit(10).
 		Find(&concluidas)
 
+	// 3. Busca os veículos do motorista
+	var veiculos []structs.Veiculo
+	db.DB.Where("motorista_id = ?", usuarioID).Order("ativo DESC, id ASC").Find(&veiculos)
+
+	var veiculoAtivo structs.Veiculo
+	temVeiculoAtivo := false
+	if len(veiculos) > 0 && veiculos[0].Ativo {
+		veiculoAtivo = veiculos[0]
+		temVeiculoAtivo = true
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"sucesso":    true,
-		"usuario":    motorista,
-		"atribuidas": atribuidas,
-		"concluidas": concluidas,
+		"sucesso":           true,
+		"usuario":           motorista,
+		"atribuidas":        atribuidas,
+		"concluidas":        concluidas,
+		"veiculo_ativo":     veiculoAtivo,
+		"veiculos":          veiculos,
+		"tem_veiculo_ativo": temVeiculoAtivo,
 	})
 }
 

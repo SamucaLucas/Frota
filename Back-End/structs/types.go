@@ -65,6 +65,7 @@ type Corrida struct {
 	ValorEstimado    float64
 	ValorFinal       float64
 	Status           string `gorm:"size:50;default:'Aguardando Confirmacao'"` // Aguardando, Aprovada, Concluida, Cancelada
+	VeiculoAtivo     *Veiculo `gorm:"-" json:"veiculo_ativo"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	DeletedAt        gorm.DeletedAt `gorm:"index"`

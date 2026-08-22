@@ -221,6 +221,13 @@ func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 		mapaMotoristas[m.ID] = m.Nome
 	}
 
+	var veiculosAtivos []structs.Veiculo
+	db.DB.Where("ativo = ?", true).Find(&veiculosAtivos)
+	mapaVeiculos := make(map[uint]structs.Veiculo)
+	for _, v := range veiculosAtivos {
+		mapaVeiculos[v.MotoristaID] = v
+	}
+
 	dadosJSON, _ := json.Marshal(localizacoes)
 	var listaDinamica []map[string]interface{}
 	json.Unmarshal(dadosJSON, &listaDinamica)
@@ -241,6 +248,10 @@ func BuscarLocalizacoesAdmin(w http.ResponseWriter, r *http.Request) {
 			loc["nome_garantido"] = nome
 		} else {
 			loc["nome_garantido"] = "Motorista #" + fmt.Sprint(id)
+		}
+
+		if veiculo, existe := mapaVeiculos[uint(id)]; existe {
+			loc["veiculo_ativo"] = veiculo
 		}
 
 		listaDinamica[i] = loc

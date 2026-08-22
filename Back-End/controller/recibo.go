@@ -23,6 +23,14 @@ func ObterDetalhesCorrida(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Adiciona o Veículo Ativo se o motorista existir
+	if corrida.MotoristaID != nil {
+		var veiculo structs.Veiculo
+		if errV := db.DB.Where("motorista_id = ? AND ativo = ?", *corrida.MotoristaID, true).First(&veiculo).Error; errV == nil {
+			corrida.VeiculoAtivo = &veiculo
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(corrida)
 }

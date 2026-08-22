@@ -306,7 +306,7 @@
                 </svg>
             </button>
             <div style="font-size: 18px; font-weight: 800; color: var(--t1);">Radar da Frota</div>
-    
+
         </div>
 
         <div class="map-wrapper">
@@ -412,11 +412,25 @@
                         idsAtivosMap.push(String(id));
                         const iconeDinamico = criarIconeCarro(nome, statusSafe);
 
+                        let veicStr = "Nenhum veículo ativo";
+                        if (mot.veiculo_ativo) {
+                            veicStr = `<b>${mot.veiculo_ativo.Placa}</b><br>${mot.veiculo_ativo.Marca} ${mot.veiculo_ativo.Modelo} ${mot.veiculo_ativo.Cor}`;
+                        }
+
+                        const popupHtml = `<div style="font-family:'Sora',sans-serif; text-align:center;">
+                            <div style="font-size:14px; font-weight:800; color:#111;">${nome}</div>
+                            <div style="font-size:11px; color:#666; margin-top:2px; margin-bottom:6px;">Status: ${statusOriginal}</div>
+                            <div style="font-size:12px; color:#222; background:#f0f0f0; padding:6px; border-radius:6px; text-transform:uppercase;">${veicStr}</div>
+                        </div>`;
+
                         if (marcadoresMotoristas[id]) {
                             marcadoresMotoristas[id].setLatLng([lat, lng]);
                             marcadoresMotoristas[id].setIcon(iconeDinamico);
+                            if (marcadoresMotoristas[id].getPopup()) {
+                                marcadoresMotoristas[id].getPopup().setContent(popupHtml);
+                            }
                         } else {
-                            marcadoresMotoristas[id] = L.marker([lat, lng], { icon: iconeDinamico }).addTo(map);
+                            marcadoresMotoristas[id] = L.marker([lat, lng], { icon: iconeDinamico }).bindPopup(popupHtml).addTo(map);
                         }
                     }
                 });

@@ -355,6 +355,19 @@
                 <div class="hero-accent"></div>
             </div>
 
+            <div class="veiculo-info-card" id="card-veiculo-ativo" style="display: none; cursor: pointer; margin: 0 16px 20px 16px;" onclick="document.getElementById('modalEscolherVeiculo').classList.add('open')">
+                <div class="icone-carro">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-size: 11px; color: var(--t3); margin-bottom: 2px;">Veículo do Dia</div>
+                    <div id="veiculo-ativo-desc" style="font-size: 13px; font-weight: 800; color: var(--t1); text-transform: uppercase;">
+                        ---
+                    </div>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.27l-5.67 5.67"/></svg>
+            </div>
+
             <div class="sec-lbl">Minha Agenda 📅</div>
             <div id="lista-atribuidas">
                 <div class="card list-card" style="text-align: center; padding: 20px 10px;">
@@ -369,9 +382,25 @@
                 </div>
             </div>
 
+        <!-- MODAL ESCOLHER VEÍCULO -->
+    <div id="modalEscolherVeiculo" class="modal-permissoes" style="z-index: 10000;">
+        <div class="modal-card">
+            <div style="font-size: 16px; font-weight: 800; color: var(--t1); margin-bottom: 8px;">Com qual carro você vai trabalhar hoje? 🚗</div>
+            <div style="font-size: 12px; color: var(--t2); margin-bottom: 16px; line-height: 1.4;">
+                Selecione o veículo que você está utilizando. Essa informação vai aparecer para o passageiro.
+            </div>
+            
+            <div id="lista-veiculos-modal" style="max-height: 200px; overflow-y: auto; margin-bottom: 16px;">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <button class="btn-iniciar-rota" style="margin-top: 0; background: var(--border); color: var(--t1);" onclick="fecharModalVeiculo()">
+                Fechar
+            </button>
         </div>
     </div>
 
+    <!-- MODAL PERMISSÕES -->
     <div class="modal-permissoes" id="modalPermissoes">
         <div class="modal-card">
             <div style="font-size: 32px; text-align: center; margin-bottom: 10px;">⚙️</div>
@@ -533,6 +562,44 @@
                         document.getElementById('motorista-nome').textContent = dados.usuario.Nome;
                         renderizarAtribuidas(dados.atribuidas);
                         renderizarConcluidas(dados.concluidas);
+                        
+                        // Lógica de Veículos
+                        let dataHoje = new Date().toLocaleDateString();
+                        let ultimoAcesso = localStorage.getItem("data_carro_escolhido");
+                        
+                        if (dados.veiculos && dados.veiculos.length > 0) {
+                            document.getElementById('card-veiculo-ativo').style.display = 'flex';
+                            
+                            if (dados.tem_veiculo_ativo) {
+                                let v = dados.veiculo_ativo;
+                                document.getElementById('veiculo-ativo-desc').textContent = `${v.Placa} • ${v.Marca} ${v.Modelo} ${v.Cor}`;
+                            } else {
+                                document.getElementById('veiculo-ativo-desc').textContent = "NENHUM SELECIONADO";
+                            }
+                            
+                            // Monta modal
+                            const modal = document.getElementById('lista-veiculos-modal');
+                            modal.innerHTML = dados.veiculos.map(v => `
+                                <div style="background: var(--bg); border: 1px solid ${v.Ativo ? 'var(--acc)' : 'var(--border)'}; border-radius: 8px; padding: 10px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight:700; color:var(--t1);">${v.Placa}</div>
+                                        <div style="font-size: 11px; color:var(--t3);">${v.Marca} ${v.Modelo}</div>
+                                    </div>
+                                    <button onclick="selecionarVeiculo(${v.ID})" style="background: ${v.Ativo ? 'var(--acc)' : 'var(--bg2)'}; color: ${v.Ativo ? '#fff' : 'var(--t1)'}; border:none; padding: 6px 12px; border-radius: 6px; font-size:11px; cursor:pointer;">
+                                        ${v.Ativo ? 'Ativo' : 'Selecionar'}
+                                    </button>
+                                </div>
+                            `).join('');
+                            
+                            // Se é o primeiro acesso do dia ou nenhum selecionado, força
+                            if (!dados.tem_veiculo_ativo || ultimoAcesso !== dataHoje) {
+                                document.getElementById('modalEscolherVeiculo').classList.add('open');
+                            }
+                            
+                        } else {
+                            document.getElementById('card-veiculo-ativo').style.display = 'none';
+                            // Sugerir ir pro perfil?
+                        }
                     } else {
                         alert("Erro ao carregar dados: " + dados.erro);
                     }
@@ -541,6 +608,25 @@
                     console.error(err);
                     if (err.message === "Sessão expirada") fazerLogout(false);
                 });
+        }
+        
+        function fecharModalVeiculo() {
+            localStorage.setItem("data_carro_escolhido", new Date().toLocaleDateString());
+            document.getElementById('modalEscolherVeiculo').classList.remove('open');
+        }
+        
+        function selecionarVeiculo(id) {
+            fetch(`${window.API_URL}/api/veiculos/ativo/${id}`, {
+                method: "PUT",
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(dados => {
+                if (dados.sucesso) {
+                    fecharModalVeiculo();
+                    carregarDadosMotorista();
+                }
+            });
         }
 
         // ==========================================
