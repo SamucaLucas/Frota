@@ -473,7 +473,12 @@
                 statusIcon.innerText = "🚙";
                 statusText.innerText = "Motorista Confirmado";
             }
-            else if (statusSafe.includes("andamento") || statusSafe.includes("corrida")) {
+            else if (statusSafe === "a caminho") {
+                badgeContainer.classList.add("status-andamento");
+                statusIcon.innerText = "🚗";
+                statusText.innerText = "O motorista está a caminho!";
+            }
+            else if (statusSafe === "em corrida" || statusSafe.includes("andamento")) {
                 badgeContainer.classList.add("status-andamento");
                 statusIcon.innerText = "📍";
                 statusText.innerText = "Sua viagem está em andamento";
@@ -489,10 +494,6 @@
                 badgeContainer.classList.add("status-cancelada");
                 statusIcon.innerText = "❌";
                 statusText.innerText = "Viagem Cancelada";
-            } else if (statusSafe === "em corrida") {
-                badgeContainer.classList.add("status-andamento");
-                statusIcon.innerText = "📍";
-                statusText.innerText = "O motorista chegou ao local!";
             }
             else {
                 badgeContainer.classList.add("status-pendente");

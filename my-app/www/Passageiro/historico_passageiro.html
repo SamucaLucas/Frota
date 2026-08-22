@@ -393,15 +393,17 @@
                 let classBadge = "badge-status ";
                 let classBorder = "";
 
-                if (statusSafe === "pendente") {
+                if (statusSafe === "pendente" || statusSafe.includes("aguardando")) {
                     classBadge += "status-pendente";
                     classBorder = "border-pendente";
-                } else if (statusSafe === "aprovada" || statusSafe === "confirmada") {
+                } else if (statusSafe === "aprovada" || statusSafe === "confirmada" || statusSafe === "a caminho" || statusSafe === "em corrida" || statusSafe.includes("andamento")) {
                     classBadge += "status-aprovada";
                     classBorder = "border-aprovada";
-                } else if (statusSafe === "concluida") {
+                } else if (statusSafe === "concluida" || statusSafe.includes("realizada")) {
                     classBadge += "status-concluida";
                     classBorder = "border-concluida";
+                } else if (statusSafe === "cancelada") {
+                    classBadge += "status-concluida"; // Pode reusar um estilo cinza/cancelado se houver, aqui usa-se o padrão
                 } else {
                     classBadge += "status-pendente";
                 }

@@ -207,7 +207,6 @@
         .sb-theme-btn:active {
             background: var(--border);
         }
-
     </style>
 </head>
 
@@ -436,7 +435,9 @@
 
             let html = "";
             viagens.forEach(v => {
-                const badgeClass = v.Status === "Aprovada" ? "badge-green" : "badge-muted";
+                const statusSafe = (v.Status || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                const badgeClass = (statusSafe === "aprovada" || statusSafe === "confirmada" || statusSafe === "a caminho" || statusSafe === "em corrida" || statusSafe.includes("andamento")) ? "badge-green" : "badge-muted";
+
                 const dataFormatada = formatarData(v.DataHoraAgendada);
                 const infoMotorista = v.MotoristaID
                     ? `<span style="color: var(--t1); font-weight: 600;">${v.Motorista.Nome}</span>`
