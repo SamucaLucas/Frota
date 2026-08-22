@@ -48,7 +48,7 @@ func ApiHomeMotorista(w http.ResponseWriter, r *http.Request) {
 	// 1. Busca as corridas que o Dudu despachou para este motorista
 	var atribuidas []structs.Corrida
 	db.DB.Preload("Usuario").
-		Where("status = ? OR status = ? AND motorista_id = ?", "Aprovada", "Em Corrida", usuarioID).
+		Where("(status = ? OR status = ?) AND motorista_id = ?", "Aprovada", "Em Corrida", usuarioID).
 		Order("data_hora_agendada ASC").
 		Find(&atribuidas)
 
@@ -329,6 +329,24 @@ func AtualizarStatusCorrida(w http.ResponseWriter, r *http.Request) {
         http.Error(w, `{"erro": "Dados inválidos"}`, http.StatusBadRequest)
         return
     }
+
+	// 3.5 Trava de segurança (garantir que ele é dono da corrida)
+	usuarioID, err := services.ExtrairUsuarioID(r)
+	if err != nil {
+		http.Error(w, `{"erro": "Sessão expirada"}`, http.StatusUnauthorized)
+		return
+	}
+
+	var corrida structs.Corrida
+	if err := db.DB.First(&corrida, req.CorridaID).Error; err != nil {
+		http.Error(w, `{"erro": "Corrida não encontrada"}`, http.StatusNotFound)
+		return
+	}
+
+	if corrida.MotoristaID == nil || *corrida.MotoristaID != usuarioID {
+		http.Error(w, `{"erro": "Você não tem permissão para alterar esta corrida"}`, http.StatusForbidden)
+		return
+	}
 
     // 4. Atualiza a corrida no banco de dados
     errDb := db.DB.Model(&structs.Corrida{}).Where("id = ?", req.CorridaID).Update("status", req.Status).Error
