@@ -140,6 +140,15 @@ func AgendarViagem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 8. Envia Push Notification para todos os Administradores
+	var admins []structs.Usuario
+	db.DB.Where("papel = ?", "admin").Find(&admins)
+	for _, adm := range admins {
+		if adm.FCMToken != "" {
+			go services.EnviarPushNotification(adm.FCMToken, "🚨 Nova Corrida Solicitada!", "Um passageiro pediu uma corrida. Abra o painel para despachar.")
+		}
+	}
+
 	// 8. Responde Sucesso para o App
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{

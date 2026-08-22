@@ -58,10 +58,10 @@ func HomeAdmin(w http.ResponseWriter, r *http.Request) {
 		Order("created_at DESC").
 		Find(&pendentes)
 
-	// 2. Busca TODAS as Aprovadas (Confirmadas)
+	// 2. Busca TODAS as Aprovadas, Em Corrida, A Caminho
 	var aprovadas []structs.Corrida
 	db.DB.Preload("Usuario").Preload("Motorista").
-		Where("status = ? OR status = ?", "Aprovada", "Confirmada").
+		Where("status IN ?", []string{"Aprovada", "Confirmada", "Em Corrida", "A Caminho"}).
 		Order("data_hora_agendada ASC").
 		Find(&aprovadas)
 
@@ -186,6 +186,20 @@ func ApiPostAtribuir(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Erro ao salvar no banco."})
 		return
+	}
+
+	// Busca o Motorista para notificar
+	var motorista structs.Usuario
+	if err := db.DB.First(&motorista, req.MotoristaID).Error; err == nil && motorista.FCMToken != "" {
+		go services.EnviarPushNotification(motorista.FCMToken, "🚕 Nova Corrida Atribuída!", "A central enviou uma corrida para você. Abra o app.")
+	}
+
+	// Busca a Corrida e o Passageiro para notificar
+	var corrida structs.Corrida
+	if err := db.DB.Preload("Usuario").First(&corrida, req.CorridaID).Error; err == nil {
+		if corrida.Usuario.FCMToken != "" {
+			go services.EnviarPushNotification(corrida.Usuario.FCMToken, "🚗 Seu Motorista foi definido!", "A central aprovou a corrida e o motorista está a caminho.")
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -343,6 +357,14 @@ func NovaChamada(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Erro ao salvar chamada no banco."})
 		return
+	}
+
+	// 8. Se foi atribuída direto a um motorista, envia notificação
+	if req.MotoristaID != 0 {
+		var motorista structs.Usuario
+		if err := db.DB.First(&motorista, req.MotoristaID).Error; err == nil && motorista.FCMToken != "" {
+			go services.EnviarPushNotification(motorista.FCMToken, "🚕 Nova Corrida Atribuída!", "A central criou uma nova corrida diretamente para você.")
+		}
 	}
 
 	// 8. Retorna sucesso e o ID gerado para o front-end poder redirecionar

@@ -141,6 +141,37 @@
             z-index: 10;
         }
 
+        /* CARD VEÍCULO DO DIA (Destaque) */
+        .veiculo-info-card {
+            background: linear-gradient(145deg, var(--card) 0%, var(--bg2) 100%);
+            border: 2px dashed var(--acc);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .veiculo-info-card:active {
+            transform: scale(0.98);
+        }
+
+        .veiculo-info-card .icone-carro {
+            width: 48px;
+            height: 48px;
+            background: var(--acc-bg);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--acc);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
         .sidebar {
             position: fixed;
             top: 0;
@@ -355,17 +386,32 @@
                 <div class="hero-accent"></div>
             </div>
 
-            <div class="veiculo-info-card" id="card-veiculo-ativo" style="display: none; cursor: pointer; margin: 0 16px 20px 16px;" onclick="document.getElementById('modalEscolherVeiculo').classList.add('open')">
+            <div class="veiculo-info-card" id="card-veiculo-ativo"
+                style="display: none; cursor: pointer; margin: 20px 16px 24px 16px; z-index: 20;"
+                onclick="document.getElementById('modalEscolherVeiculo').classList.add('open')">
                 <div class="icone-carro">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                        <circle cx="7" cy="17" r="2" />
+                        <path d="M9 17h6" />
+                        <circle cx="17" cy="17" r="2" />
+                    </svg>
                 </div>
                 <div style="flex: 1;">
-                    <div style="font-size: 11px; color: var(--t3); margin-bottom: 2px;">Veículo do Dia</div>
-                    <div id="veiculo-ativo-desc" style="font-size: 13px; font-weight: 800; color: var(--t1); text-transform: uppercase;">
+                    <div
+                        style="font-size: 11px; color: var(--t3); margin-bottom: 3px; font-weight: 700; text-transform: uppercase;">
+                        VEÍCULO DO DIA (CLIQUE PARA ALTERAR)</div>
+                    <div id="veiculo-ativo-desc"
+                        style="font-size: 14px; font-weight: 800; color: var(--t1); text-transform: uppercase;">
                         ---
                     </div>
                 </div>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.27l-5.67 5.67"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.27l-5.67 5.67" />
+                </svg>
             </div>
 
             <div class="sec-lbl">Minha Agenda 📅</div>
@@ -382,204 +428,213 @@
                 </div>
             </div>
 
-        <!-- MODAL ESCOLHER VEÍCULO -->
-    <div id="modalEscolherVeiculo" class="modal-permissoes" style="z-index: 10000;">
-        <div class="modal-card">
-            <div style="font-size: 16px; font-weight: 800; color: var(--t1); margin-bottom: 8px;">Com qual carro você vai trabalhar hoje? 🚗</div>
-            <div style="font-size: 12px; color: var(--t2); margin-bottom: 16px; line-height: 1.4;">
-                Selecione o veículo que você está utilizando. Essa informação vai aparecer para o passageiro.
-            </div>
-            
-            <div id="lista-veiculos-modal" style="max-height: 200px; overflow-y: auto; margin-bottom: 16px;">
-                <!-- Preenchido via JS -->
-            </div>
+            <!-- MODAL ESCOLHER VEÍCULO -->
+            <div id="modalEscolherVeiculo" class="modal-permissoes" style="z-index: 10000;">
+                <div class="modal-card">
+                    <div style="font-size: 16px; font-weight: 800; color: var(--t1); margin-bottom: 8px;">Com qual carro
+                        você vai trabalhar hoje? 🚗</div>
+                    <div style="font-size: 12px; color: var(--t2); margin-bottom: 16px; line-height: 1.4;">
+                        Selecione o veículo que você está utilizando. Essa informação vai aparecer para o passageiro.
+                    </div>
 
-            <button class="btn-iniciar-rota" style="margin-top: 0; background: var(--border); color: var(--t1);" onclick="fecharModalVeiculo()">
-                Fechar
-            </button>
-        </div>
-    </div>
+                    <div id="lista-veiculos-modal" style="max-height: 200px; overflow-y: auto; margin-bottom: 16px;">
+                        <!-- Preenchido via JS -->
+                    </div>
 
-    <!-- MODAL PERMISSÕES -->
-    <div class="modal-permissoes" id="modalPermissoes">
-        <div class="modal-card">
-            <div style="font-size: 32px; text-align: center; margin-bottom: 10px;">⚙️</div>
-            <div style="font-size: 16px; font-weight: 800; text-align: center; margin-bottom: 16px;">Configuração
-                Obrigatória</div>
-
-            <div
-                style="font-size: 12.5px; color: var(--t2); line-height: 1.5; margin-bottom: 16px; text-align: center;">
-                Para receber viagens com o aplicativo fechado ou no bolso, precisamos que você conceda duas permissões:
-            </div>
-
-            <div
-                style="background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-                <div style="font-size: 12px; font-weight: 800; color: var(--t1); margin-bottom: 4px;">🔔 1. Notificações
-                </div>
-                <div style="font-size: 11px; color: var(--t3);">Ao clicar em continuar, clique em <b>"Permitir"</b>
-                    quando o sistema perguntar sobre notificações.</div>
-            </div>
-
-            <div
-                style="background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 24px;">
-                <div style="font-size: 12px; font-weight: 800; color: var(--t1); margin-bottom: 4px;">📍 2. Localização
-                    em 2º Plano</div>
-                <div style="font-size: 11px; color: var(--t3);">O app vai pedir o acesso ao GPS. Primeiro escolha
-                    <b>"Durante o uso do app"</b>. Depois, acesse as configurações do celular e troque a localização
-                    para <b>"Permitir o tempo todo"</b>.
+                    <button class="btn-iniciar-rota" style="margin-top: 0; background: var(--border); color: var(--t1);"
+                        onclick="fecharModalVeiculo()">
+                        Fechar
+                    </button>
                 </div>
             </div>
 
-            <button class="btn-iniciar-rota" style="margin-top: 0;" onclick="aceitarPermissoesNativas()">
-                Entendi, solicitar
-            </button>
-        </div>
-    </div>
+            <!-- MODAL PERMISSÕES -->
+            <div class="modal-permissoes" id="modalPermissoes">
+                <div class="modal-card">
+                    <div style="font-size: 32px; text-align: center; margin-bottom: 10px;">⚙️</div>
+                    <div style="font-size: 16px; font-weight: 800; text-align: center; margin-bottom: 16px;">
+                        Configuração
+                        Obrigatória</div>
 
-    <script src="../static/app.js"></script>
-    <script src="../static/gps_tracker.js"></script>
-    <script>
-        // ==========================================
-        // LÓGICA DE PERMISSÕES REAIS (CAPACITOR API)
-        // ==========================================
-        window.addEventListener("DOMContentLoaded", () => {
-            verificarPermissoesNativas();
-        });
+                    <div
+                        style="font-size: 12.5px; color: var(--t2); line-height: 1.5; margin-bottom: 16px; text-align: center;">
+                        Para receber viagens com o aplicativo fechado ou no bolso, precisamos que você conceda duas
+                        permissões:
+                    </div>
 
-        async function verificarPermissoesNativas() {
-            // Só executa se for o aplicativo instalado no celular
-            if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
+                    <div
+                        style="background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+                        <div style="font-size: 12px; font-weight: 800; color: var(--t1); margin-bottom: 4px;">🔔 1.
+                            Notificações
+                        </div>
+                        <div style="font-size: 11px; color: var(--t3);">Ao clicar em continuar, clique em
+                            <b>"Permitir"</b>
+                            quando o sistema perguntar sobre notificações.</div>
+                    </div>
 
-            let faltaPermissao = false;
+                    <div
+                        style="background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 24px;">
+                        <div style="font-size: 12px; font-weight: 800; color: var(--t1); margin-bottom: 4px;">📍 2.
+                            Localização
+                            em 2º Plano</div>
+                        <div style="font-size: 11px; color: var(--t3);">O app vai pedir o acesso ao GPS. Primeiro
+                            escolha
+                            <b>"Durante o uso do app"</b>. Depois, acesse as configurações do celular e troque a
+                            localização
+                            para <b>"Permitir o tempo todo"</b>.
+                        </div>
+                    </div>
 
-            try {
-                // 1. O SISTEMA VERIFICA O GPS
-                if (window.Capacitor.Plugins.Geolocation) {
-                    const gpsStatus = await window.Capacitor.Plugins.Geolocation.checkPermissions();
-                    if (gpsStatus.location !== 'granted') {
-                        faltaPermissao = true;
-                    }
-                }
+                    <button class="btn-iniciar-rota" style="margin-top: 0;" onclick="aceitarPermissoesNativas()">
+                        Entendi, solicitar
+                    </button>
+                </div>
+            </div>
 
-                // 2. O SISTEMA VERIFICA AS NOTIFICAÇÕES
-                if (window.Capacitor.Plugins.PushNotifications) {
-                    const pushStatus = await window.Capacitor.Plugins.PushNotifications.checkPermissions();
-                    if (pushStatus.receive !== 'granted') faltaPermissao = true;
-                } else if (window.Capacitor.Plugins.LocalNotifications) {
-                    const localStatus = await window.Capacitor.Plugins.LocalNotifications.checkPermissions();
-                    if (localStatus.display !== 'granted') faltaPermissao = true;
-                }
+            <script src="../static/app.js"></script>
+            <script src="../static/gps_tracker.js"></script>
+            <script>
+                // ==========================================
+                // LÓGICA DE PERMISSÕES REAIS (CAPACITOR API)
+                // ==========================================
+                window.addEventListener("DOMContentLoaded", () => {
+                    verificarPermissoesNativas();
+                });
 
-                if (faltaPermissao) {
-                    setTimeout(() => {
-                        document.getElementById('modalPermissoes').classList.add('open');
-                    }, 500);
-                }
+                async function verificarPermissoesNativas() {
+                    // Só executa se for o aplicativo instalado no celular
+                    if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
 
-            } catch (error) {
-                console.log("Erro ao checar permissões reais:", error);
-                if (!localStorage.getItem('permissoes_motorista_ok')) {
-                    document.getElementById('modalPermissoes').classList.add('open');
-                }
-            }
-        }
+                    let faltaPermissao = false;
 
-        async function aceitarPermissoesNativas() {
-            if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-                try {
-                    // 1. TENTA PEDIR NOTIFICAÇÃO
-                    if (window.Capacitor.Plugins.LocalNotifications) {
-                        await window.Capacitor.Plugins.LocalNotifications.requestPermissions();
-                    } else if (window.Capacitor.Plugins.PushNotifications) {
-                        await window.Capacitor.Plugins.PushNotifications.requestPermissions();
-                    } else {
-                        alert("Atenção Dev: O plugin @capacitor/local-notifications não está instalado no app!");
-                    }
-
-                    // 2. TENTA PEDIR GPS
-                    if (window.Capacitor.Plugins.Geolocation) {
-                        await window.Capacitor.Plugins.Geolocation.requestPermissions();
-                    } else {
-                        alert("Atenção Dev: O plugin @capacitor/geolocation não está instalado!");
-                    }
-                } catch (e) {
-                    alert("Falha no sistema ao pedir permissão: " + JSON.stringify(e));
-                }
-
-                document.getElementById('modalPermissoes').classList.remove('open');
-                localStorage.setItem('permissoes_motorista_ok', 'true');
-            }
-        }
-
-
-        // ==========================================
-        // LÓGICA ORIGINAL DA HOME DO MOTORISTA
-        // ==========================================
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('open');
-        }
-
-        // ==========================================
-        // CAPTURA INTELIGENTE DO TOKEN DO GOOGLE (WEB)
-        // ==========================================
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenURL = urlParams.get('token');
-
-        if (tokenURL) {
-            // Verifica se o cara marcou "Manter Conectado" antes de ir pro Google
-            if (localStorage.getItem("forcar_lembrar_google_web") === "true") {
-                localStorage.setItem("token", tokenURL);
-                localStorage.removeItem("forcar_lembrar_google_web"); // Limpa o aviso
-            } else {
-                sessionStorage.setItem("token", tokenURL); // Salva temporário
-            }
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-
-        // ==========================================
-        // FLUXO DE CARREGAMENTO
-        // ==========================================
-        const token = sessionStorage.getItem("token") || localStorage.getItem("token");
-
-        if (!token) {
-            window.location.href = "../Usuario/login.html";
-        } else {
-            carregarDadosMotorista();
-        }
-
-        function carregarDadosMotorista() {
-            fetch(`${window.API_URL}/api/motorista/home`, {
-                method: "GET",
-                headers: { "Authorization": `Bearer ${token}` }
-            })
-                .then(res => {
-                    if (res.status === 401 || res.status === 403) throw new Error("Sessão expirada");
-                    return res.json();
-                })
-                .then(dados => {
-                    if (dados.sucesso) {
-                        document.getElementById('motorista-nome').textContent = dados.usuario.Nome;
-                        renderizarAtribuidas(dados.atribuidas);
-                        renderizarConcluidas(dados.concluidas);
-                        
-                        // Lógica de Veículos
-                        let dataHoje = new Date().toLocaleDateString();
-                        let ultimoAcesso = localStorage.getItem("data_carro_escolhido");
-                        
-                        if (dados.veiculos && dados.veiculos.length > 0) {
-                            document.getElementById('card-veiculo-ativo').style.display = 'flex';
-                            
-                            if (dados.tem_veiculo_ativo) {
-                                let v = dados.veiculo_ativo;
-                                document.getElementById('veiculo-ativo-desc').textContent = `${v.Placa} • ${v.Marca} ${v.Modelo} ${v.Cor}`;
-                            } else {
-                                document.getElementById('veiculo-ativo-desc').textContent = "NENHUM SELECIONADO";
+                    try {
+                        // 1. O SISTEMA VERIFICA O GPS
+                        if (window.Capacitor.Plugins.Geolocation) {
+                            const gpsStatus = await window.Capacitor.Plugins.Geolocation.checkPermissions();
+                            if (gpsStatus.location !== 'granted') {
+                                faltaPermissao = true;
                             }
-                            
-                            // Monta modal
-                            const modal = document.getElementById('lista-veiculos-modal');
-                            modal.innerHTML = dados.veiculos.map(v => `
+                        }
+
+                        // 2. O SISTEMA VERIFICA AS NOTIFICAÇÕES
+                        if (window.Capacitor.Plugins.PushNotifications) {
+                            const pushStatus = await window.Capacitor.Plugins.PushNotifications.checkPermissions();
+                            if (pushStatus.receive !== 'granted') faltaPermissao = true;
+                        } else if (window.Capacitor.Plugins.LocalNotifications) {
+                            const localStatus = await window.Capacitor.Plugins.LocalNotifications.checkPermissions();
+                            if (localStatus.display !== 'granted') faltaPermissao = true;
+                        }
+
+                        if (faltaPermissao) {
+                            setTimeout(() => {
+                                document.getElementById('modalPermissoes').classList.add('open');
+                            }, 500);
+                        }
+
+                    } catch (error) {
+                        console.log("Erro ao checar permissões reais:", error);
+                        if (!localStorage.getItem('permissoes_motorista_ok')) {
+                            document.getElementById('modalPermissoes').classList.add('open');
+                        }
+                    }
+                }
+
+                async function aceitarPermissoesNativas() {
+                    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                        try {
+                            // 1. TENTA PEDIR NOTIFICAÇÃO
+                            if (window.Capacitor.Plugins.LocalNotifications) {
+                                await window.Capacitor.Plugins.LocalNotifications.requestPermissions();
+                            } else if (window.Capacitor.Plugins.PushNotifications) {
+                                await window.Capacitor.Plugins.PushNotifications.requestPermissions();
+                            } else {
+                                alert("Atenção Dev: O plugin @capacitor/local-notifications não está instalado no app!");
+                            }
+
+                            // 2. TENTA PEDIR GPS
+                            if (window.Capacitor.Plugins.Geolocation) {
+                                await window.Capacitor.Plugins.Geolocation.requestPermissions();
+                            } else {
+                                alert("Atenção Dev: O plugin @capacitor/geolocation não está instalado!");
+                            }
+                        } catch (e) {
+                            alert("Falha no sistema ao pedir permissão: " + JSON.stringify(e));
+                        }
+
+                        document.getElementById('modalPermissoes').classList.remove('open');
+                        localStorage.setItem('permissoes_motorista_ok', 'true');
+                    }
+                }
+
+
+                // ==========================================
+                // LÓGICA ORIGINAL DA HOME DO MOTORISTA
+                // ==========================================
+                function toggleMenu() {
+                    document.getElementById('sidebar').classList.toggle('open');
+                    document.getElementById('overlay').classList.toggle('open');
+                }
+
+                // ==========================================
+                // CAPTURA INTELIGENTE DO TOKEN DO GOOGLE (WEB)
+                // ==========================================
+                const urlParams = new URLSearchParams(window.location.search);
+                const tokenURL = urlParams.get('token');
+
+                if (tokenURL) {
+                    // Verifica se o cara marcou "Manter Conectado" antes de ir pro Google
+                    if (localStorage.getItem("forcar_lembrar_google_web") === "true") {
+                        localStorage.setItem("token", tokenURL);
+                        localStorage.removeItem("forcar_lembrar_google_web"); // Limpa o aviso
+                    } else {
+                        sessionStorage.setItem("token", tokenURL); // Salva temporário
+                    }
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+
+                // ==========================================
+                // FLUXO DE CARREGAMENTO
+                // ==========================================
+                const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+                if (!token) {
+                    window.location.href = "../Usuario/login.html";
+                } else {
+                    carregarDadosMotorista();
+                }
+
+                function carregarDadosMotorista() {
+                    fetch(`${window.API_URL}/api/motorista/home`, {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${token}` }
+                    })
+                        .then(res => {
+                            if (res.status === 401 || res.status === 403) throw new Error("Sessão expirada");
+                            return res.json();
+                        })
+                        .then(dados => {
+                            if (dados.sucesso) {
+                                document.getElementById('motorista-nome').textContent = dados.usuario.Nome;
+                                renderizarAtribuidas(dados.atribuidas);
+                                renderizarConcluidas(dados.concluidas);
+
+                                // Lógica de Veículos
+                                let dataHoje = new Date().toLocaleDateString();
+                                let ultimoAcesso = localStorage.getItem("data_carro_escolhido");
+
+                                if (dados.veiculos && dados.veiculos.length > 0) {
+                                    document.getElementById('card-veiculo-ativo').style.display = 'flex';
+
+                                    if (dados.tem_veiculo_ativo) {
+                                        let v = dados.veiculo_ativo;
+                                        document.getElementById('veiculo-ativo-desc').textContent = `${v.Placa} • ${v.Marca} ${v.Modelo} ${v.Cor}`;
+                                    } else {
+                                        document.getElementById('veiculo-ativo-desc').textContent = "NENHUM SELECIONADO";
+                                    }
+
+                                    // Monta modal
+                                    const modal = document.getElementById('lista-veiculos-modal');
+                                    modal.innerHTML = dados.veiculos.map(v => `
                                 <div style="background: var(--bg); border: 1px solid ${v.Ativo ? 'var(--acc)' : 'var(--border)'}; border-radius: 8px; padding: 10px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
                                     <div>
                                         <div style="font-size: 13px; font-weight:700; color:var(--t1);">${v.Placa}</div>
@@ -590,66 +645,66 @@
                                     </button>
                                 </div>
                             `).join('');
-                            
-                            // Se é o primeiro acesso do dia ou nenhum selecionado, força
-                            if (!dados.tem_veiculo_ativo || ultimoAcesso !== dataHoje) {
-                                document.getElementById('modalEscolherVeiculo').classList.add('open');
+
+                                    // Se é o primeiro acesso do dia ou nenhum selecionado, força
+                                    if (!dados.tem_veiculo_ativo || ultimoAcesso !== dataHoje) {
+                                        document.getElementById('modalEscolherVeiculo').classList.add('open');
+                                    }
+
+                                } else {
+                                    document.getElementById('card-veiculo-ativo').style.display = 'none';
+                                    // Sugerir ir pro perfil?
+                                }
+                            } else {
+                                alert("Erro ao carregar dados: " + dados.erro);
                             }
-                            
-                        } else {
-                            document.getElementById('card-veiculo-ativo').style.display = 'none';
-                            // Sugerir ir pro perfil?
-                        }
-                    } else {
-                        alert("Erro ao carregar dados: " + dados.erro);
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    if (err.message === "Sessão expirada") fazerLogout(false);
-                });
-        }
-        
-        function fecharModalVeiculo() {
-            localStorage.setItem("data_carro_escolhido", new Date().toLocaleDateString());
-            document.getElementById('modalEscolherVeiculo').classList.remove('open');
-        }
-        
-        function selecionarVeiculo(id) {
-            fetch(`${window.API_URL}/api/veiculos/ativo/${id}`, {
-                method: "PUT",
-                headers: { "Authorization": `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(dados => {
-                if (dados.sucesso) {
-                    fecharModalVeiculo();
-                    carregarDadosMotorista();
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            if (err.message === "Sessão expirada") fazerLogout(false);
+                        });
                 }
-            });
-        }
 
-        // ==========================================
-        // ATUALIZAÇÃO EM TEMPO REAL (POLLING)
-        // ==========================================
-        setInterval(() => {
-            if (token) {
-                carregarDadosMotorista();
-            }
-        }, 10000);
+                function fecharModalVeiculo() {
+                    localStorage.setItem("data_carro_escolhido", new Date().toLocaleDateString());
+                    document.getElementById('modalEscolherVeiculo').classList.remove('open');
+                }
 
-        function renderizarAtribuidas(corridas) {
-            const container = document.getElementById('lista-atribuidas');
-            if (!corridas || corridas.length === 0) {
-                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida pendente na sua agenda.</div></div>';
-                return;
-            }
+                function selecionarVeiculo(id) {
+                    fetch(`${window.API_URL}/api/veiculos/ativo/${id}`, {
+                        method: "PUT",
+                        headers: { "Authorization": `Bearer ${token}` }
+                    })
+                        .then(res => res.json())
+                        .then(dados => {
+                            if (dados.sucesso) {
+                                fecharModalVeiculo();
+                                carregarDadosMotorista();
+                            }
+                        });
+                }
 
-            let html = "";
-            corridas.forEach(c => {
-                let dataFmt = new Date(c.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                // ==========================================
+                // ATUALIZAÇÃO EM TEMPO REAL (POLLING)
+                // ==========================================
+                setInterval(() => {
+                    if (token) {
+                        carregarDadosMotorista();
+                    }
+                }, 10000);
 
-                html += `
+                function renderizarAtribuidas(corridas) {
+                    const container = document.getElementById('lista-atribuidas');
+                    if (!corridas || corridas.length === 0) {
+                        container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida pendente na sua agenda.</div></div>';
+                        return;
+                    }
+
+                    let html = "";
+                    corridas.forEach(c => {
+                        let dataFmt = new Date(c.DataHoraAgendada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+                        html += `
                 <div class="card list-card" style="border-left: 3px solid #10B981;">
                     <div class="row" style="margin-bottom: 8px;">
                         <div style="font-size: 13px; font-weight: 800; color: var(--t1);">${c.OrigemTexto} → ${c.DestinoTexto}</div>
@@ -664,33 +719,33 @@
                         ▶ Iniciar Corrida
                     </button>
                 </div>`;
-            });
-            container.innerHTML = html;
-        }
+                    });
+                    container.innerHTML = html;
+                }
 
-        function renderizarConcluidas(corridas) {
-            const container = document.getElementById('lista-concluidas');
+                function renderizarConcluidas(corridas) {
+                    const container = document.getElementById('lista-concluidas');
 
-            const dataDeHoje = new Date().toLocaleDateString('pt-BR');
+                    const dataDeHoje = new Date().toLocaleDateString('pt-BR');
 
-            const corridasDeHoje = (corridas || []).filter(c => {
-                const dataCorrida = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt || new Date()).toLocaleDateString('pt-BR');
-                return dataCorrida === dataDeHoje;
-            }).sort((a, b) => new Date(b.DataHoraAgendada || b.created_at || b.UpdatedAt) - new Date(a.DataHoraAgendada || a.created_at || a.UpdatedAt));
+                    const corridasDeHoje = (corridas || []).filter(c => {
+                        const dataCorrida = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt || new Date()).toLocaleDateString('pt-BR');
+                        return dataCorrida === dataDeHoje;
+                    }).sort((a, b) => new Date(b.DataHoraAgendada || b.created_at || b.UpdatedAt) - new Date(a.DataHoraAgendada || a.created_at || a.UpdatedAt));
 
-            if (corridasDeHoje.length === 0) {
-                container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida concluída hoje.</div></div>';
-                return;
-            }
+                    if (corridasDeHoje.length === 0) {
+                        container.innerHTML = '<div class="card list-card" style="text-align: center; padding: 20px 10px;"><div style="font-size: 12px; color: var(--t3);">Nenhuma corrida concluída hoje.</div></div>';
+                        return;
+                    }
 
-            let html = "";
-            corridasDeHoje.forEach(c => {
-                let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
-                let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    let html = "";
+                    corridasDeHoje.forEach(c => {
+                        let dataObj = new Date(c.DataHoraAgendada || c.created_at || c.UpdatedAt);
+                        let horaFmt = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-                let nomePassageiro = c.Usuario ? c.Usuario.Nome : "Avulso";
+                        let nomePassageiro = c.Usuario ? c.Usuario.Nome : "Avulso";
 
-                html += `
+                        html += `
                 <div class="card list-card" style="border-left: 3px solid var(--t4); cursor: pointer;" onclick="window.location.href='../Dados/recibo.html?id=${c.ID}'">
                     <div class="row" style="margin-bottom: 7px;">
                         <div style="font-size: 12px; font-weight: 600; color: var(--t1);">${c.OrigemTexto} → ${c.DestinoTexto}</div>
@@ -700,28 +755,28 @@
                         Hoje às ${horaFmt} · Passageiro: ${nomePassageiro}
                     </div>
                 </div>`;
-            });
-            container.innerHTML = html;
-        }
+                    });
+                    container.innerHTML = html;
+                }
 
-        function abrirCorridaAgendada(id) {
-            window.location.href = `corrida_agendada.html?id=${id}`;
-        }
+                function abrirCorridaAgendada(id) {
+                    window.location.href = `corrida_agendada.html?id=${id}`;
+                }
 
-        function fazerLogout(avisarApi = true) {
-            if (window.GPSGlobal) {
-                window.GPSGlobal.parar();
-            }
+                function fazerLogout(avisarApi = true) {
+                    if (window.GPSGlobal) {
+                        window.GPSGlobal.parar();
+                    }
 
-            if (avisarApi) {
-                fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
-            }
+                    if (avisarApi) {
+                        fetch(`${window.API_URL}/api/logout`, { method: "POST" }).catch(e => console.log(e));
+                    }
 
-            localStorage.removeItem("token");
-            sessionStorage.removeItem("token");
-            window.location.href = "../Usuario/login.html";
-        }
-    </script>
+                    localStorage.removeItem("token");
+                    sessionStorage.removeItem("token");
+                    window.location.href = "../Usuario/login.html";
+                }
+            </script>
 </body>
 
 </html>

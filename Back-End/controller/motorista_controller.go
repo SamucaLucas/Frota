@@ -166,6 +166,12 @@ func ApiPostConcluirCorrida(w http.ResponseWriter, r *http.Request) {
 			TipoTransacao: "corrida",
 		}
 		db.DB.Create(&historico)
+
+		// Envia Push Notification para o passageiro
+		var passageiro structs.Usuario
+		if err := db.DB.First(&passageiro, corrida.UsuarioID).Error; err == nil && passageiro.FCMToken != "" {
+			go services.EnviarPushNotification(passageiro.FCMToken, "✅ Corrida Concluída!", "Obrigado por viajar conosco! Você ganhou 1 Token de Fidelidade.")
+		}
 	}
 
 	// Responde sucesso para o Front-end!
