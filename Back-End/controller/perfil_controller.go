@@ -11,13 +11,19 @@ import (
 	"time"
 
 	"Frota/db"
+	"Frota/services"
 	"Frota/structs"
 )
 
 // ObterPerfil retorna os dados do usuário logado e seus veículos
 func ObterPerfil(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	usuarioID := r.Context().Value("usuario_id").(uint)
+	usuarioID, err := services.ExtrairUsuarioID(r)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{"sucesso": false, "erro": "Sessão inválida."})
+		return
+	}
 
 	var usuario structs.Usuario
 	if err := db.DB.First(&usuario, usuarioID).Error; err != nil {
@@ -41,7 +47,11 @@ func ObterPerfil(w http.ResponseWriter, r *http.Request) {
 // AtualizarPerfil atualiza dados de texto
 func AtualizarPerfil(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	usuarioID := r.Context().Value("usuario_id").(uint)
+	usuarioID, err := services.ExtrairUsuarioID(r)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
 	var req struct {
 		Nome     string `json:"nome"`
@@ -70,7 +80,11 @@ func AtualizarPerfil(w http.ResponseWriter, r *http.Request) {
 // UploadFotoPerfil salva uma foto localmente
 func UploadFotoPerfil(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	usuarioID := r.Context().Value("usuario_id").(uint)
+	usuarioID, errAuth := services.ExtrairUsuarioID(r)
+	if errAuth != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
 	err := r.ParseMultipartForm(5 << 20) // 5 MB max
 	if err != nil {
@@ -124,7 +138,11 @@ func UploadFotoPerfil(w http.ResponseWriter, r *http.Request) {
 // AdicionarVeiculo
 func AdicionarVeiculo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	usuarioID := r.Context().Value("usuario_id").(uint)
+	usuarioID, errAuth := services.ExtrairUsuarioID(r)
+	if errAuth != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
 	var req structs.Veiculo
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -163,7 +181,11 @@ func extrairID(r *http.Request, prefixo string) string {
 // DefinirVeiculoAtivo
 func DefinirVeiculoAtivo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	usuarioID := r.Context().Value("usuario_id").(uint)
+	usuarioID, errAuth := services.ExtrairUsuarioID(r)
+	if errAuth != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	veiculoID := extrairID(r, "/api/veiculos/ativo/")
 
 	// Zera os ativos do motorista
@@ -183,7 +205,11 @@ func DefinirVeiculoAtivo(w http.ResponseWriter, r *http.Request) {
 // ExcluirVeiculo
 func ExcluirVeiculo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	usuarioID := r.Context().Value("usuario_id").(uint)
+	usuarioID, errAuth := services.ExtrairUsuarioID(r)
+	if errAuth != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	veiculoID := extrairID(r, "/api/veiculos/excluir/")
 
 	db.DB.Where("id = ? AND motorista_id = ?", veiculoID, usuarioID).Delete(&structs.Veiculo{})
