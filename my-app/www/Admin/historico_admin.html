@@ -281,6 +281,7 @@
             window.location.href = "../Usuario/login.html";
         } else {
             carregarHistorico();
+            setInterval(carregarHistorico, 10000);
         }
 
         function carregarHistorico() {

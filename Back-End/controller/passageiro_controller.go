@@ -36,7 +36,7 @@ func HomePassageiro(w http.ResponseWriter, r *http.Request) {
     // 4. Busca as próximas viagens (ADICIONADO PRELOAD DO USUARIO)
     var proximas []structs.Corrida
     db.DB.Preload("Motorista").Preload("Usuario").
-        Where("usuario_id = ? AND status IN ?", usuarioID, []string{"Aguardando Confirmacao", "Aprovada"}).
+        Where("usuario_id = ? AND status IN ?", usuarioID, []string{"Aguardando Confirmacao", "Aprovada", "A Caminho", "Em Corrida"}).
         Order("data_hora_agendada ASC").
         Find(&proximas)
 

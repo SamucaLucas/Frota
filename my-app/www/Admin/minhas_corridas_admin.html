@@ -148,6 +148,11 @@
         if (!token) window.location.href = "../Usuario/login.html";
 
         window.onload = () => {
+            carregarMinhasCorridas();
+            setInterval(carregarMinhasCorridas, 10000);
+        };
+
+        function carregarMinhasCorridas() {
             // Alterado para buscar da rota de Admin, que nós sabemos que não será bloqueada
             fetch(`${window.API_URL}/api/admin/home`, {
                 method: "GET",
@@ -175,11 +180,11 @@
                         renderizarAtribuidas(minhasCorridasPendentes);
                         renderizarConcluidas(minhasCorridasConcluidas);
                     } else {
-                        alert("Erro ao carregar agenda: " + dados.erro);
+                        console.error("Erro ao carregar agenda: " + dados.erro);
                     }
                 })
                 .catch(err => console.error(err));
-        };
+        }
 
         function renderizarAtribuidas(corridas) {
             const container = document.getElementById('lista-atribuidas');
