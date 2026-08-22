@@ -535,6 +535,15 @@
                 });
         }
 
+        // ==========================================
+        // ATUALIZAÇÃO EM TEMPO REAL (POLLING)
+        // ==========================================
+        setInterval(() => {
+            if (token) {
+                carregarDadosMotorista();
+            }
+        }, 10000);
+
         function renderizarAtribuidas(corridas) {
             const container = document.getElementById('lista-atribuidas');
             if (!corridas || corridas.length === 0) {

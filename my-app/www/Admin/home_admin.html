@@ -550,7 +550,7 @@
                         renderizarAprovadas(aprovadas);
                         renderizarRealizadas(realizadasDeHoje);
                     } else {
-                        alert("Erro ao carregar painel: " + dados.erro);
+                        console.error("Erro ao carregar painel: " + dados.erro);
                     }
                 })
                 .catch(err => {
@@ -558,6 +558,16 @@
                     if (err.message === "Sessão expirada") fazerLogout(false);
                 });
         }
+
+        // ==========================================
+        // ATUALIZAÇÃO EM TEMPO REAL (POLLING)
+        // ==========================================
+        // Atualiza a tela a cada 10 segundos silenciosamente
+        setInterval(() => {
+            if (token) {
+                carregarDadosAdmin();
+            }
+        }, 10000);
 
         // --- Renderizador das Aprovadas COM botão de rastreio ---
         function renderizarAprovadas(aprovadas) {

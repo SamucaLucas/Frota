@@ -424,6 +424,15 @@
                 .catch(err => console.error("Erro na Home:", err));
         }
 
+        // ==========================================
+        // ATUALIZAÇÃO EM TEMPO REAL (POLLING)
+        // ==========================================
+        setInterval(() => {
+            if (token) {
+                carregarDadosHome();
+            }
+        }, 10000);
+
         function renderizarProximas(viagens) {
             const container = document.getElementById("lista-proximas");
             if (!viagens || viagens.length === 0) {
